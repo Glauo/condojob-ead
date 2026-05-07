@@ -8,6 +8,7 @@ type Atividade = { id: string; titulo: string; tipo: string; questoes: Questao[]
 
 export function PlayerClient({
   aulaId,
+  cursoId,
   videoUrl,
   conteudo,
   materiais,
@@ -18,6 +19,7 @@ export function PlayerClient({
   userId,
 }: {
   aulaId: string;
+  cursoId: string;
   videoUrl: string | null;
   conteudo: string | null;
   materiais: Material[];
@@ -142,15 +144,21 @@ export function PlayerClient({
                 </div>
               </div>
 
-              {/* Simular botão (YouTube não permite rastreamento nativo) */}
+              {/* YouTube: marcar conclusão manual (limitação da API embed) */}
               {ytId && !videoConcluido && (
-                <div style={{ marginTop: "10px", display: "flex", gap: "8px", alignItems: "center" }}>
-                  <button className="btn btn-ghost btn-sm" onClick={simularProgresso}>
-                    ▶ Marcar progresso manualmente
-                  </button>
-                  <span style={{ fontSize: "0.72rem", color: "var(--cj-text-muted)" }}>
-                    (Assista o vídeo completamente e depois clique)
-                  </span>
+                <div style={{ marginTop: "12px", background: "rgba(155,89,182,0.08)", border: "1px solid rgba(155,89,182,0.2)", borderRadius: "var(--cj-radius)", padding: "12px 14px", display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                  <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" style={{ color: "var(--cj-purple-light)", flexShrink: 0, marginTop: "1px" }}>
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <div style={{ fontSize: "0.8rem", fontWeight: 600, marginBottom: "4px" }}>Assista o vídeo até o final</div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--cj-text-muted)", marginBottom: "8px" }}>
+                      Após assistir completamente, clique no botão abaixo para confirmar e liberar a atividade avaliativa.
+                    </div>
+                    <button className="btn btn-primary btn-sm" onClick={simularProgresso}>
+                      ✓ Confirmar — assisti o vídeo completo
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -277,7 +285,7 @@ export function PlayerClient({
                       </button>
                     )}
                     {resultado.nota >= notaMinima && (
-                      <a href={`/aluno/curso/${aulaId}`} className="btn btn-primary" style={{ marginTop: "16px" }}>
+                      <a href={`/aluno/curso/${cursoId}`} className="btn btn-primary" style={{ marginTop: "16px" }}>
                         Continuar curso →
                       </a>
                     )}

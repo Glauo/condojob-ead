@@ -52,6 +52,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
 
       <PlayerClient
         aulaId={aula.id}
+        cursoId={aula.curso_id}
         videoUrl={aula.video_url}
         conteudo={aula.conteudo}
         materiais={materiais}
