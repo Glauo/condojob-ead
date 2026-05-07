@@ -1,8 +1,14 @@
 import { Pool } from "pg";
 
+const rawUrl = process.env.DATABASE_URL ?? "";
+const connectionString = rawUrl
+  .replace(/[?&]sslmode=[^&]*/g, "")
+  .replace(/[?&]channel_binding=[^&]*/g, "")
+  .replace(/\?$/, "");
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes("neon.tech") ? { rejectUnauthorized: false } : undefined,
+  connectionString,
+  ssl: rawUrl.includes("neon.tech") ? { rejectUnauthorized: false } : undefined,
 });
 
 export const db = pool;
