@@ -1,6 +1,6 @@
-import { Pool } from "pg";
+﻿import { Pool } from "pg";
 
-const rawUrl = (process.env.DATABASE_URL ?? "").replace(/^﻿/, "");
+const rawUrl = (process.env.DATABASE_URL ?? "").replace(/^\uFEFF/, "");
 const connectionString = rawUrl
   .replace(/[?&]sslmode=[^&]*/g, "")
   .replace(/[?&]channel_binding=[^&]*/g, "")
