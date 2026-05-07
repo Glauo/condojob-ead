@@ -144,7 +144,7 @@ export default function LoginPage() {
 
         <div className="login-card">
           <div className="login-logo">
-            <Image src={LOGO_URL} alt="CondoJob" width={150} height={44} style={{ objectFit: "contain" }} />
+            <Image src={LOGO_URL} alt="CondoJob" width={210} height={64} style={{ objectFit: "contain" }} />
             <div><span className="login-logo-tag">Área do Aluno & Coordenador</span></div>
           </div>
 
