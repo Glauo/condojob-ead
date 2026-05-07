@@ -450,13 +450,10 @@ img { max-width: 100%; }
 .login-page {
   min-height: 100vh;
   background:
-    linear-gradient(rgba(155,89,182,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(155,89,182,0.04) 1px, transparent 1px),
-    radial-gradient(ellipse at 12% 10%, rgba(125,60,152,0.45) 0%, transparent 45%),
-    radial-gradient(ellipse at 88% 88%, rgba(0,206,209,0.28) 0%, transparent 45%),
-    radial-gradient(ellipse at 75% 5%, rgba(155,89,182,0.22) 0%, transparent 38%),
-    linear-gradient(160deg, #080818 0%, #111128 40%, #0c1a30 100%);
-  background-size: 48px 48px, 48px 48px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+    radial-gradient(ellipse at 15% 15%, rgba(125,60,152,0.55) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 80%, rgba(0,206,209,0.22) 0%, transparent 45%),
+    linear-gradient(160deg, rgba(20,5,50,0.88) 0%, rgba(10,8,40,0.82) 50%, rgba(5,18,45,0.88) 100%),
+    url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1920&q=80') center/cover no-repeat;
   display: grid;
   place-items: center;
   padding: 20px;
@@ -475,20 +472,20 @@ img { max-width: 100%; }
   100% { transform: translateY(-30px) scale(1.05); }
 }
 .login-bg-orb-1 {
-  width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(155,89,182,0.30) 0%, transparent 70%);
-  top: -160px; right: -140px;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(155,89,182,0.40) 0%, transparent 70%);
+  top: -200px; right: -180px;
   animation-duration: 9s;
 }
 .login-bg-orb-2 {
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(0,206,209,0.20) 0%, transparent 70%);
-  bottom: -120px; left: -100px;
+  width: 550px; height: 550px;
+  background: radial-gradient(circle, rgba(0,206,209,0.25) 0%, transparent 70%);
+  bottom: -140px; left: -120px;
   animation-duration: 11s; animation-delay: -4s;
 }
 .login-bg-orb-3 {
-  width: 300px; height: 300px;
-  background: radial-gradient(circle, rgba(125,60,152,0.25) 0%, transparent 70%);
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, rgba(125,60,152,0.30) 0%, transparent 70%);
   top: 40%; left: 50%; transform: translate(-50%, -50%);
   animation-duration: 13s; animation-delay: -7s;
 }
