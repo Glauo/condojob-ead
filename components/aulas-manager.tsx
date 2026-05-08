@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 type Curso = { id: string; nome: string };
 type Aula = { id: string; titulo: string; ordem: number; video_url: string | null; curso_id: string; curso_nome: string };
@@ -8,21 +8,37 @@ type Aula = { id: string; titulo: string; ordem: number; video_url: string | nul
 export function AulasManager({ cursos, aulasIniciais }: { cursos: Curso[]; aulasIniciais: Aula[] }) {
   const [aulas, setAulas] = useState<Aula[]>(aulasIniciais);
   const [editando, setEditando] = useState<string | null>(null);
+  const [videoMode, setVideoMode] = useState<"url" | "upload">("url");
   const [videoUrl, setVideoUrl] = useState("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [novaAula, setNovaAula] = useState<{ curso_id: string; titulo: string; ordem: number } | null>(null);
   const [cursoAberto, setCursoAberto] = useState<string | null>(cursos[0]?.id ?? null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const comVideo = aulas.filter((a) => a.video_url).length;
   const semVideo = aulas.length - comVideo;
 
   async function salvarVideo(aula: Aula) {
+    let finalUrl = videoUrl.trim() || null;
+    if (videoMode === "upload" && uploadFile) {
+      setUploading(true);
+      const fd = new FormData();
+      fd.append("video", uploadFile);
+      const up = await fetch("/api/upload", { method: "POST", body: fd });
+      setUploading(false);
+      if (!up.ok) { alert("Erro no upload do vídeo."); return; }
+      finalUrl = (await up.json()).url;
+    }
     setSalvando(true);
-    const body = { id: aula.id, titulo: aula.titulo, ordem: aula.ordem, video_url: videoUrl.trim() || null };
+    const body = { id: aula.id, titulo: aula.titulo, ordem: aula.ordem, video_url: finalUrl };
     await fetch("/api/aulas", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    setAulas((prev) => prev.map((a) => a.id === aula.id ? { ...a, video_url: videoUrl.trim() || null } : a));
+    setAulas((prev) => prev.map((a) => a.id === aula.id ? { ...a, video_url: finalUrl } : a));
     setSalvando(false);
     setEditando(null);
+    setUploadFile(null);
+    setVideoUrl("");
   }
 
   async function criarAula() {
@@ -123,23 +139,37 @@ export function AulasManager({ cursos, aulasIniciais }: { cursos: Curso[]; aulas
                                 </div>
                                 <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>{aula.titulo}</div>
                               </div>
-                              <div style={{ display: "flex", gap: "8px", alignItems: "center", paddingLeft: "42px" }}>
-                                <input
-                                  className="form-input"
-                                  style={{ flex: 1, fontSize: "0.85rem", padding: "8px 12px" }}
-                                  placeholder="https://www.youtube.com/watch?v=... ou URL do vídeo"
-                                  value={videoUrl}
-                                  onChange={(e) => setVideoUrl(e.target.value)}
-                                  onKeyDown={(e) => e.key === "Enter" && salvarVideo(aula)}
-                                  autoFocus
-                                />
-                                <button className="btn btn-primary btn-sm" onClick={() => salvarVideo(aula)} disabled={salvando}>
-                                  {salvando ? "…" : "Salvar"}
-                                </button>
-                                <button className="btn btn-ghost btn-sm" onClick={() => setEditando(null)}>Cancelar</button>
+                              <div style={{ display: "flex", gap: "8px", paddingLeft: "42px" }}>
+                                <button className={`btn btn-sm ${videoMode === "url" ? "btn-primary" : "btn-ghost"}`} onClick={() => setVideoMode("url")}>🔗 URL</button>
+                                <button className={`btn btn-sm ${videoMode === "upload" ? "btn-primary" : "btn-ghost"}`} onClick={() => setVideoMode("upload")}>⬆ Upload</button>
                               </div>
-                              <div style={{ paddingLeft: "42px", fontSize: "0.72rem", color: "var(--cj-text-muted)" }}>
-                                Aceita links do YouTube, Vimeo ou URL direta de arquivo de vídeo (mp4, webm)
+                              <div style={{ paddingLeft: "42px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                                {videoMode === "url" ? (
+                                  <input
+                                    className="form-input"
+                                    style={{ fontSize: "0.85rem", padding: "8px 12px" }}
+                                    placeholder="https://youtube.com/... ou URL .mp4"
+                                    value={videoUrl}
+                                    onChange={(e) => setVideoUrl(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && salvarVideo(aula)}
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <div className="upload-drop-zone" onClick={() => fileRef.current?.click()}>
+                                    <input ref={fileRef} type="file" accept="video/mp4,video/webm,video/ogg"
+                                      style={{ display: "none" }} onChange={(e) => setUploadFile(e.target.files?.[0] || null)} />
+                                    {uploadFile
+                                      ? <span style={{ color: "var(--cj-teal)", fontWeight: 600, fontSize: "0.875rem" }}>🎬 {uploadFile.name}</span>
+                                      : <span style={{ color: "var(--cj-text-muted)", fontSize: "0.875rem" }}>📹 Clique para selecionar vídeo (MP4, WebM · máx 500 MB)</span>
+                                    }
+                                  </div>
+                                )}
+                                <div style={{ display: "flex", gap: "8px" }}>
+                                  <button className="btn btn-primary btn-sm" onClick={() => salvarVideo(aula)} disabled={salvando || uploading}>
+                                    {uploading ? "Enviando…" : salvando ? "…" : "Salvar vídeo"}
+                                  </button>
+                                  <button className="btn btn-ghost btn-sm" onClick={() => { setEditando(null); setUploadFile(null); setVideoUrl(""); }}>Cancelar</button>
+                                </div>
                               </div>
                             </div>
                           ) : (
@@ -166,7 +196,7 @@ export function AulasManager({ cursos, aulasIniciais }: { cursos: Curso[]; aulas
                               <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
                                 <button
                                   className="btn btn-ghost btn-sm"
-                                  onClick={() => { setEditando(aula.id); setVideoUrl(aula.video_url ?? ""); }}
+                                  onClick={() => { setEditando(aula.id); setVideoUrl(aula.video_url ?? ""); setVideoMode("url"); setUploadFile(null); }}
                                 >
                                   {aula.video_url ? "Editar vídeo" : "Adicionar vídeo"}
                                 </button>

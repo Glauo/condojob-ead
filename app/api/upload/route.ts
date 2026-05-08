@@ -9,21 +9,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 403 });
 
   const formData = await req.formData();
-  const file = formData.get("video") as File | null;
+  const file = (formData.get("video") ?? formData.get("arquivo")) as File | null;
 
   if (!file) return NextResponse.json({ error: "Nenhum arquivo enviado." }, { status: 400 });
 
-  const allowedTypes = ["video/mp4", "video/webm", "video/ogg", "video/quicktime"];
-  if (!allowedTypes.includes(file.type))
-    return NextResponse.json({ error: "Formato não suportado. Use MP4, WebM ou OGG." }, { status: 400 });
+  const allowedVideos = ["video/mp4", "video/webm", "video/ogg", "video/quicktime"];
+  const allowedDocs = ["application/pdf"];
+  const allAllowed = [...allowedVideos, ...allowedDocs];
 
-  const maxSize = 500 * 1024 * 1024; // 500 MB
+  if (!allAllowed.includes(file.type))
+    return NextResponse.json({ error: "Formato não suportado. Use MP4, WebM, OGG ou PDF." }, { status: 400 });
+
+  const isPdf = allowedDocs.includes(file.type);
+  const maxSize = isPdf ? 50 * 1024 * 1024 : 500 * 1024 * 1024;
   if (file.size > maxSize)
-    return NextResponse.json({ error: "Arquivo muito grande. Máximo 500 MB." }, { status: 400 });
+    return NextResponse.json({ error: `Arquivo muito grande. Máximo ${isPdf ? "50" : "500"} MB.` }, { status: 400 });
 
-  const ext = file.name.split(".").pop()?.toLowerCase() || "mp4";
+  const ext = isPdf ? "pdf" : (file.name.split(".").pop()?.toLowerCase() || "mp4");
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const uploadsDir = path.join(process.cwd(), "public", "videos");
+  const folder = isPdf ? "materiais" : "videos";
+  const uploadsDir = path.join(process.cwd(), "public", folder);
 
   await mkdir(uploadsDir, { recursive: true });
 
@@ -31,9 +36,5 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(bytes);
   await writeFile(path.join(uploadsDir, filename), buffer);
 
-  return NextResponse.json({ url: `/videos/${filename}` });
+  return NextResponse.json({ url: `/${folder}/${filename}`, nome: file.name });
 }
-
-export const config = {
-  api: { bodyParser: false },
-};

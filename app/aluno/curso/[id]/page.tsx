@@ -2,11 +2,20 @@ import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQueryOne, dbQuery } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
+import { CourseAccordion } from "@/components/course-accordion";
 
 type Curso = { id: string; nome: string; descricao: string; carga_horaria: number; nota_minima: number };
-type Aula = { id: string; titulo: string; ordem: number };
+type Aula = { id: string; titulo: string; ordem: number; video_url: string | null; materiais: string };
 type Prog = { aula_id: string; percentual: number; concluido: boolean };
 type AtvStatus = { aula_id: string; total_atividades: string; atividades_aprovadas: string };
+type AtvComSub = {
+  id: string;
+  aula_id: string;
+  titulo: string;
+  tipo: string;
+  nota: number | null;
+  sub_status: string | null;
+};
 
 export default async function CursoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,10 +30,12 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
 
   if (!curso || !matricula) notFound();
 
-  const [aulas, progressos, atvStatus] = await Promise.all([
-    dbQuery<Aula>("SELECT id, titulo, ordem FROM cj_aulas WHERE curso_id = $1 ORDER BY ordem", [id]),
-    dbQuery<Prog>("SELECT aula_id, percentual, concluido FROM cj_progresso WHERE usuario_id = $1 AND aula_id IN (SELECT id FROM cj_aulas WHERE curso_id = $2)", [session.id, id]),
-    // Para cada aula, verifica se há atividades E se o aluno passou
+  const [aulas, progressos, atvStatus, atividades] = await Promise.all([
+    dbQuery<Aula>("SELECT id, titulo, ordem, video_url, materiais FROM cj_aulas WHERE curso_id = $1 ORDER BY ordem", [id]),
+    dbQuery<Prog>(
+      "SELECT aula_id, percentual, concluido FROM cj_progresso WHERE usuario_id = $1 AND aula_id IN (SELECT id FROM cj_aulas WHERE curso_id = $2)",
+      [session.id, id]
+    ),
     dbQuery<AtvStatus>(
       `SELECT
          a.id AS aula_id,
@@ -40,6 +51,17 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
        GROUP BY a.id, c.nota_minima`,
       [session.id, id]
     ),
+    // Melhor submissão por atividade (maior nota)
+    dbQuery<AtvComSub>(
+      `SELECT DISTINCT ON (atv.id)
+         atv.id, atv.aula_id, atv.titulo, atv.tipo,
+         s.nota, s.status AS sub_status
+       FROM cj_atividades atv
+       LEFT JOIN cj_submissoes s ON s.atividade_id = atv.id AND s.usuario_id = $1
+       WHERE atv.aula_id IN (SELECT id FROM cj_aulas WHERE curso_id = $2)
+       ORDER BY atv.id, s.nota DESC NULLS LAST`,
+      [session.id, id]
+    ),
   ]);
 
   const progMap = Object.fromEntries(progressos.map((p) => [p.aula_id, p]));
@@ -47,18 +69,32 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
   const totalConc = progressos.filter((p) => p.concluido).length;
   const pct = aulas.length ? Math.round((totalConc / aulas.length) * 100) : 0;
 
-  type UnlockStatus = "liberada" | "bloqueada_video" | "bloqueada_atividade";
-
-  function getStatus(idx: number): UnlockStatus {
-    if (idx === 0) return "liberada";
+  function getUnlockInfo(idx: number): { unlocked: boolean; reason: string | null } {
+    if (idx === 0) return { unlocked: true, reason: null };
     const prev = aulas[idx - 1];
-    if (!progMap[prev.id]?.concluido) return "bloqueada_video";
+    if (!progMap[prev.id]?.concluido) return { unlocked: false, reason: "Conclua o vídeo do módulo anterior" };
     const prevAtv = atvMap[prev.id];
     if (prevAtv && Number(prevAtv.total_atividades) > 0 && Number(prevAtv.atividades_aprovadas) === 0) {
-      return "bloqueada_atividade";
+      return { unlocked: false, reason: "Passe na atividade do módulo anterior (nota ≥ " + Number(curso!.nota_minima).toFixed(1) + ")" };
     }
-    return "liberada";
+    return { unlocked: true, reason: null };
   }
+
+  const aulasComStatus = aulas.map((aula, idx) => {
+    const prog = progMap[aula.id];
+    const { unlocked, reason } = getUnlockInfo(idx);
+    return {
+      id: aula.id,
+      titulo: aula.titulo,
+      ordem: aula.ordem,
+      video_url: aula.video_url,
+      materiais: JSON.parse(aula.materiais || "[]") as { nome: string; url: string }[],
+      percentual: prog?.percentual ?? 0,
+      concluido: Boolean(prog?.concluido),
+      unlocked,
+      unlockReason: reason,
+    };
+  });
 
   return (
     <AppShell breadcrumb={curso.nome} userName={session.nome} userRole="aluno">
@@ -69,106 +105,39 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
           {curso.descricao && <p className="page-desc">{curso.descricao}</p>}
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: "0.72rem", color: "var(--cj-text-muted)" }}>Progresso</div>
-          <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--cj-teal)" }}>{pct}%</div>
+          <div style={{ fontSize: "0.72rem", color: "var(--cj-text-muted)", marginBottom: "4px" }}>Progresso geral</div>
+          <div style={{ fontSize: "2rem", fontWeight: 800, color: "var(--cj-teal)", lineHeight: 1 }}>{pct}%</div>
+          <div style={{ width: "80px", marginTop: "6px" }}>
+            <div className="progress-bar-wrap">
+              <div className="progress-bar-fill" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="metric-grid metric-grid-3">
         <div className="metric-card metric-card-purple">
-          <div className="metric-label">Total de aulas</div>
+          <div className="metric-label">Total de módulos</div>
           <div className="metric-value">{aulas.length}</div>
           <div className="metric-note">{curso.carga_horaria}h de conteúdo</div>
         </div>
         <div className="metric-card metric-card-teal">
-          <div className="metric-label">Concluídas</div>
+          <div className="metric-label">Concluídos</div>
           <div className="metric-value">{totalConc}</div>
-          <div className="metric-note">de {aulas.length} aulas</div>
+          <div className="metric-note">de {aulas.length} módulos</div>
         </div>
         <div className="metric-card metric-card-green">
           <div className="metric-label">Nota mínima</div>
           <div className="metric-value">{Number(curso.nota_minima).toFixed(1)}</div>
-          <div className="metric-note">Para avançar nas aulas</div>
+          <div className="metric-note">Para avançar nos módulos</div>
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <div className="section-eyebrow">Conteúdo</div>
-            <h3 className="section-title">Aulas do curso</h3>
-          </div>
-        </div>
-        <div className="card-body" style={{ paddingTop: "12px" }}>
-          {aulas.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-title">Nenhuma aula cadastrada</div>
-              <p className="empty-desc">As aulas serão disponibilizadas em breve pelo coordenador.</p>
-            </div>
-          ) : (
-            <div className="step-list">
-              {aulas.map((aula, idx) => {
-                const prog = progMap[aula.id];
-                const status = getStatus(idx);
-                const unlocked = status === "liberada";
-                const done = Boolean(prog?.concluido);
-                const pctAula = prog?.percentual ?? 0;
-
-                return (
-                  <div className="step-item" key={aula.id}>
-                    <div className={`step-num ${done ? "done" : unlocked ? "active" : ""}`}>
-                      {done ? (
-                        <svg viewBox="0 0 20 20" fill="currentColor" width="12" height="12">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : String(aula.ordem).padStart(2, "0")}
-                    </div>
-                    <div className="step-body">
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
-                        <div style={{ flex: 1 }}>
-                          <div className="step-title" style={{ color: !unlocked ? "var(--cj-text-muted)" : undefined }}>
-                            {aula.titulo}
-                          </div>
-                          {!unlocked && (
-                            <div style={{ fontSize: "0.75rem", marginTop: "4px", color: "var(--cj-text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
-                              🔒{" "}
-                              {status === "bloqueada_video"
-                                ? "Conclua a aula anterior para desbloquear"
-                                : "Realize a atividade avaliativa da aula anterior"}
-                            </div>
-                          )}
-                          {unlocked && !done && pctAula > 0 && (
-                            <div style={{ marginTop: "6px", maxWidth: "220px" }}>
-                              <div className="progress-bar-wrap" style={{ height: "4px" }}>
-                                <div className="progress-bar-fill progress-bar-fill-teal" style={{ width: `${pctAula}%` }} />
-                              </div>
-                              <div style={{ fontSize: "0.68rem", color: "var(--cj-text-muted)", marginTop: "2px" }}>{pctAula}% assistido</div>
-                            </div>
-                          )}
-                          {done && (
-                            <div style={{ fontSize: "0.72rem", color: "var(--cj-success)", marginTop: "2px" }}>
-                              ✓ Aula e atividade concluídas
-                            </div>
-                          )}
-                        </div>
-                        <div style={{ flexShrink: 0 }}>
-                          {unlocked ? (
-                            <a href={`/aluno/aula/${aula.id}`} className="btn btn-primary btn-sm">
-                              {done ? "Rever" : "Entrar"}
-                            </a>
-                          ) : (
-                            <span className="badge badge-muted">🔒 Bloqueada</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
+      <CourseAccordion
+        aulas={aulasComStatus}
+        atividades={atividades}
+        notaMinima={Number(curso.nota_minima)}
+      />
     </AppShell>
   );
 }
