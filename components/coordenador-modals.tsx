@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 /* ─── Modal Novo Curso ─── */
@@ -105,11 +105,27 @@ export function CursoModal({ curso }: { curso?: CursoData } = {}) {
   );
 }
 
-/* ─── Modal Novo Aluno ─── */
+/* ─── Modal Novo Usuário (Aluno ou Coordenador) ─── */
 export function NovoAlunoModal() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ nome: "", email: "", senha: "", telefone: "" });
+  const [form, setForm] = useState({
+    perfil: "aluno",
+    nome: "",
+    email: "",
+    senha: "",
+    data_nascimento: "",
+    rg: "",
+    cpf: "",
+    estado_civil: "",
+    cep: "",
+    cidade: "",
+    rua: "",
+    numero: "",
+    complemento: "",
+    celular_whatsapp: "",
+    telefone: "",
+  });
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -126,45 +142,125 @@ export function NovoAlunoModal() {
     setSaving(false);
     if (!res.ok) { const d = await res.json().catch(() => ({})); setErro((d as { error?: string }).error || "Erro ao salvar."); return; }
     setOpen(false);
+    setForm({ perfil: "aluno", nome: "", email: "", senha: "", data_nascimento: "", rg: "", cpf: "", estado_civil: "", cep: "", cidade: "", rua: "", numero: "", complemento: "", celular_whatsapp: "", telefone: "" });
     router.refresh();
   }
 
+  const labelCadastrar = form.perfil === "coordenador" ? "Cadastrar coordenador" : "Cadastrar aluno";
+
   return (
     <>
-      <button className="btn btn-primary" onClick={() => setOpen(true)}>+ Novo Aluno</button>
+      <button className="btn btn-primary" onClick={() => setOpen(true)}>+ Novo Cadastro</button>
       {open && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
-          <div className="modal-box">
+          <div className="modal-box" style={{ maxWidth: "680px" }}>
             <div className="modal-header">
-              <div className="modal-title">Cadastrar aluno</div>
+              <div className="modal-title">Cadastrar usuário</div>
               <button className="modal-close" onClick={() => setOpen(false)}>
                 <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
               </button>
             </div>
             <div className="modal-body">
+              {/* Tipo de perfil */}
+              <div className="form-group form-group-full" style={{ marginBottom: "16px" }}>
+                <label className="form-label">Tipo de perfil *</label>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  {(["aluno", "coordenador"] as const).map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => upd("perfil", p)}
+                      style={{
+                        flex: 1, padding: "10px", borderRadius: "8px", border: "2px solid",
+                        borderColor: form.perfil === p ? "var(--cj-teal)" : "var(--cj-dark-border)",
+                        background: form.perfil === p ? "var(--cj-teal-bg)" : "transparent",
+                        color: form.perfil === p ? "var(--cj-teal)" : "var(--cj-text-muted)",
+                        fontWeight: 600, fontSize: "0.875rem", cursor: "pointer",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {p === "aluno" ? "👨‍🎓 Aluno" : "👨‍💼 Coordenador"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="modal-section-label">Dados pessoais</div>
               <div className="form-grid">
                 <div className="form-group form-group-full">
                   <label className="form-label">Nome completo *</label>
                   <input className="form-input" placeholder="João da Silva" value={form.nome} onChange={(e) => upd("nome", e.target.value)} autoFocus />
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Data de nascimento</label>
+                  <input className="form-input" type="date" value={form.data_nascimento} onChange={(e) => upd("data_nascimento", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Estado civil</label>
+                  <select className="form-input" value={form.estado_civil} onChange={(e) => upd("estado_civil", e.target.value)}>
+                    <option value="">Selecione…</option>
+                    <option value="Solteiro(a)">Solteiro(a)</option>
+                    <option value="Casado(a)">Casado(a)</option>
+                    <option value="Divorciado(a)">Divorciado(a)</option>
+                    <option value="Viúvo(a)">Viúvo(a)</option>
+                    <option value="União estável">União estável</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">RG</label>
+                  <input className="form-input" placeholder="00.000.000-0" value={form.rg} onChange={(e) => upd("rg", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">CPF</label>
+                  <input className="form-input" placeholder="000.000.000-00" value={form.cpf} onChange={(e) => upd("cpf", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="modal-section-label" style={{ marginTop: "16px" }}>Endereço</div>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">CEP</label>
+                  <input className="form-input" placeholder="00000-000" value={form.cep} onChange={(e) => upd("cep", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Cidade</label>
+                  <input className="form-input" placeholder="São Paulo" value={form.cidade} onChange={(e) => upd("cidade", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Rua / Logradouro</label>
+                  <input className="form-input" placeholder="Rua das Flores" value={form.rua} onChange={(e) => upd("rua", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Número</label>
+                  <input className="form-input" placeholder="123" value={form.numero} onChange={(e) => upd("numero", e.target.value)} />
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Complemento</label>
+                  <input className="form-input" placeholder="Apto 12, Bloco B…" value={form.complemento} onChange={(e) => upd("complemento", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="modal-section-label" style={{ marginTop: "16px" }}>Contato & Acesso</div>
+              <div className="form-grid">
+                <div className="form-group">
                   <label className="form-label">E-mail *</label>
                   <input className="form-input" type="email" placeholder="aluno@email.com" value={form.email} onChange={(e) => upd("email", e.target.value)} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Telefone / WhatsApp</label>
-                  <input className="form-input" placeholder="(11) 99999-9999" value={form.telefone} onChange={(e) => upd("telefone", e.target.value)} />
+                  <label className="form-label">Celular / WhatsApp</label>
+                  <input className="form-input" placeholder="(11) 99999-9999" value={form.celular_whatsapp} onChange={(e) => upd("celular_whatsapp", e.target.value)} />
                 </div>
                 <div className="form-group form-group-full">
                   <label className="form-label">Senha de acesso *</label>
                   <input className="form-input" type="password" placeholder="Mínimo 6 caracteres" value={form.senha} onChange={(e) => upd("senha", e.target.value)} />
                 </div>
               </div>
-              {erro && <div className="form-error">{erro}</div>}
+
+              {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
-              <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Cadastrando…" : "Cadastrar aluno"}</button>
+              <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Cadastrando…" : labelCadastrar}</button>
             </div>
           </div>
         </div>
@@ -234,26 +330,53 @@ export function MatricularAlunoModal({ alunoId, alunoNome, cursos }: { alunoId: 
   );
 }
 
-/* ─── Modal Nova Aula ─── */
+/* ─── Modal Nova Aula (com upload de vídeo) ─── */
 type AulaData = { id?: string; titulo?: string; video_url?: string; conteudo?: string; ordem?: number };
 
 export function AulaModal({ cursoId, aula }: { cursoId: string; aula?: AulaData }) {
   const router = useRouter();
   const isEdit = Boolean(aula?.id);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ titulo: String(aula?.titulo || ""), video_url: String(aula?.video_url || ""), conteudo: String(aula?.conteudo || ""), ordem: String(aula?.ordem || "1") });
+  const [form, setForm] = useState({
+    titulo: String(aula?.titulo || ""),
+    video_url: String(aula?.video_url || ""),
+    conteudo: String(aula?.conteudo || ""),
+    ordem: String(aula?.ordem || "1"),
+  });
+  const [videoMode, setVideoMode] = useState<"url" | "upload">("url");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   function upd(f: keyof typeof form, v: string) { setForm((p) => ({ ...p, [f]: v })); setErro(""); }
 
   async function salvar() {
     if (!form.titulo.trim()) { setErro("Título da aula é obrigatório."); return; }
+
+    let finalVideoUrl = form.video_url;
+
+    if (videoMode === "upload" && uploadFile) {
+      setUploading(true);
+      const fd = new FormData();
+      fd.append("video", uploadFile);
+      const upRes = await fetch("/api/upload", { method: "POST", body: fd });
+      setUploading(false);
+      if (!upRes.ok) {
+        const d = await upRes.json().catch(() => ({}));
+        setErro((d as { error?: string }).error || "Erro no upload do vídeo.");
+        return;
+      }
+      const { url } = await upRes.json();
+      finalVideoUrl = url;
+    }
+
     setSaving(true);
     const res = await fetch("/api/aulas", {
       method: isEdit ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: aula?.id, curso_id: cursoId, ...form, ordem: Number(form.ordem) }),
+      body: JSON.stringify({ id: aula?.id, curso_id: cursoId, ...form, video_url: finalVideoUrl, ordem: Number(form.ordem) }),
     });
     setSaving(false);
     if (!res.ok) { const d = await res.json().catch(() => ({})); setErro((d as { error?: string }).error || "Erro ao salvar."); return; }
@@ -278,29 +401,91 @@ export function AulaModal({ cursoId, aula }: { cursoId: string; aula?: AulaData 
             </div>
             <div className="modal-body">
               <div className="form-grid">
-                <div className="form-group" style={{ gridColumn: "1 / -1" }}>
+                <div className="form-group form-group-full">
                   <label className="form-label">Título da aula *</label>
                   <input className="form-input" placeholder="Ex: Comunicação com Moradores" value={form.titulo} onChange={(e) => upd("titulo", e.target.value)} autoFocus />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Ordem</label>
-                  <input className="form-input" type="number" min="1" value={form.ordem} onChange={(e) => upd("ordem", e.target.value)} />
+                  <input className="form-input" type="number" min="1" max="10" value={form.ordem} onChange={(e) => upd("ordem", e.target.value)} />
                 </div>
-                <div className="form-group" style={{ gridColumn: "1 / -1" }}>
-                  <label className="form-label">URL do vídeo (YouTube ou link direto)</label>
-                  <input className="form-input" type="url" placeholder="https://youtube.com/watch?v=..." value={form.video_url} onChange={(e) => upd("video_url", e.target.value)} />
-                  <span className="form-hint">Suporta links do YouTube, Vimeo ou vídeo direto (.mp4)</span>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Vídeo da aula</label>
+                  <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${videoMode === "url" ? "btn-primary" : "btn-ghost"}`}
+                      onClick={() => setVideoMode("url")}
+                    >
+                      🔗 Link (YouTube / URL)
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${videoMode === "upload" ? "btn-primary" : "btn-ghost"}`}
+                      onClick={() => setVideoMode("upload")}
+                    >
+                      ⬆ Upload de arquivo
+                    </button>
+                  </div>
+
+                  {videoMode === "url" ? (
+                    <>
+                      <input
+                        className="form-input"
+                        type="url"
+                        placeholder="https://youtube.com/watch?v=... ou link .mp4"
+                        value={form.video_url}
+                        onChange={(e) => upd("video_url", e.target.value)}
+                      />
+                      <span className="form-hint">Suporta YouTube, Vimeo ou vídeo direto (.mp4, .webm)</span>
+                    </>
+                  ) : (
+                    <div
+                      className="upload-drop-zone"
+                      onClick={() => fileRef.current?.click()}
+                    >
+                      <input
+                        ref={fileRef}
+                        type="file"
+                        accept="video/mp4,video/webm,video/ogg"
+                        style={{ display: "none" }}
+                        onChange={(e) => { setUploadFile(e.target.files?.[0] || null); setErro(""); }}
+                      />
+                      {uploadFile ? (
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ fontSize: "1.5rem", marginBottom: "4px" }}>🎬</div>
+                          <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--cj-teal)" }}>{uploadFile.name}</div>
+                          <div style={{ fontSize: "0.75rem", color: "var(--cj-text-muted)", marginTop: "2px" }}>
+                            {(uploadFile.size / (1024 * 1024)).toFixed(1)} MB
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ fontSize: "2rem", marginBottom: "6px" }}>📹</div>
+                          <div style={{ fontWeight: 600, fontSize: "0.875rem" }}>Clique para selecionar vídeo</div>
+                          <div style={{ fontSize: "0.75rem", color: "var(--cj-text-muted)", marginTop: "2px" }}>MP4, WebM ou OGG · máx. 500 MB</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="form-group" style={{ gridColumn: "1 / -1" }}>
+                <div className="form-group form-group-full">
                   <label className="form-label">Conteúdo / texto</label>
                   <textarea className="form-input form-textarea" rows={4} placeholder="Conteúdo da aula em HTML ou texto…" value={form.conteudo} onChange={(e) => upd("conteudo", e.target.value)} />
                 </div>
               </div>
+              {uploading && (
+                <div style={{ marginTop: "10px", padding: "10px", background: "var(--cj-teal-bg)", borderRadius: "8px", fontSize: "0.82rem", color: "var(--cj-teal)" }}>
+                  Enviando vídeo… Aguarde, isso pode demorar alguns instantes.
+                </div>
+              )}
               {erro && <div className="form-error">{erro}</div>}
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
-              <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Salvando…" : isEdit ? "Salvar" : "Criar aula"}</button>
+              <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving || uploading}>Cancelar</button>
+              <button className="btn btn-primary" onClick={salvar} disabled={saving || uploading}>
+                {uploading ? "Enviando vídeo…" : saving ? "Salvando…" : isEdit ? "Salvar" : "Criar aula"}
+              </button>
             </div>
           </div>
         </div>

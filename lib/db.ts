@@ -43,6 +43,16 @@ export async function initSchema() {
       senha_hash TEXT NOT NULL,
       perfil TEXT NOT NULL CHECK (perfil IN ('aluno','coordenador')),
       telefone TEXT,
+      celular_whatsapp TEXT,
+      data_nascimento DATE,
+      rg TEXT,
+      cpf TEXT,
+      estado_civil TEXT,
+      cep TEXT,
+      cidade TEXT,
+      rua TEXT,
+      numero TEXT,
+      complemento TEXT,
       foto_url TEXT,
       ativo BOOLEAN DEFAULT true,
       criado_em TIMESTAMPTZ DEFAULT now()
@@ -160,5 +170,18 @@ export async function initSchema() {
       detalhes JSONB,
       criado_em TIMESTAMPTZ DEFAULT now()
     );
+  `);
+
+  await pool.query(`
+    ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS celular_whatsapp TEXT;
+    ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS data_nascimento DATE;
+    ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS rg TEXT;
+    ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS cpf TEXT;
+    ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS estado_civil TEXT;
+    ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS cep TEXT;
+    ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS cidade TEXT;
+    ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS rua TEXT;
+    ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS numero TEXT;
+    ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS complemento TEXT;
   `);
 }

@@ -48,17 +48,17 @@ const FEATURES = [
 
 export default function LoginPage() {
   const router = useRouter();
-  const [perfil, setPerfil] = useState<"aluno" | "coordenador">("aluno");
   const [form, setForm] = useState({ email: "", senha: "" });
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
+  const [showSenha, setShowSenha] = useState(false);
 
   function update(field: keyof typeof form, value: string) {
     setForm((p) => ({ ...p, [field]: value }));
     setErro("");
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!form.email.trim() || !form.senha) { setErro("Preencha e-mail e senha."); return; }
     setLoading(true);
@@ -73,26 +73,24 @@ export default function LoginPage() {
       setErro((d as { error?: string }).error || "E-mail ou senha incorretos.");
       return;
     }
-    const { perfil: p } = await res.json();
-    router.push(p === "coordenador" ? "/coordenador" : "/aluno");
+    const { perfil } = await res.json();
+    router.push(perfil === "coordenador" ? "/coordenador" : "/aluno");
   }
 
   return (
     <div className="login-page">
 
-      {/* ===== PAINEL ESQUERDO — informações da plataforma ===== */}
+      {/* ===== PAINEL ESQUERDO ===== */}
       <div className="login-left">
         <div className="login-left-orb login-left-orb-1" />
         <div className="login-left-orb login-left-orb-2" />
 
         <div className="login-left-inner">
-          {/* Logo */}
           <div className="login-left-logo">
             <Image src={LOGO_URL} alt="CondoJob" width={160} height={48} style={{ objectFit: "contain" }} />
             <span className="login-left-badge">Educação EAD</span>
           </div>
 
-          {/* Tagline */}
           <h1 className="login-left-title">
             Formando o profissional<br />
             <span className="login-left-title-accent">condominial do futuro.</span>
@@ -103,7 +101,6 @@ export default function LoginPage() {
             mais segurança no setor de condomínios.
           </p>
 
-          {/* Features */}
           <div className="login-features">
             {FEATURES.map((f) => (
               <div className="login-feature-item" key={f.titulo}>
@@ -116,7 +113,6 @@ export default function LoginPage() {
             ))}
           </div>
 
-          {/* Stats */}
           <div className="login-stats">
             <div className="login-stat">
               <div className="login-stat-value">100%</div>
@@ -146,63 +142,74 @@ export default function LoginPage() {
         <div className="login-card">
           <div className="login-logo">
             <Image src={LOGO_URL} alt="CondoJob" width={210} height={64} style={{ objectFit: "contain" }} />
-            <div><span className="login-logo-tag">Área do Aluno & Coordenador</span></div>
+            <div><span className="login-logo-tag">Plataforma EAD</span></div>
           </div>
 
-          {/* Seletor de perfil */}
-          <div className="login-role-selector">
-            <button
-              type="button"
-              className={`login-role-btn ${perfil === "aluno" ? "active" : ""}`}
-              onClick={() => { setPerfil("aluno"); setErro(""); }}
-            >
-              <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15">
-                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3z" />
-              </svg>
-              Aluno
-            </button>
-            <button
-              type="button"
-              className={`login-role-btn ${perfil === "coordenador" ? "active" : ""}`}
-              onClick={() => { setPerfil("coordenador"); setErro(""); }}
-            >
-              <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15">
-                <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
-                <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
-              </svg>
-              Coordenador
-            </button>
-          </div>
-
-          <h2 className="login-title">
-            {perfil === "aluno" ? "Bem-vindo de volta" : "Acesso Administrativo"}
-          </h2>
-          <p className="login-subtitle">
-            {perfil === "aluno"
-              ? "Continue sua formação condominial"
-              : "Gerencie cursos, alunos e conteúdos"}
-          </p>
+          <h2 className="login-title">Bem-vindo de volta</h2>
+          <p className="login-subtitle">Acesse sua conta para continuar</p>
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="form-group">
               <label className="form-label">E-mail</label>
-              <input className="form-input login-input" type="email" placeholder="seu@email.com"
-                value={form.email} onChange={(e) => update("email", e.target.value)} autoFocus />
+              <input
+                className="form-input login-input"
+                type="email"
+                placeholder="seu@email.com"
+                value={form.email}
+                onChange={(e) => update("email", e.target.value)}
+                autoFocus
+              />
             </div>
             <div className="form-group">
               <label className="form-label">Senha</label>
-              <input className="form-input login-input" type="password" placeholder="••••••••"
-                value={form.senha} onChange={(e) => update("senha", e.target.value)} />
+              <div style={{ position: "relative" }}>
+                <input
+                  className="form-input login-input"
+                  type={showSenha ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={form.senha}
+                  onChange={(e) => update("senha", e.target.value)}
+                  style={{ paddingRight: "44px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSenha((v) => !v)}
+                  style={{
+                    position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)",
+                    background: "none", border: "none", color: "var(--cj-text-muted)", cursor: "pointer",
+                  }}
+                >
+                  {showSenha ? (
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
+                      <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                      <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             {erro && <div className="form-error">{erro}</div>}
 
             <button
               type="submit"
-              className={`login-btn ${perfil === "coordenador" ? "login-btn-coord" : ""}`}
+              className="login-btn"
               disabled={loading}
             >
-              {loading ? "Entrando…" : perfil === "aluno" ? "Entrar como Aluno →" : "Entrar como Coordenador →"}
+              {loading ? (
+                <span style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
+                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style={{ animation: "spin 1s linear infinite" }}>
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3" />
+                    <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                  Entrando…
+                </span>
+              ) : "Entrar →"}
             </button>
           </form>
 
