@@ -30,7 +30,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
 
   const [progresso, atividades] = await Promise.all([
     dbQueryOne<Prog>("SELECT percentual, concluido FROM cj_progresso WHERE usuario_id = $1 AND aula_id = $2", [session.id, id]),
-    dbQuery<Atividade>("SELECT id, titulo, tipo, questoes FROM cj_atividades WHERE aula_id = $1 ORDER BY rowid", [id]),
+    dbQuery<Atividade>("SELECT id, titulo, tipo, questoes FROM cj_atividades WHERE aula_id = $1 ORDER BY criado_em", [id]),
   ]);
 
   const materiais = JSON.parse(aula.materiais || "[]") as { nome: string; url: string }[];

@@ -43,17 +43,16 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
   const router = useRouter();
   const [list, setList] = useState(aulas);
   const [editId, setEditId] = useState<string | null>(null);
-  const [videoMode, setVideoMode] = useState<"url" | "upload">("url");
   const [videoUrl, setVideoUrl] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [novaForm, setNovaForm] = useState<{ titulo: string; ordem: number } | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   async function salvarVideo(aula: Aula) {
     let finalUrl = videoUrl.trim() || null;
-    if (videoMode === "upload" && uploadFile) {
+    if (uploadFile) {
       setUploading(true);
       const fd = new FormData();
       fd.append("video", uploadFile);
@@ -62,6 +61,7 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
       if (!up.ok) { alert("Erro no upload do vídeo."); return; }
       finalUrl = (await up.json()).url;
     }
+    if (!finalUrl && !uploadFile) { alert("Insira uma URL ou selecione um arquivo."); return; }
     setSaving(true);
     await fetch("/api/aulas", {
       method: "PUT",
@@ -96,6 +96,12 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
     router.refresh();
   }
 
+  function openEdit(aula: Aula) {
+    setEditId(aula.id);
+    setVideoUrl(aula.video_url ?? "");
+    setUploadFile(null);
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
       {list.length === 0 && (
@@ -108,39 +114,68 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
       {list.map((aula) => (
         <div key={aula.id} style={{ borderTop: "1px solid var(--cj-dark-border)", padding: "16px 0" }}>
           {editId === aula.id ? (
+            /* ── Modo edição de vídeo ── */
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <div className="coord-module-num">{String(aula.ordem).padStart(2, "0")}</div>
                 <span style={{ fontWeight: 600 }}>{aula.titulo}</span>
               </div>
-              <div style={{ paddingLeft: "42px", display: "flex", gap: "8px" }}>
-                <button className={`btn btn-sm ${videoMode === "url" ? "btn-primary" : "btn-ghost"}`} onClick={() => setVideoMode("url")}>🔗 URL</button>
-                <button className={`btn btn-sm ${videoMode === "upload" ? "btn-primary" : "btn-ghost"}`} onClick={() => setVideoMode("upload")}>⬆ Upload</button>
-              </div>
-              <div style={{ paddingLeft: "42px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                {videoMode === "url" ? (
-                  <input className="form-input" placeholder="https://youtube.com/... ou URL .mp4"
-                    value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && salvarVideo(aula)} autoFocus />
-                ) : (
-                  <div className="upload-drop-zone" onClick={() => fileRef.current?.click()}>
-                    <input ref={fileRef} type="file" accept="video/mp4,video/webm,video/ogg"
-                      style={{ display: "none" }} onChange={(e) => setUploadFile(e.target.files?.[0] || null)} />
-                    {uploadFile
-                      ? <span style={{ color: "var(--cj-teal)", fontWeight: 600, fontSize: "0.875rem" }}>🎬 {uploadFile.name}</span>
-                      : <span style={{ color: "var(--cj-text-muted)", fontSize: "0.875rem" }}>📹 Clique para selecionar vídeo (MP4, WebM · máx 500 MB)</span>
-                    }
-                  </div>
-                )}
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button className="btn btn-primary btn-sm" onClick={() => salvarVideo(aula)} disabled={saving || uploading}>
-                    {uploading ? "Enviando…" : saving ? "…" : "Salvar vídeo"}
-                  </button>
-                  <button className="btn btn-ghost btn-sm" onClick={() => { setEditId(null); setUploadFile(null); setVideoUrl(""); }}>Cancelar</button>
+
+              {/* Upload por arquivo */}
+              <div style={{ paddingLeft: "42px" }}>
+                <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--cj-teal)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  ⬆ Anexar arquivo de vídeo
                 </div>
+                <div
+                  className="upload-drop-zone"
+                  style={{ padding: "20px", marginBottom: "8px" }}
+                  onClick={() => fileRefs.current[aula.id]?.click()}
+                >
+                  <input
+                    ref={(el) => { fileRefs.current[aula.id] = el; }}
+                    type="file"
+                    accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                    style={{ display: "none" }}
+                    onChange={(e) => { setUploadFile(e.target.files?.[0] || null); setVideoUrl(""); }}
+                  />
+                  {uploadFile ? (
+                    <span style={{ color: "var(--cj-teal)", fontWeight: 600, fontSize: "0.875rem" }}>
+                      🎬 {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(1)} MB)
+                    </span>
+                  ) : (
+                    <span style={{ color: "var(--cj-text-muted)", fontSize: "0.875rem" }}>
+                      📹 Clique aqui para selecionar vídeo (MP4, WebM · máx 500 MB)
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Ou URL */}
+              <div style={{ paddingLeft: "42px" }}>
+                <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--cj-text-muted)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  🔗 Ou cole uma URL (YouTube, Vimeo, MP4)
+                </div>
+                <input
+                  className="form-input"
+                  placeholder="https://youtube.com/watch?v=... ou https://..."
+                  value={videoUrl}
+                  onChange={(e) => { setVideoUrl(e.target.value); setUploadFile(null); }}
+                  onKeyDown={(e) => e.key === "Enter" && salvarVideo(aula)}
+                  style={{ opacity: uploadFile ? 0.4 : 1 }}
+                />
+              </div>
+
+              <div style={{ paddingLeft: "42px", display: "flex", gap: "8px" }}>
+                <button className="btn btn-primary btn-sm" onClick={() => salvarVideo(aula)} disabled={saving || uploading}>
+                  {uploading ? "Enviando vídeo…" : saving ? "Salvando…" : "Salvar vídeo"}
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => { setEditId(null); setUploadFile(null); setVideoUrl(""); }}>
+                  Cancelar
+                </button>
               </div>
             </div>
           ) : (
+            /* ── Modo visualização ── */
             <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
               <div className={`coord-module-num${aula.video_url ? " has-video" : " no-video"}`}>
                 {String(aula.ordem).padStart(2, "0")}
@@ -148,15 +183,20 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>{aula.titulo}</div>
                 <div style={{ fontSize: "0.75rem", marginTop: "2px", color: aula.video_url ? "var(--cj-teal)" : "var(--cj-danger)" }}>
-                  {aula.video_url ? `▶ ${aula.video_url.length > 55 ? aula.video_url.slice(0, 55) + "…" : aula.video_url}` : "⚠ Sem vídeo"}
+                  {aula.video_url
+                    ? `▶ ${aula.video_url.length > 55 ? aula.video_url.slice(0, 55) + "…" : aula.video_url}`
+                    : "⚠ Sem vídeo — clique em 'Adicionar vídeo' para enviar"}
                 </div>
                 <div style={{ fontSize: "0.72rem", color: "var(--cj-text-muted)", marginTop: "2px" }}>
                   {aula.total_atividades} atividade{aula.total_atividades !== 1 ? "s" : ""} · {aula.materiais.length} material{aula.materiais.length !== 1 ? "is" : ""}
                 </div>
               </div>
               <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => { setEditId(aula.id); setVideoUrl(aula.video_url ?? ""); setVideoMode("url"); }}>
-                  {aula.video_url ? "Trocar vídeo" : "Adicionar vídeo"}
+                <button
+                  className={`btn btn-sm ${aula.video_url ? "btn-ghost" : "btn-primary"}`}
+                  onClick={() => openEdit(aula)}
+                >
+                  {aula.video_url ? "Trocar vídeo" : "📹 Adicionar vídeo"}
                 </button>
                 <button className="btn btn-ghost btn-sm" style={{ color: "var(--cj-danger)" }} onClick={() => excluir(aula.id, aula.titulo)}>
                   Excluir
@@ -171,13 +211,13 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
       <div style={{ borderTop: "1px solid var(--cj-dark-border)", paddingTop: "14px" }}>
         {novaForm ? (
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <input className="form-input" type="number" min="1" max="10" style={{ width: "70px" }}
+            <input className="form-input" type="number" min="1" style={{ width: "70px" }}
               value={novaForm.ordem} onChange={(e) => setNovaForm((p) => p ? { ...p, ordem: Number(e.target.value) } : p)} />
             <input className="form-input" style={{ flex: 1 }} placeholder="Título do módulo"
               value={novaForm.titulo} onChange={(e) => setNovaForm((p) => p ? { ...p, titulo: e.target.value } : p)}
               onKeyDown={(e) => e.key === "Enter" && criarAula()} autoFocus />
             <button className="btn btn-primary btn-sm" onClick={criarAula} disabled={saving || !novaForm.titulo.trim()}>
-              {saving ? "…" : "Criar"}
+              {saving ? "…" : "Criar módulo"}
             </button>
             <button className="btn btn-ghost btn-sm" onClick={() => setNovaForm(null)}>Cancelar</button>
           </div>
