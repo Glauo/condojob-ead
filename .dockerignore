@@ -1,7 +1,9 @@
 .next/
 node_modules/
-.env.local
-.env
+.env*
+!.env.example
 *.log
 .git/
 .DS_Store
+README.md
+MIGRATION-GUIDE.md
