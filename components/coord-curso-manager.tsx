@@ -56,9 +56,20 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
       setUploading(true);
       const fd = new FormData();
       fd.append("video", uploadFile);
-      const up = await fetch("/api/upload", { method: "POST", body: fd });
+      let up: Response;
+      try {
+        up = await fetch("/api/upload", { method: "POST", body: fd });
+      } catch (e) {
+        setUploading(false);
+        alert(`Falha de rede ao enviar vídeo: ${e instanceof Error ? e.message : String(e)}`);
+        return;
+      }
       setUploading(false);
-      if (!up.ok) { alert("Erro no upload do vídeo."); return; }
+      if (!up.ok) {
+        const d = await up.json().catch(() => ({}));
+        alert(`Erro no upload do vídeo: ${(d as { error?: string }).error ?? `HTTP ${up.status}`}`);
+        return;
+      }
       finalUrl = (await up.json()).url;
     }
     if (!finalUrl && !uploadFile) { alert("Insira uma URL ou selecione um arquivo."); return; }
@@ -245,9 +256,20 @@ function TabMateriais({ aulas }: { aulas: Aula[] }) {
     setUploadingId(aula.id);
     const fd = new FormData();
     fd.append("arquivo", file);
-    const up = await fetch("/api/upload", { method: "POST", body: fd });
+    let up: Response;
+    try {
+      up = await fetch("/api/upload", { method: "POST", body: fd });
+    } catch (e) {
+      setUploadingId(null);
+      alert(`Falha de rede ao enviar PDF: ${e instanceof Error ? e.message : String(e)}`);
+      return;
+    }
     setUploadingId(null);
-    if (!up.ok) { alert("Erro no upload do PDF."); return; }
+    if (!up.ok) {
+      const d = await up.json().catch(() => ({}));
+      alert(`Erro no upload do PDF: ${(d as { error?: string }).error ?? `HTTP ${up.status}`}`);
+      return;
+    }
     const { url, nome } = await up.json();
     const novosMateriais = [...aula.materiais, { nome: nome || file.name, url }];
     await fetch("/api/aulas", {
