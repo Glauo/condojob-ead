@@ -87,7 +87,10 @@ export default function LoginPage() {
 
         <div className="login-left-inner">
           <div className="login-left-logo">
-            <Image src={LOGO_URL} alt="CondoJob" width={160} height={48} style={{ objectFit: "contain" }} />
+            <div className="login-left-logo-wrap">
+              <Image src={LOGO_URL} alt="CondoJob" width={160} height={48} style={{ objectFit: "contain" }} />
+            </div>
+            <div className="login-left-logo-sep" />
             <span className="login-left-badge">Educação EAD</span>
           </div>
 
@@ -141,8 +144,12 @@ export default function LoginPage() {
 
         <div className="login-card">
           <div className="login-logo">
-            <Image src={LOGO_URL} alt="CondoJob" width={210} height={64} style={{ objectFit: "contain" }} />
-            <div><span className="login-logo-tag">Plataforma EAD</span></div>
+            <div className="login-logo-beacon" />
+            <div className="login-logo-wrap">
+              <Image src={LOGO_URL} alt="CondoJob" width={190} height={56} style={{ objectFit: "contain" }} />
+            </div>
+            <span className="login-logo-tag">Plataforma EAD</span>
+            <div className="login-logo-divider" />
           </div>
 
           <h2 className="login-title">Bem-vindo de volta</h2>
