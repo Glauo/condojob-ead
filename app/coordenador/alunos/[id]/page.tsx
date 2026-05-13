@@ -2,8 +2,26 @@ import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQueryOne, dbQuery } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
+import { EditarAlunoModal } from "@/components/coordenador-modals";
 
-type Aluno = { id: string; nome: string; email: string; telefone: string; criado_em: string };
+type Aluno = {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string | null;
+  celular_whatsapp: string | null;
+  data_nascimento: string | null;
+  rg: string | null;
+  cpf: string | null;
+  estado_civil: string | null;
+  cep: string | null;
+  cidade: string | null;
+  rua: string | null;
+  numero: string | null;
+  complemento: string | null;
+  ativo: boolean;
+  criado_em: string;
+};
 type Matricula = { curso_nome: string; status: string; total_aulas: number; concluidas: number; matriculado_em: string };
 type Nota = { titulo_atividade: string; aula_titulo: string; nota: number; status: string; submetido_em: string };
 
@@ -13,7 +31,13 @@ export default async function AlunoRelatorio({ params }: { params: Promise<{ id:
   if (!session) redirect("/login");
   if (session.perfil !== "coordenador") redirect("/aluno");
 
-  const aluno = await dbQueryOne<Aluno>("SELECT id, nome, email, telefone, criado_em FROM cj_users WHERE id=$1 AND perfil='aluno'", [id]);
+  const aluno = await dbQueryOne<Aluno>(
+    `SELECT id, nome, email, telefone, celular_whatsapp,
+      TO_CHAR(data_nascimento, 'YYYY-MM-DD') AS data_nascimento,
+      rg, cpf, estado_civil, cep, cidade, rua, numero, complemento, ativo, criado_em
+     FROM cj_users WHERE id=$1 AND perfil='aluno'`,
+    [id]
+  );
   if (!aluno) notFound();
 
   const [matriculas, notas] = await Promise.all([
@@ -47,7 +71,10 @@ export default async function AlunoRelatorio({ params }: { params: Promise<{ id:
           <h1 className="page-title">{aluno.nome}</h1>
           <p className="page-desc">{aluno.email} {aluno.telefone ? `· ${aluno.telefone}` : ""} · Cadastrado em {new Date(aluno.criado_em).toLocaleDateString("pt-BR")}</p>
         </div>
-        <a href="/coordenador/alunos" className="btn btn-ghost btn-sm">← Alunos</a>
+        <div className="page-actions">
+          <EditarAlunoModal aluno={aluno} />
+          <a href="/coordenador/alunos" className="btn btn-ghost btn-sm">← Alunos</a>
+        </div>
       </div>
 
       <div className="metric-grid metric-grid-3">

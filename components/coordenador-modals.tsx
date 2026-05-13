@@ -106,6 +106,24 @@ export function CursoModal({ curso }: { curso?: CursoData } = {}) {
 }
 
 /* ─── Modal Novo Usuário (Aluno ou Coordenador) ─── */
+export type AlunoCadastroData = {
+  id: string;
+  nome: string;
+  email: string;
+  telefone?: string | null;
+  celular_whatsapp?: string | null;
+  data_nascimento?: string | null;
+  rg?: string | null;
+  cpf?: string | null;
+  estado_civil?: string | null;
+  cep?: string | null;
+  cidade?: string | null;
+  rua?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  ativo?: boolean | null;
+};
+
 export function NovoAlunoModal() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -261,6 +279,173 @@ export function NovoAlunoModal() {
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
               <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Cadastrando…" : labelCadastrar}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ─── Modal Editar Aluno ─── */
+export function EditarAlunoModal({ aluno }: { aluno: AlunoCadastroData }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    nome: aluno.nome || "",
+    email: aluno.email || "",
+    senha: "",
+    data_nascimento: aluno.data_nascimento?.slice(0, 10) || "",
+    rg: aluno.rg || "",
+    cpf: aluno.cpf || "",
+    estado_civil: aluno.estado_civil || "",
+    cep: aluno.cep || "",
+    cidade: aluno.cidade || "",
+    rua: aluno.rua || "",
+    numero: aluno.numero || "",
+    complemento: aluno.complemento || "",
+    celular_whatsapp: aluno.celular_whatsapp || "",
+    telefone: aluno.telefone || "",
+    ativo: aluno.ativo ?? true,
+  });
+  const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState("");
+
+  function upd<K extends keyof typeof form>(f: K, v: (typeof form)[K]) {
+    setForm((p) => ({ ...p, [f]: v }));
+    setErro("");
+  }
+
+  async function salvar() {
+    if (!form.nome.trim() || !form.email.trim()) {
+      setErro("Nome e e-mail são obrigatórios.");
+      return;
+    }
+    if (form.senha && form.senha.length < 6) {
+      setErro("A nova senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    setSaving(true);
+    const payload = { id: aluno.id, ...form, senha: form.senha.trim() || undefined };
+    const res = await fetch("/api/alunos", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    setSaving(false);
+
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setErro((d as { error?: string }).error || "Erro ao salvar cadastro.");
+      return;
+    }
+
+    setOpen(false);
+    setForm((p) => ({ ...p, senha: "" }));
+    router.refresh();
+  }
+
+  return (
+    <>
+      <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)}>Editar</button>
+      {open && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
+          <div className="modal-box" style={{ maxWidth: "720px" }}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Editar cadastro</div>
+                <div className="modal-subtitle">{aluno.nome}</div>
+              </div>
+              <button className="modal-close" onClick={() => setOpen(false)}>
+                <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="modal-section-label">Dados pessoais</div>
+              <div className="form-grid">
+                <div className="form-group form-group-full">
+                  <label className="form-label">Nome completo *</label>
+                  <input className="form-input" value={form.nome} onChange={(e) => upd("nome", e.target.value)} autoFocus />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Data de nascimento</label>
+                  <input className="form-input" type="date" value={form.data_nascimento} onChange={(e) => upd("data_nascimento", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Estado civil</label>
+                  <select className="form-input" value={form.estado_civil} onChange={(e) => upd("estado_civil", e.target.value)}>
+                    <option value="">Selecione...</option>
+                    <option value="Solteiro(a)">Solteiro(a)</option>
+                    <option value="Casado(a)">Casado(a)</option>
+                    <option value="Divorciado(a)">Divorciado(a)</option>
+                    <option value="Viúvo(a)">Viúvo(a)</option>
+                    <option value="União estável">União estável</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">RG</label>
+                  <input className="form-input" value={form.rg} onChange={(e) => upd("rg", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">CPF</label>
+                  <input className="form-input" value={form.cpf} onChange={(e) => upd("cpf", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="modal-section-label" style={{ marginTop: "16px" }}>Endereço</div>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">CEP</label>
+                  <input className="form-input" value={form.cep} onChange={(e) => upd("cep", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Cidade</label>
+                  <input className="form-input" value={form.cidade} onChange={(e) => upd("cidade", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Rua / Logradouro</label>
+                  <input className="form-input" value={form.rua} onChange={(e) => upd("rua", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Número</label>
+                  <input className="form-input" value={form.numero} onChange={(e) => upd("numero", e.target.value)} />
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Complemento</label>
+                  <input className="form-input" value={form.complemento} onChange={(e) => upd("complemento", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="modal-section-label" style={{ marginTop: "16px" }}>Contato & Acesso</div>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">E-mail *</label>
+                  <input className="form-input" type="email" value={form.email} onChange={(e) => upd("email", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Celular / WhatsApp</label>
+                  <input className="form-input" value={form.celular_whatsapp} onChange={(e) => upd("celular_whatsapp", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Telefone</label>
+                  <input className="form-input" value={form.telefone} onChange={(e) => upd("telefone", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Nova senha</label>
+                  <input className="form-input" type="password" placeholder="Deixe em branco para manter" value={form.senha} onChange={(e) => upd("senha", e.target.value)} />
+                </div>
+                <label className="form-group form-group-full" style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                  <input type="checkbox" checked={form.ativo} onChange={(e) => upd("ativo", e.target.checked)} />
+                  <span className="form-label" style={{ margin: 0 }}>Aluno ativo</span>
+                </label>
+              </div>
+
+              {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
+              <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Salvando..." : "Salvar alterações"}</button>
             </div>
           </div>
         </div>

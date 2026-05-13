@@ -2,9 +2,28 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQuery, initSchema } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
-import { NovoAlunoModal, MatricularAlunoModal } from "@/components/coordenador-modals";
+import { NovoAlunoModal, MatricularAlunoModal, EditarAlunoModal } from "@/components/coordenador-modals";
 
-type Aluno = { id: string; nome: string; email: string; telefone: string; ativo: boolean; criado_em: string; total_matriculas: number; total_concluidos: number };
+type Aluno = {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string | null;
+  celular_whatsapp: string | null;
+  data_nascimento: string | null;
+  rg: string | null;
+  cpf: string | null;
+  estado_civil: string | null;
+  cep: string | null;
+  cidade: string | null;
+  rua: string | null;
+  numero: string | null;
+  complemento: string | null;
+  ativo: boolean;
+  criado_em: string;
+  total_matriculas: number;
+  total_concluidos: number;
+};
 
 export default async function AlunosPage() {
   const session = await getSession();
@@ -14,7 +33,10 @@ export default async function AlunosPage() {
   await initSchema();
 
   const alunos = await dbQuery<Aluno>(
-    `SELECT u.id, u.nome, u.email, u.telefone, u.ativo, u.criado_em,
+    `SELECT u.id, u.nome, u.email, u.telefone, u.celular_whatsapp,
+      TO_CHAR(u.data_nascimento, 'YYYY-MM-DD') AS data_nascimento,
+      u.rg, u.cpf, u.estado_civil, u.cep, u.cidade, u.rua, u.numero, u.complemento,
+      u.ativo, u.criado_em,
       (SELECT COUNT(*) FROM cj_matriculas WHERE usuario_id = u.id) AS total_matriculas,
       (SELECT COUNT(*) FROM cj_matriculas WHERE usuario_id = u.id AND status = 'concluido') AS total_concluidos
      FROM cj_users u WHERE u.perfil = 'aluno' ORDER BY u.criado_em DESC`
@@ -84,6 +106,7 @@ export default async function AlunosPage() {
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: "6px" }}>
+                        <EditarAlunoModal aluno={a} />
                         <MatricularAlunoModal alunoId={a.id} alunoNome={a.nome} cursos={cursos} />
                         <a href={`/coordenador/alunos/${a.id}`} className="btn btn-ghost btn-sm">Relatório</a>
                       </div>
