@@ -248,6 +248,7 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
 
 /* ── Tab: Materiais (PDFs) ── */
 function TabMateriais({ aulas }: { aulas: Aula[] }) {
+  const router = useRouter();
   const [list, setList] = useState(aulas);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -256,38 +257,61 @@ function TabMateriais({ aulas }: { aulas: Aula[] }) {
     setUploadingId(aula.id);
     const fd = new FormData();
     fd.append("arquivo", file);
-    let up: Response;
     try {
-      up = await fetch("/api/upload", { method: "POST", body: fd });
+      const up = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!up.ok) {
+        const d = await up.json().catch(() => ({}));
+        alert(`Erro no upload do PDF: ${(d as { error?: string }).error ?? `HTTP ${up.status}`}`);
+        return;
+      }
+
+      const { url, nome } = await up.json();
+      const aulaAtual = list.find((item) => item.id === aula.id) ?? aula;
+      const novosMateriais = [...(aulaAtual.materiais || []), { nome: nome || file.name, url }];
+      const save = await fetch("/api/aulas", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: aula.id,
+          titulo: aula.titulo,
+          ordem: aula.ordem,
+          video_url: aula.video_url,
+          conteudo: aula.conteudo,
+          materiais: novosMateriais,
+        }),
+      });
+
+      if (!save.ok) {
+        const d = await save.json().catch(() => ({}));
+        alert(`PDF enviado, mas nao foi salvo na aula: ${(d as { error?: string }).error ?? `HTTP ${save.status}`}`);
+        return;
+      }
+
+      setList((p) => p.map((a) => a.id === aula.id ? { ...a, materiais: novosMateriais } : a));
+      router.refresh();
     } catch (e) {
-      setUploadingId(null);
       alert(`Falha de rede ao enviar PDF: ${e instanceof Error ? e.message : String(e)}`);
-      return;
+    } finally {
+      setUploadingId(null);
+      if (fileRefs.current[aula.id]) fileRefs.current[aula.id]!.value = "";
     }
-    setUploadingId(null);
-    if (!up.ok) {
-      const d = await up.json().catch(() => ({}));
-      alert(`Erro no upload do PDF: ${(d as { error?: string }).error ?? `HTTP ${up.status}`}`);
-      return;
-    }
-    const { url, nome } = await up.json();
-    const novosMateriais = [...aula.materiais, { nome: nome || file.name, url }];
-    await fetch("/api/aulas", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: aula.id, titulo: aula.titulo, ordem: aula.ordem, video_url: aula.video_url, conteudo: aula.conteudo, materiais: novosMateriais }),
-    });
-    setList((p) => p.map((a) => a.id === aula.id ? { ...a, materiais: novosMateriais } : a));
   }
 
   async function removerMaterial(aula: Aula, idx: number) {
-    const novosMateriais = aula.materiais.filter((_, i) => i !== idx);
-    await fetch("/api/aulas", {
+    const aulaAtual = list.find((item) => item.id === aula.id) ?? aula;
+    const novosMateriais = aulaAtual.materiais.filter((_, i) => i !== idx);
+    const save = await fetch("/api/aulas", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: aula.id, titulo: aula.titulo, ordem: aula.ordem, video_url: aula.video_url, conteudo: aula.conteudo, materiais: novosMateriais }),
     });
+    if (!save.ok) {
+      const d = await save.json().catch(() => ({}));
+      alert(`Nao foi possivel remover o PDF: ${(d as { error?: string }).error ?? `HTTP ${save.status}`}`);
+      return;
+    }
     setList((p) => p.map((a) => a.id === aula.id ? { ...a, materiais: novosMateriais } : a));
+    router.refresh();
   }
 
   return (

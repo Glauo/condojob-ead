@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const allowedVideos = ["video/mp4", "video/webm", "video/ogg", "video/quicktime"];
     const allowedDocs = ["application/pdf", "application/x-pdf"];
     const allAllowed = [...allowedVideos, ...allowedDocs];
-    const isPdf = allowedDocs.includes(file.type) || (file.type === "application/octet-stream" && originalExt === "pdf");
+    const isPdf = allowedDocs.includes(file.type) || (["", "application/octet-stream"].includes(file.type) && originalExt === "pdf");
 
     if (!allAllowed.includes(file.type) && !isPdf)
       return NextResponse.json({ error: `Formato não suportado (${file.type}). Use MP4, WebM, OGG ou PDF.` }, { status: 400 });
