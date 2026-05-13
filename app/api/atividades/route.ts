@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { dbQuery, dbQueryOne, dbRun, initSchema } from "@/lib/db";
 
+const MAX_QUESTOES_AVALIACAO = 10;
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const aulaId = searchParams.get("aula_id");
@@ -16,6 +18,10 @@ export async function POST(req: NextRequest) {
   await initSchema();
   const { aula_id, titulo, tipo, questoes } = await req.json();
   if (!aula_id || !titulo?.trim()) return NextResponse.json({ error: "aula_id e título são obrigatórios." }, { status: 400 });
+  const total = await dbQueryOne<{ total: string }>("SELECT COUNT(*)::text AS total FROM cj_atividades WHERE aula_id=$1", [aula_id]);
+  if (Number(total?.total ?? 0) >= MAX_QUESTOES_AVALIACAO) {
+    return NextResponse.json({ error: `Esta avaliacao ja possui ${MAX_QUESTOES_AVALIACAO} questoes.` }, { status: 400 });
+  }
   const atv = await dbQueryOne(
     "INSERT INTO cj_atividades (aula_id, titulo, tipo, questoes) VALUES ($1,$2,$3,$4) RETURNING id",
     [aula_id, titulo, tipo || "multipla_escolha", JSON.stringify(questoes || [])]
@@ -31,5 +37,15 @@ export async function PATCH(req: NextRequest) {
   const { nota } = await req.json();
   if (!id) return NextResponse.json({ error: "ID obrigatório." }, { status: 400 });
   await dbRun("UPDATE cj_submissoes SET nota=$1, status='corrigida' WHERE id=$2", [nota, id]);
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(req: NextRequest) {
+  const session = await getSession();
+  if (!session || session.perfil !== "coordenador") return NextResponse.json({ error: "Nao autorizado." }, { status: 403 });
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "ID obrigatorio." }, { status: 400 });
+  await dbRun("DELETE FROM cj_atividades WHERE id=$1", [id]);
   return NextResponse.json({ ok: true });
 }

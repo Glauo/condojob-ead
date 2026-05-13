@@ -161,7 +161,7 @@ export function CourseAccordion({
       <div className="accordion-section">
         <button className={`accordion-header${openSection === "atividade" ? " open" : ""}`} onClick={() => toggle("atividade")}>
           <span className="accordion-section-icon">📝</span>
-          <span className="accordion-section-title">Atividades Avaliativas</span>
+          <span className="accordion-section-title">Avaliacoes por Modulo</span>
           <span className="badge badge-success" style={{ marginLeft: "10px" }}>{aprovadas}/{totalAtv} aprovadas</span>
           <ChevronIcon open={openSection === "atividade"} />
         </button>

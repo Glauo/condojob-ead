@@ -40,7 +40,7 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
       `SELECT
          a.id AS aula_id,
          COUNT(DISTINCT atv.id)::text AS total_atividades,
-         COUNT(DISTINCT s.id) FILTER (
+         COUNT(DISTINCT atv.id) FILTER (
            WHERE s.usuario_id = $1 AND s.nota >= c.nota_minima AND s.status = 'corrigida'
          )::text AS atividades_aprovadas
        FROM cj_aulas a
@@ -66,15 +66,16 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
 
   const progMap = Object.fromEntries(progressos.map((p) => [p.aula_id, p]));
   const atvMap = Object.fromEntries(atvStatus.map((a) => [a.aula_id, a]));
-  const totalConc = progressos.filter((p) => p.concluido).length;
-  const pct = aulas.length ? Math.round((totalConc / aulas.length) * 100) : 0;
+  const aulasAvaliativas = aulas.slice(1);
+  const totalConc = aulasAvaliativas.filter((a) => progMap[a.id]?.concluido).length;
+  const pct = aulasAvaliativas.length ? Math.round((totalConc / aulasAvaliativas.length) * 100) : 0;
 
   function getUnlockInfo(idx: number): { unlocked: boolean; reason: string | null } {
     if (idx === 0) return { unlocked: true, reason: null };
     const prev = aulas[idx - 1];
     if (!progMap[prev.id]?.concluido) return { unlocked: false, reason: "Conclua o vídeo do módulo anterior" };
     const prevAtv = atvMap[prev.id];
-    if (prevAtv && Number(prevAtv.total_atividades) > 0 && Number(prevAtv.atividades_aprovadas) === 0) {
+    if (idx > 1 && prevAtv && Number(prevAtv.total_atividades) > 0 && Number(prevAtv.atividades_aprovadas) < Number(prevAtv.total_atividades)) {
       return { unlocked: false, reason: "Passe na atividade do módulo anterior (nota ≥ " + Number(curso!.nota_minima).toFixed(1) + ")" };
     }
     return { unlocked: true, reason: null };
@@ -117,14 +118,14 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
 
       <div className="metric-grid metric-grid-3">
         <div className="metric-card metric-card-purple">
-          <div className="metric-label">Total de módulos</div>
-          <div className="metric-value">{aulas.length}</div>
+          <div className="metric-label">Módulos avaliativos</div>
+          <div className="metric-value">{aulasAvaliativas.length}</div>
           <div className="metric-note">{curso.carga_horaria}h de conteúdo</div>
         </div>
         <div className="metric-card metric-card-teal">
           <div className="metric-label">Concluídos</div>
           <div className="metric-value">{totalConc}</div>
-          <div className="metric-note">de {aulas.length} módulos</div>
+          <div className="metric-note">de {aulasAvaliativas.length} módulos avaliativos</div>
         </div>
         <div className="metric-card metric-card-green">
           <div className="metric-label">Nota mínima</div>
@@ -135,7 +136,7 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
 
       <CourseAccordion
         aulas={aulasComStatus}
-        atividades={atividades}
+        atividades={atividades.filter((a) => a.aula_id !== aulas[0]?.id)}
         notaMinima={Number(curso.nota_minima)}
       />
     </AppShell>

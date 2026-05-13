@@ -32,6 +32,8 @@ type Submissao = {
   submetido_em: string;
 };
 
+const MAX_QUESTOES_AVALIACAO = 10;
+
 const CLOSE_SVG = (
   <svg viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -369,12 +371,16 @@ function TabMateriais({ aulas }: { aulas: Aula[] }) {
 function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; atividades: Atividade[] }) {
   const router = useRouter();
   const [atvs, setAtvs] = useState(atvsIniciais);
-  const [modal, setModal] = useState<{ aulaId: string; aulaTitle: string } | null>(null);
+  const [modal, setModal] = useState<{ aulaId: string; aulaTitle: string; numero: number } | null>(null);
   const [form, setForm] = useState({ titulo: "", tipo: "multipla_escolha", questao_texto: "", alt_a: "", alt_b: "", alt_c: "", alt_d: "", resposta: "0" });
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState("");
 
   async function criarAtividade() {
+    if (modal && atvs.filter((a) => a.aula_id === modal.aulaId).length >= MAX_QUESTOES_AVALIACAO) {
+      setErro(`Esta avaliacao ja possui ${MAX_QUESTOES_AVALIACAO} questoes.`);
+      return;
+    }
     if (!modal || !form.titulo.trim() || !form.questao_texto.trim()) { setErro("Preencha título e enunciado."); return; }
     const questoes = [{
       texto: form.questao_texto,
@@ -406,17 +412,32 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
 
   return (
     <div>
-      {aulas.map((aula) => {
+      {aulas.length > 0 && (
+        <div style={{ marginBottom: "18px", padding: "12px 14px", borderRadius: "var(--cj-radius)", border: "1px solid var(--cj-dark-border)", background: "rgba(255,255,255,0.03)" }}>
+          <div style={{ fontSize: "0.78rem", color: "var(--cj-text-muted)" }}>
+            A primeira aula e apresentacao e nao entra na contagem. Cada modulo de conteudo tem uma avaliacao com ate {MAX_QUESTOES_AVALIACAO} questoes.
+          </div>
+        </div>
+      )}
+      {aulas.slice(1).map((aula, idx) => {
         const atvAula = atvs.filter((a) => a.aula_id === aula.id);
+        const podeAdicionar = atvAula.length < MAX_QUESTOES_AVALIACAO;
         return (
           <div key={aula.id} style={{ marginBottom: "24px" }}>
             <div className="coord-tab-module-header">
-              <span className="coord-module-num">{String(aula.ordem).padStart(2, "0")}</span>
-              <span style={{ fontWeight: 600 }}>{aula.titulo}</span>
-              <span className="badge badge-muted">{atvAula.length} atividade{atvAula.length !== 1 ? "s" : ""}</span>
+              <span className="coord-module-num">{String(idx + 1).padStart(2, "0")}</span>
+              <span style={{ fontWeight: 600 }}>Modulo {String(idx + 1).padStart(2, "0")} - {aula.titulo}</span>
+              <span className={`badge ${podeAdicionar ? "badge-muted" : "badge-success"}`}>{atvAula.length}/{MAX_QUESTOES_AVALIACAO} questoes</span>
+              {podeAdicionar && <span className="badge badge-muted">{MAX_QUESTOES_AVALIACAO - atvAula.length} espacos livres</span>}
               <button className="btn btn-primary btn-sm" style={{ marginLeft: "auto" }}
-                onClick={() => { setModal({ aulaId: aula.id, aulaTitle: aula.titulo }); setErro(""); }}>
-                + Nova Atividade
+                disabled={!podeAdicionar}
+                onClick={() => {
+                  const numero = atvAula.length + 1;
+                  setModal({ aulaId: aula.id, aulaTitle: aula.titulo, numero });
+                  setForm((p) => ({ ...p, titulo: `Questao ${String(numero).padStart(2, "0")}` }));
+                  setErro("");
+                }}>
+                {podeAdicionar ? "+ Adicionar questao" : "Avaliacao completa"}
               </button>
             </div>
             {atvAula.length === 0 ? (
@@ -439,6 +460,12 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
           </div>
         );
       })}
+      {aulas.length <= 1 && (
+        <div className="empty-state">
+          <div className="empty-title">Nenhum modulo avaliativo</div>
+          <p className="empty-desc">Crie os modulos apos a aula de apresentacao para cadastrar as avaliacoes.</p>
+        </div>
+      )}
 
       {/* Modal nova atividade */}
       {modal && (
@@ -446,7 +473,7 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
           <div className="modal-box" style={{ maxWidth: "600px" }}>
             <div className="modal-header">
               <div>
-                <div className="modal-title">Nova atividade avaliativa</div>
+                <div className="modal-title">Questao {String(modal.numero).padStart(2, "0")} da avaliacao</div>
                 <div className="modal-subtitle">{modal.aulaTitle}</div>
               </div>
               <button className="modal-close" onClick={() => setModal(null)}>{CLOSE_SVG}</button>
@@ -497,7 +524,7 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setModal(null)}>Cancelar</button>
-              <button className="btn btn-primary" onClick={criarAtividade} disabled={saving}>{saving ? "Salvando…" : "Criar atividade"}</button>
+              <button className="btn btn-primary" onClick={criarAtividade} disabled={saving}>{saving ? "Salvando…" : "Salvar questão"}</button>
             </div>
           </div>
         </div>

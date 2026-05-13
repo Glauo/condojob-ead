@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 type Material = { nome: string; url: string };
 type Questao = { texto: string; alternativas?: string[]; resposta_correta?: number };
 type Atividade = { id: string; titulo: string; tipo: string; questoes: Questao[] };
+type RespostaArquivo = { nome: string; url: string };
 
 export function PlayerClient({
   aulaId,
@@ -16,7 +17,6 @@ export function PlayerClient({
   jaConcluido,
   atividades,
   notaMinima,
-  userId,
 }: {
   aulaId: string;
   cursoId: string;
@@ -33,7 +33,10 @@ export function PlayerClient({
   const [videoConcluido, setVideoConcluido] = useState(jaConcluido || progressoInicial >= 100);
   const [tab, setTab] = useState<"video" | "atividades">("video");
   const [respostas, setRespostas] = useState<Record<string, number>>({});
-  const [resultado, setResultado] = useState<{ nota: number; msg: string } | null>(null);
+  const [respostasTexto, setRespostasTexto] = useState<Record<string, string>>({});
+  const [respostasArquivo, setRespostasArquivo] = useState<Record<string, RespostaArquivo>>({});
+  const [uploadingResposta, setUploadingResposta] = useState<string | null>(null);
+  const [resultado, setResultado] = useState<{ nota: number | null; msg: string; aguardando?: boolean } | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [anotacao, setAnotacao] = useState("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -45,7 +48,7 @@ export function PlayerClient({
 
   async function salvarProgresso(percentual: number) {
     if (saved.current && percentual < 100) return;
-    await fetch(`/api/progresso`, {
+    await fetch("/api/progresso", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ aula_id: aulaId, percentual, concluido: percentual >= 100 }),
@@ -74,26 +77,80 @@ export function PlayerClient({
     return m ? m[1] : null;
   }
 
+  async function uploadRespostaArquivo(atvId: string, file: File) {
+    setUploadingResposta(atvId);
+    const fd = new FormData();
+    fd.append("resposta", file);
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert((data as { error?: string }).error || "Erro ao enviar arquivo.");
+        return;
+      }
+      setRespostasArquivo((p) => ({ ...p, [atvId]: { nome: data.nome || file.name, url: data.url } }));
+    } finally {
+      setUploadingResposta(null);
+    }
+  }
+
   async function submeterAtividades() {
-    const total = atividades.filter((a) => a.tipo === "multipla_escolha" || a.tipo === "verdadeiro_falso");
-    if (total.length === 0) return;
-    let acertos = 0;
-    total.forEach((a) => {
-      if (respostas[a.id] === a.questoes[0]?.resposta_correta) acertos++;
-    });
-    const nota = Math.round((acertos / total.length) * 10 * 10) / 10;
+    if (!videoConcluido) return;
+
+    const objetivas = atividades.filter((a) => a.tipo === "multipla_escolha" || a.tipo === "verdadeiro_falso");
+    const discursivas = atividades.filter((a) => a.tipo === "dissertativa");
+    const uploads = atividades.filter((a) => a.tipo === "upload");
+
+    if (objetivas.some((a) => respostas[a.id] === undefined)) {
+      alert("Responda todas as questoes objetivas antes de enviar.");
+      return;
+    }
+    if (discursivas.some((a) => !respostasTexto[a.id]?.trim())) {
+      alert("Preencha todas as respostas discursivas antes de enviar.");
+      return;
+    }
+    if (uploads.some((a) => !respostasArquivo[a.id]?.url)) {
+      alert("Anexe todos os arquivos solicitados antes de enviar.");
+      return;
+    }
+
+    let nota: number | null = null;
+    if (objetivas.length > 0) {
+      let acertos = 0;
+      objetivas.forEach((a) => {
+        if (respostas[a.id] === a.questoes[0]?.resposta_correta) acertos++;
+      });
+      nota = Math.round((acertos / objetivas.length) * 10 * 10) / 10;
+    }
+
     setSalvando(true);
-    await fetch("/api/atividades/submeter", {
+    const res = await fetch("/api/atividades/submeter", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ atividade_ids: total.map((a) => a.id), respostas, nota, aula_id: aulaId }),
+      body: JSON.stringify({
+        atividade_ids: atividades.map((a) => a.id),
+        respostas: { objetivas: respostas, discursivas: respostasTexto, arquivos: respostasArquivo },
+        nota,
+        aula_id: aulaId,
+      }),
     });
     setSalvando(false);
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert((data as { error?: string }).error || "Erro ao enviar avaliacao.");
+      return;
+    }
+
+    const aguardando = discursivas.length > 0 || uploads.length > 0;
     setResultado({
       nota,
-      msg: nota >= notaMinima
-        ? `Parabéns! Nota ${nota.toFixed(1)} — próxima aula desbloqueada!`
-        : `Nota ${nota.toFixed(1)} — abaixo do mínimo (${notaMinima}). Tente novamente.`,
+      aguardando,
+      msg: aguardando
+        ? "Avaliacao enviada. As questoes discursivas ou arquivos ficam aguardando correcao do coordenador."
+        : nota !== null && nota >= notaMinima
+          ? `Parabens! Nota ${nota.toFixed(1)} - proximo modulo desbloqueado!`
+          : `Nota ${nota?.toFixed(1)} - abaixo do minimo (${notaMinima}). Tente novamente.`,
     });
   }
 
@@ -101,7 +158,6 @@ export function PlayerClient({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      {/* Player */}
       <div className="card">
         <div className="card-body">
           {videoUrl ? (
@@ -133,30 +189,25 @@ export function PlayerClient({
                 )}
               </div>
 
-              {/* Progress */}
               <div style={{ marginTop: "12px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", color: "var(--cj-text-muted)", marginBottom: "6px" }}>
-                  <span>Progresso do vídeo</span>
-                  <span style={{ color: videoConcluido ? "var(--cj-teal)" : "var(--cj-text-muted)" }}>{videoConcluido ? "✓ Concluído" : `${pct}%`}</span>
+                  <span>Progresso do video</span>
+                  <span style={{ color: videoConcluido ? "var(--cj-teal)" : "var(--cj-text-muted)" }}>{videoConcluido ? "Concluido" : `${pct}%`}</span>
                 </div>
                 <div className="progress-bar-wrap">
                   <div className={`progress-bar-fill ${videoConcluido ? "progress-bar-fill-success" : ""}`} style={{ width: `${pct}%` }} />
                 </div>
               </div>
 
-              {/* YouTube: marcar conclusão manual (limitação da API embed) */}
               {ytId && !videoConcluido && (
                 <div style={{ marginTop: "12px", background: "rgba(155,89,182,0.08)", border: "1px solid rgba(155,89,182,0.2)", borderRadius: "var(--cj-radius)", padding: "12px 14px", display: "flex", gap: "12px", alignItems: "flex-start" }}>
-                  <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" style={{ color: "var(--cj-purple-light)", flexShrink: 0, marginTop: "1px" }}>
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
                   <div>
-                    <div style={{ fontSize: "0.8rem", fontWeight: 600, marginBottom: "4px" }}>Assista o vídeo até o final</div>
+                    <div style={{ fontSize: "0.8rem", fontWeight: 600, marginBottom: "4px" }}>Assista o video ate o final</div>
                     <div style={{ fontSize: "0.75rem", color: "var(--cj-text-muted)", marginBottom: "8px" }}>
-                      Após assistir completamente, clique no botão abaixo para confirmar e liberar a atividade avaliativa.
+                      Depois de assistir completamente, confirme para liberar a avaliacao do modulo.
                     </div>
                     <button className="btn btn-primary btn-sm" onClick={simularProgresso}>
-                      ✓ Confirmar — assisti o vídeo completo
+                      Confirmar que assisti o video completo
                     </button>
                   </div>
                 </div>
@@ -164,30 +215,22 @@ export function PlayerClient({
 
               {videoConcluido && atividades.length > 0 && (
                 <div style={{ marginTop: "12px" }}>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => setTab("atividades")}
-                    style={{ background: "var(--cj-teal)" }}
-                  >
-                    Ir para Atividades →
+                  <button className="btn btn-primary" onClick={() => setTab("atividades")} style={{ background: "var(--cj-teal)" }}>
+                    Ir para Avaliacao
                   </button>
                 </div>
               )}
             </div>
           ) : (
             <div className="player-overlay" style={{ position: "relative", minHeight: "200px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px" }}>
-              <svg viewBox="0 0 20 20" fill="currentColor" width="40" height="40" style={{ color: "var(--cj-text-muted)" }}>
-                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-              </svg>
-              <p style={{ color: "var(--cj-text-muted)", fontSize: "0.875rem" }}>Vídeo não disponível para esta aula.</p>
-              {!videoConcluido && <button className="btn btn-primary btn-sm" onClick={() => { setVideoConcluido(true); salvarProgresso(100); setPct(100); }}>Marcar aula como concluída</button>}
+              <p style={{ color: "var(--cj-text-muted)", fontSize: "0.875rem" }}>Video nao disponivel para esta aula.</p>
+              {!videoConcluido && <button className="btn btn-primary btn-sm" onClick={() => { setVideoConcluido(true); salvarProgresso(100); setPct(100); }}>Marcar aula como concluida</button>}
             </div>
           )}
         </div>
       </div>
 
-      {/* Tabs: Conteúdo / Atividades */}
-      <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--cj-dark-border)", paddingBottom: "0" }}>
+      <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--cj-dark-border)" }}>
         {(["video", "atividades"] as const).map((t) => (
           <button
             key={t}
@@ -200,31 +243,28 @@ export function PlayerClient({
               paddingBottom: "10px",
             }}
           >
-            {t === "video" ? "Conteúdo & Materiais" : `Atividades (${atividades.length})`}
+            {t === "video" ? "Conteudo & Materiais" : `Avaliacao (${atividades.length}/10)`}
           </button>
         ))}
       </div>
 
       {tab === "video" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {/* Conteúdo */}
           {conteudo && (
             <div className="card">
-              <div className="card-header"><div><div className="section-eyebrow">Material</div><h3 className="section-title">Conteúdo da aula</h3></div></div>
+              <div className="card-header"><div><div className="section-eyebrow">Material</div><h3 className="section-title">Conteudo da aula</h3></div></div>
               <div className="card-body" style={{ color: "var(--cj-text-secondary)", fontSize: "0.9rem", lineHeight: "1.7" }}
                 dangerouslySetInnerHTML={{ __html: conteudo }}
               />
             </div>
           )}
 
-          {/* Materiais */}
           {materiais.length > 0 && (
             <div className="card">
               <div className="card-header"><div><div className="section-eyebrow">Downloads</div><h3 className="section-title">Materiais de apoio</h3></div></div>
               <div className="card-body" style={{ paddingTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
                 {materiais.map((m, i) => (
                   <a key={i} href={m.url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ justifyContent: "flex-start" }}>
-                    <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                     {m.nome}
                   </a>
                 ))}
@@ -232,14 +272,13 @@ export function PlayerClient({
             </div>
           )}
 
-          {/* Anotações */}
           <div className="card">
-            <div className="card-header"><div><div className="section-eyebrow">Pessoal</div><h3 className="section-title">Minhas anotações</h3></div></div>
+            <div className="card-header"><div><div className="section-eyebrow">Pessoal</div><h3 className="section-title">Minhas anotacoes</h3></div></div>
             <div className="card-body">
               <textarea
                 className="form-input form-textarea"
                 style={{ minHeight: "120px", width: "100%" }}
-                placeholder="Escreva suas notas pessoais aqui… salvo automaticamente."
+                placeholder="Escreva suas notas pessoais aqui."
                 value={anotacao}
                 onChange={(e) => setAnotacao(e.target.value)}
               />
@@ -253,82 +292,91 @@ export function PlayerClient({
           {!videoConcluido ? (
             <div className="card">
               <div className="card-body" style={{ textAlign: "center", padding: "40px 20px" }}>
-                <div style={{ fontSize: "2rem", marginBottom: "12px" }}>🔒</div>
-                <div style={{ fontWeight: 700, marginBottom: "4px" }}>Assista 100% do vídeo primeiro</div>
-                <p style={{ fontSize: "0.875rem", color: "var(--cj-text-muted)" }}>As atividades ficam disponíveis após concluir o vídeo da aula.</p>
-                <div style={{ marginTop: "16px" }}>
-                  <div className="progress-bar-wrap" style={{ maxWidth: "200px", margin: "0 auto" }}>
-                    <div className="progress-bar-fill" style={{ width: `${pct}%` }} />
-                  </div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--cj-text-muted)", marginTop: "4px" }}>{pct}% assistido</div>
-                </div>
+                <div style={{ fontWeight: 700, marginBottom: "4px" }}>Assista 100% do video primeiro</div>
+                <p style={{ fontSize: "0.875rem", color: "var(--cj-text-muted)" }}>A avaliacao deste modulo fica disponivel apos concluir a aula.</p>
               </div>
             </div>
           ) : atividades.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-title">Sem atividades</div>
-              <p className="empty-desc">Esta aula não possui atividades avaliativas.</p>
+              <div className="empty-title">Sem avaliacao</div>
+              <p className="empty-desc">Este modulo ainda nao possui questoes avaliativas.</p>
+            </div>
+          ) : resultado ? (
+            <div className="card" style={{ borderColor: resultado.aguardando || (resultado.nota !== null && resultado.nota >= notaMinima) ? "rgba(39,174,96,0.4)" : "rgba(231,76,60,0.4)" }}>
+              <div className="card-body" style={{ textAlign: "center", padding: "40px 20px" }}>
+                <div style={{ fontSize: "1.5rem", fontWeight: 800, color: resultado.aguardando || (resultado.nota !== null && resultado.nota >= notaMinima) ? "var(--cj-success)" : "var(--cj-danger)", marginBottom: "8px" }}>
+                  {resultado.aguardando ? "Aguardando correcao" : resultado.nota?.toFixed(1)}
+                </div>
+                <p style={{ color: "var(--cj-text-secondary)" }}>{resultado.msg}</p>
+                {!resultado.aguardando && resultado.nota !== null && resultado.nota < notaMinima && (
+                  <button className="btn btn-purple" style={{ marginTop: "16px" }} onClick={() => { setResultado(null); setRespostas({}); setRespostasTexto({}); setRespostasArquivo({}); }}>
+                    Tentar novamente
+                  </button>
+                )}
+                {(resultado.aguardando || (resultado.nota !== null && resultado.nota >= notaMinima)) && (
+                  <a href={`/aluno/curso/${cursoId}`} className="btn btn-primary" style={{ marginTop: "16px" }}>
+                    Continuar curso
+                  </a>
+                )}
+              </div>
             </div>
           ) : (
             <div className="quiz-wrap">
-              {resultado ? (
-                <div className="card" style={{ borderColor: resultado.nota >= notaMinima ? "rgba(39,174,96,0.4)" : "rgba(231,76,60,0.4)" }}>
-                  <div className="card-body" style={{ textAlign: "center", padding: "40px 20px" }}>
-                    <div style={{ fontSize: "3rem", marginBottom: "12px" }}>{resultado.nota >= notaMinima ? "🎉" : "😕"}</div>
-                    <div style={{ fontSize: "2rem", fontWeight: 800, color: resultado.nota >= notaMinima ? "var(--cj-success)" : "var(--cj-danger)", marginBottom: "8px" }}>
-                      {resultado.nota.toFixed(1)}
-                    </div>
-                    <p style={{ color: "var(--cj-text-secondary)" }}>{resultado.msg}</p>
-                    {resultado.nota < notaMinima && (
-                      <button className="btn btn-purple" style={{ marginTop: "16px" }} onClick={() => { setResultado(null); setRespostas({}); }}>
-                        Tentar novamente
-                      </button>
-                    )}
-                    {resultado.nota >= notaMinima && (
-                      <a href={`/aluno/curso/${cursoId}`} className="btn btn-primary" style={{ marginTop: "16px" }}>
-                        Continuar curso →
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {atividades.map((atv, idx) => (
-                    <div className="quiz-question" key={atv.id}>
-                      <div className="quiz-question-num">Questão {idx + 1} — {atv.titulo}</div>
-                      {atv.questoes.map((q, qi) => (
-                        <div key={qi}>
-                          <div className="quiz-question-text">{q.texto}</div>
-                          {(atv.tipo === "multipla_escolha" || atv.tipo === "verdadeiro_falso") && q.alternativas && (
-                            <div className="quiz-options">
-                              {q.alternativas.map((alt, ai) => (
-                                <div
-                                  key={ai}
-                                  className={`quiz-option ${respostas[atv.id] === ai ? "selected" : ""}`}
-                                  onClick={() => setRespostas((p) => ({ ...p, [atv.id]: ai }))}
-                                >
-                                  <div className="quiz-radio">
-                                    {respostas[atv.id] === ai && <div className="quiz-radio-dot" />}
-                                  </div>
-                                  {alt}
-                                </div>
-                              ))}
+              {atividades.map((atv, idx) => (
+                <div className="quiz-question" key={atv.id}>
+                  <div className="quiz-question-num">Questao {idx + 1} de 10 - {atv.titulo}</div>
+                  {atv.questoes.map((q, qi) => (
+                    <div key={qi}>
+                      <div className="quiz-question-text">{q.texto}</div>
+                      {(atv.tipo === "multipla_escolha" || atv.tipo === "verdadeiro_falso") && q.alternativas && (
+                        <div className="quiz-options">
+                          {q.alternativas.map((alt, ai) => (
+                            <div
+                              key={ai}
+                              className={`quiz-option ${respostas[atv.id] === ai ? "selected" : ""}`}
+                              onClick={() => setRespostas((p) => ({ ...p, [atv.id]: ai }))}
+                            >
+                              <div className="quiz-radio">
+                                {respostas[atv.id] === ai && <div className="quiz-radio-dot" />}
+                              </div>
+                              {alt}
                             </div>
-                          )}
-                          {atv.tipo === "dissertativa" && (
-                            <textarea className="form-input form-textarea" placeholder="Escreva sua resposta aqui…" style={{ marginTop: "8px", width: "100%" }} />
-                          )}
+                          ))}
                         </div>
-                      ))}
+                      )}
+                      {atv.tipo === "dissertativa" && (
+                        <textarea
+                          className="form-input form-textarea"
+                          placeholder="Escreva sua resposta aqui."
+                          style={{ marginTop: "8px", width: "100%" }}
+                          value={respostasTexto[atv.id] || ""}
+                          onChange={(e) => setRespostasTexto((p) => ({ ...p, [atv.id]: e.target.value }))}
+                        />
+                      )}
+                      {atv.tipo === "upload" && (
+                        <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                          <input
+                            className="form-input"
+                            type="file"
+                            accept="application/pdf,image/png,image/jpeg,image/webp"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) uploadRespostaArquivo(atv.id, file);
+                            }}
+                          />
+                          {uploadingResposta === atv.id && <span className="badge badge-muted">Enviando...</span>}
+                          {respostasArquivo[atv.id] && <span className="badge badge-success">{respostasArquivo[atv.id].nome}</span>}
+                        </div>
+                      )}
                     </div>
                   ))}
-                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <button className="btn btn-primary btn-lg" onClick={submeterAtividades} disabled={salvando}>
-                      {salvando ? "Enviando…" : "Enviar respostas"}
-                    </button>
-                  </div>
-                </>
-              )}
+                </div>
+              ))}
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button className="btn btn-primary btn-lg" onClick={submeterAtividades} disabled={salvando || Boolean(uploadingResposta)}>
+                  {salvando ? "Enviando..." : "Enviar avaliacao"}
+                </button>
+              </div>
             </div>
           )}
         </div>
