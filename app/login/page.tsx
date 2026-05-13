@@ -90,8 +90,6 @@ export default function LoginPage() {
             <div className="login-left-logo-wrap">
               <Image src={LOGO_URL} alt="CondoJob" width={160} height={48} style={{ objectFit: "contain" }} />
             </div>
-            <div className="login-left-logo-sep" />
-            <span className="login-left-badge">Educação EAD</span>
           </div>
 
           <h1 className="login-left-title">
@@ -99,7 +97,7 @@ export default function LoginPage() {
             <span className="login-left-title-accent">condominial do futuro.</span>
           </h1>
           <p className="login-left-desc">
-            A CondoJob EAD é a plataforma oficial de capacitação condominial, oferecendo cursos,
+            A CondoJob é a plataforma oficial de capacitação condominial, oferecendo cursos,
             conteúdos práticos e certificação para quem deseja se profissionalizar e atuar com
             mais segurança no setor de condomínios.
           </p>
@@ -123,7 +121,7 @@ export default function LoginPage() {
             </div>
             <div className="login-stat-divider" />
             <div className="login-stat">
-              <div className="login-stat-value">EAD</div>
+              <div className="login-stat-value">24h</div>
               <div className="login-stat-label">Estude de onde quiser</div>
             </div>
             <div className="login-stat-divider" />
@@ -148,7 +146,6 @@ export default function LoginPage() {
             <div className="login-logo-wrap">
               <Image src={LOGO_URL} alt="CondoJob" width={190} height={56} style={{ objectFit: "contain" }} />
             </div>
-            <span className="login-logo-tag">Plataforma EAD</span>
             <div className="login-logo-divider" />
           </div>
 

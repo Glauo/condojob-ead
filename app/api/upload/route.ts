@@ -14,19 +14,21 @@ export async function POST(req: NextRequest) {
 
     if (!file) return NextResponse.json({ error: "Nenhum arquivo enviado." }, { status: 400 });
 
+    const originalName = file.name || "";
+    const originalExt = originalName.split(".").pop()?.toLowerCase() || "";
     const allowedVideos = ["video/mp4", "video/webm", "video/ogg", "video/quicktime"];
-    const allowedDocs = ["application/pdf"];
+    const allowedDocs = ["application/pdf", "application/x-pdf"];
     const allAllowed = [...allowedVideos, ...allowedDocs];
+    const isPdf = allowedDocs.includes(file.type) || (file.type === "application/octet-stream" && originalExt === "pdf");
 
-    if (!allAllowed.includes(file.type))
+    if (!allAllowed.includes(file.type) && !isPdf)
       return NextResponse.json({ error: `Formato não suportado (${file.type}). Use MP4, WebM, OGG ou PDF.` }, { status: 400 });
 
-    const isPdf = allowedDocs.includes(file.type);
     const maxSize = isPdf ? 50 * 1024 * 1024 : 500 * 1024 * 1024;
     if (file.size > maxSize)
       return NextResponse.json({ error: `Arquivo muito grande. Máximo ${isPdf ? "50" : "500"} MB.` }, { status: 400 });
 
-    const ext = isPdf ? "pdf" : (file.name.split(".").pop()?.toLowerCase() || "mp4");
+    const ext = isPdf ? "pdf" : (originalExt || "mp4");
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const folder = isPdf ? "materiais" : "videos";
     const uploadsDir = path.join(process.cwd(), "public", folder);
