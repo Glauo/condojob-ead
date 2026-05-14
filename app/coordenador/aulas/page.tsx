@@ -97,6 +97,8 @@ export default async function CoordAulasPage({
   ]);
 
   const pendentes = submissoes.filter((s) => s.status === "aguardando_correcao").length;
+  const primeiraAulaApresentacao = /apresent/i.test(aulas[0]?.titulo ?? "");
+  const totalModulos = primeiraAulaApresentacao ? Math.max(aulas.length - 1, 0) : aulas.length;
 
   return (
     <AppShell breadcrumb="Conteúdo" userName={session.nome} userRole="coordenador">
@@ -151,7 +153,8 @@ export default async function CoordAulasPage({
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>{curso.nome}</div>
           <div style={{ fontSize: "0.75rem", color: "var(--cj-text-muted)", marginTop: "2px" }}>
-            {aulas.length} módulo{aulas.length !== 1 ? "s" : ""} ·{" "}
+            {primeiraAulaApresentacao ? "1 apresentação · " : ""}
+            {totalModulos} módulo{totalModulos !== 1 ? "s" : ""} ·{" "}
             {atividades.length} atividade{atividades.length !== 1 ? "s" : ""} ·{" "}
             Nota mínima: {Number(curso.nota_minima).toFixed(1)}
           </div>

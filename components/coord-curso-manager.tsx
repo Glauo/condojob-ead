@@ -51,6 +51,13 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
   const [saving, setSaving] = useState(false);
   const [novaForm, setNovaForm] = useState<{ titulo: string; ordem: number } | null>(null);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const primeiraAulaApresentacao = /apresent/i.test(list[0]?.titulo ?? "");
+
+  function displayModulo(aula: Aula, idx: number) {
+    if (primeiraAulaApresentacao && idx === 0) return "AP";
+    const numero = primeiraAulaApresentacao ? aula.ordem - 1 : aula.ordem;
+    return String(Math.max(numero, 1)).padStart(2, "0");
+  }
 
   async function salvarVideo(aula: Aula) {
     let finalUrl = videoUrl.trim() || null;
@@ -124,13 +131,13 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
         </div>
       )}
 
-      {list.map((aula) => (
+      {list.map((aula, idx) => (
         <div key={aula.id} style={{ borderTop: "1px solid var(--cj-dark-border)", padding: "16px 0" }}>
           {editId === aula.id ? (
             /* ── Modo edição de vídeo ── */
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div className="coord-module-num">{String(aula.ordem).padStart(2, "0")}</div>
+                <div className="coord-module-num">{displayModulo(aula, idx)}</div>
                 <span style={{ fontWeight: 600 }}>{aula.titulo}</span>
               </div>
 
@@ -191,7 +198,7 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
             /* ── Modo visualização ── */
             <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
               <div className={`coord-module-num${aula.video_url ? " has-video" : " no-video"}`}>
-                {String(aula.ordem).padStart(2, "0")}
+                {displayModulo(aula, idx)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>{aula.titulo}</div>
@@ -254,6 +261,13 @@ function TabMateriais({ aulas }: { aulas: Aula[] }) {
   const [list, setList] = useState(aulas);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const primeiraAulaApresentacao = /apresent/i.test(list[0]?.titulo ?? "");
+
+  function displayModulo(aula: Aula, idx: number) {
+    if (primeiraAulaApresentacao && idx === 0) return "AP";
+    const numero = primeiraAulaApresentacao ? aula.ordem - 1 : aula.ordem;
+    return String(Math.max(numero, 1)).padStart(2, "0");
+  }
 
   async function uploadPdf(aula: Aula, file: File) {
     setUploadingId(aula.id);
@@ -318,10 +332,10 @@ function TabMateriais({ aulas }: { aulas: Aula[] }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      {list.map((aula) => (
+      {list.map((aula, idx) => (
         <div key={aula.id}>
           <div className="coord-tab-module-header">
-            <span className="coord-module-num">{String(aula.ordem).padStart(2, "0")}</span>
+            <span className="coord-module-num">{displayModulo(aula, idx)}</span>
             <span style={{ fontWeight: 600 }}>{aula.titulo}</span>
             <span className="badge badge-muted">{aula.materiais.length} PDF{aula.materiais.length !== 1 ? "s" : ""}</span>
           </div>
