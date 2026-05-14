@@ -64,7 +64,7 @@ img { max-width: 100%; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(129,140,248,0.45); }
 
 /* ===== LAYOUT ===== */
-.shell { display: flex; height: 100vh; overflow: hidden; }
+.shell { display: flex; height: 100vh; overflow: hidden; min-height: 0; }
 
 /* ===== SIDEBAR ===== */
 .sidebar {
@@ -178,7 +178,7 @@ img { max-width: 100%; }
 .sidebar-user-role { font-size: 0.7rem; color: var(--cj-text-muted); }
 
 /* ===== MAIN AREA ===== */
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; min-height: 0; }
 .topbar {
   height: var(--topbar-h);
   border-bottom: 1px solid var(--cj-dark-border);
@@ -892,7 +892,7 @@ img { max-width: 100%; }
 .modal-box { max-height: 88vh; }
 
 /* ===== PAGE CONTENT ===== */
-.page-content { flex: 1; overflow-y: auto; padding: 28px 32px 56px; display: flex; flex-direction: column; gap: 24px; }
+.page-content { flex: 1; min-height: 0; overflow-y: auto; padding: 28px 32px 56px; display: flex; flex-direction: column; gap: 24px; }
 
 /* ===== UTILS ===== */
 .text-muted { color: var(--cj-text-muted); }
