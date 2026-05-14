@@ -170,6 +170,16 @@ export async function initSchema() {
       detalhes JSONB,
       criado_em TIMESTAMPTZ DEFAULT now()
     );
+
+    CREATE TABLE IF NOT EXISTS cj_chat_mensagens (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      aluno_id UUID REFERENCES cj_users(id) ON DELETE CASCADE,
+      coordenador_id UUID REFERENCES cj_users(id) ON DELETE SET NULL,
+      remetente_id UUID REFERENCES cj_users(id) ON DELETE CASCADE,
+      mensagem TEXT NOT NULL,
+      lida BOOLEAN DEFAULT false,
+      criado_em TIMESTAMPTZ DEFAULT now()
+    );
   `);
 
   await pool.query(`
