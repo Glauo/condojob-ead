@@ -2,6 +2,8 @@ import Link from "next/link";
 import { initSchema } from "@/lib/db";
 import { confirmMercadoPagoPayment } from "@/lib/mercadopago";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
