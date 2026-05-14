@@ -322,6 +322,32 @@ export function PlayerClient({
             </div>
           ) : (
             <div className="quiz-wrap">
+              <div className="card">
+                <div className="card-header">
+                  <div>
+                    <div className="section-eyebrow">Instrucoes</div>
+                    <h3 className="section-title">Como fazer a avaliacao</h3>
+                  </div>
+                </div>
+                <div className="card-body" style={{ color: "var(--cj-text-secondary)", fontSize: "0.88rem", lineHeight: 1.65 }}>
+                  <p style={{ marginTop: 0 }}>
+                    Este caderno contem 8 avaliacoes, uma para cada modulo do curso. Cada avaliacao tem 10 questoes objetivas de multipla escolha, com 4 alternativas cada.
+                  </p>
+                  <p>
+                    Faca a avaliacao correspondente ao final de cada modulo, em ordem: Modulo 1, depois Modulo 2, e assim por diante.
+                  </p>
+                  <div style={{ display: "grid", gap: "6px", marginTop: "12px" }}>
+                    <div><strong style={{ color: "var(--cj-text)" }}>Tempo sugerido:</strong> 15 a 20 minutos por avaliacao.</div>
+                    <div><strong style={{ color: "var(--cj-text)" }}>Aplicacao:</strong> faca individualmente, sem consultar a apostila ou os videos.</div>
+                    <div><strong style={{ color: "var(--cj-text)" }}>Marcacao:</strong> marque apenas uma alternativa por questao.</div>
+                    <div><strong style={{ color: "var(--cj-text)" }}>Aproveitamento minimo:</strong> 7 acertos em 10 (70%).</div>
+                    <div><strong style={{ color: "var(--cj-text)" }}>Revisao:</strong> se errar muitas questoes, revise o conteudo na apostila antes de seguir.</div>
+                  </div>
+                  <p style={{ marginBottom: 0, marginTop: "12px" }}>
+                    Leia cada questao com atencao. Observe palavras-chave como INCORRETO, NAO e EXCETO.
+                  </p>
+                </div>
+              </div>
               {atividades.map((atv, idx) => (
                 <div className="quiz-question" key={atv.id}>
                   <div className="quiz-question-num">Questao {idx + 1} de 10 - {atv.titulo}</div>
