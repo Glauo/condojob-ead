@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 
 const LOGO_URL =
@@ -220,6 +221,11 @@ export default function LoginPage() {
           <p className="login-footer-text">
             Problemas para acessar?{" "}
             <span style={{ color: "var(--cj-teal)" }}>Fale com seu coordenador.</span>
+            <br />
+            Ainda nao tem cadastro?{" "}
+            <Link href="/cadastro" style={{ color: "var(--cj-teal)", fontWeight: 700 }}>
+              Cadastrar e pagar curso
+            </Link>
           </p>
         </div>
       </div>

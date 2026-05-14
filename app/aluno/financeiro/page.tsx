@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQuery, initSchema } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
+import { PaymentButton } from "@/components/payment-button";
 
 type Pagamento = { id: string; descricao: string; valor: number; status: string; vencimento: string; pago_em: string | null };
 
@@ -61,7 +62,7 @@ export default async function AlunoFinanceiroPage() {
             </div>
           ) : (
             <table className="data-table">
-              <thead><tr><th>Descrição</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Status</th></tr></thead>
+              <thead><tr><th>Descrição</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Status</th><th>Ação</th></tr></thead>
               <tbody>
                 {pagamentos.map((p) => (
                   <tr key={p.id}>
@@ -70,6 +71,7 @@ export default async function AlunoFinanceiroPage() {
                     <td style={{ fontSize: "0.8rem" }}>{p.vencimento ? new Date(p.vencimento).toLocaleDateString("pt-BR") : "—"}</td>
                     <td style={{ fontSize: "0.8rem", color: "var(--cj-text-muted)" }}>{p.pago_em ? new Date(p.pago_em).toLocaleDateString("pt-BR") : "—"}</td>
                     <td><span className={`badge ${STATUS_BADGE[p.status] || "badge-muted"}`}>{STATUS_LABEL[p.status] || p.status}</span></td>
+                    <td>{p.status === "pendente" ? <PaymentButton pagamentoId={p.id} /> : "—"}</td>
                   </tr>
                 ))}
               </tbody>

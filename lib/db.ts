@@ -193,5 +193,11 @@ export async function initSchema() {
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS rua TEXT;
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS numero TEXT;
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS complemento TEXT;
+
+    ALTER TABLE cj_pagamentos ADD COLUMN IF NOT EXISTS mp_preference_id TEXT;
+    ALTER TABLE cj_pagamentos ADD COLUMN IF NOT EXISTS mp_payment_id TEXT;
+    ALTER TABLE cj_pagamentos ADD COLUMN IF NOT EXISTS mp_external_reference TEXT;
+    ALTER TABLE cj_pagamentos ADD COLUMN IF NOT EXISTS mp_status_detail TEXT;
+    ALTER TABLE cj_pagamentos ADD COLUMN IF NOT EXISTS checkout_url TEXT;
   `);
 }
