@@ -5,7 +5,8 @@ import { AppShell } from "@/components/app-shell";
 import { CourseAccordion } from "@/components/course-accordion";
 
 type Curso = { id: string; nome: string; descricao: string; carga_horaria: number; nota_minima: number };
-type Aula = { id: string; titulo: string; ordem: number; video_url: string | null; materiais: string };
+type Material = { nome: string; url: string };
+type Aula = { id: string; titulo: string; ordem: number; video_url: string | null; materiais: string | Material[] };
 type Prog = { aula_id: string; percentual: number; concluido: boolean };
 type AtvStatus = { aula_id: string; total_atividades: string; atividades_aprovadas: string };
 type AtvComSub = {
@@ -86,12 +87,15 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
   const aulasComStatus = aulas.map((aula, idx) => {
     const prog = progMap[aula.id];
     const { unlocked, reason } = getUnlockInfo(idx);
+    const materiais = Array.isArray(aula.materiais)
+      ? aula.materiais
+      : JSON.parse(aula.materiais || "[]") as Material[];
     return {
       id: aula.id,
       titulo: aula.titulo,
       ordem: aula.ordem,
       video_url: aula.video_url,
-      materiais: JSON.parse(aula.materiais || "[]") as { nome: string; url: string }[],
+      materiais,
       percentual: prog?.percentual ?? 0,
       concluido: Boolean(prog?.concluido),
       unlocked,
