@@ -180,6 +180,23 @@ export async function initSchema() {
       lida BOOLEAN DEFAULT false,
       criado_em TIMESTAMPTZ DEFAULT now()
     );
+
+    CREATE TABLE IF NOT EXISTS cj_club_beneficios (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      nome_empresa TEXT NOT NULL,
+      categoria TEXT NOT NULL,
+      descricao TEXT,
+      desconto TEXT NOT NULL,
+      cupom TEXT,
+      link_url TEXT,
+      contato TEXT,
+      endereco TEXT,
+      regras TEXT,
+      ativo BOOLEAN DEFAULT true,
+      criado_por UUID REFERENCES cj_users(id) ON DELETE SET NULL,
+      criado_em TIMESTAMPTZ DEFAULT now(),
+      atualizado_em TIMESTAMPTZ DEFAULT now()
+    );
   `);
 
   await pool.query(`
@@ -199,5 +216,11 @@ export async function initSchema() {
     ALTER TABLE cj_pagamentos ADD COLUMN IF NOT EXISTS mp_external_reference TEXT;
     ALTER TABLE cj_pagamentos ADD COLUMN IF NOT EXISTS mp_status_detail TEXT;
     ALTER TABLE cj_pagamentos ADD COLUMN IF NOT EXISTS checkout_url TEXT;
+
+    ALTER TABLE cj_club_beneficios ADD COLUMN IF NOT EXISTS cupom TEXT;
+    ALTER TABLE cj_club_beneficios ADD COLUMN IF NOT EXISTS contato TEXT;
+    ALTER TABLE cj_club_beneficios ADD COLUMN IF NOT EXISTS endereco TEXT;
+    ALTER TABLE cj_club_beneficios ADD COLUMN IF NOT EXISTS regras TEXT;
+    ALTER TABLE cj_club_beneficios ADD COLUMN IF NOT EXISTS ativo BOOLEAN DEFAULT true;
   `);
 }
