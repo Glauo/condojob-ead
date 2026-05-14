@@ -66,7 +66,9 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
 
   const progMap = Object.fromEntries(progressos.map((p) => [p.aula_id, p]));
   const atvMap = Object.fromEntries(atvStatus.map((a) => [a.aula_id, a]));
-  const aulasAvaliativas = aulas.slice(1);
+  const primeiraAulaApresentacao = /apresent/i.test(aulas[0]?.titulo ?? "");
+  const primeiroModuloIndex = primeiraAulaApresentacao ? 1 : 0;
+  const aulasAvaliativas = aulas.slice(primeiroModuloIndex);
   const totalConc = aulasAvaliativas.filter((a) => progMap[a.id]?.concluido).length;
   const pct = aulasAvaliativas.length ? Math.round((totalConc / aulasAvaliativas.length) * 100) : 0;
 
@@ -75,7 +77,7 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
     const prev = aulas[idx - 1];
     if (!progMap[prev.id]?.concluido) return { unlocked: false, reason: "Conclua o vídeo do módulo anterior" };
     const prevAtv = atvMap[prev.id];
-    if (idx > 1 && prevAtv && Number(prevAtv.total_atividades) > 0 && Number(prevAtv.atividades_aprovadas) < Number(prevAtv.total_atividades)) {
+    if (idx - 1 >= primeiroModuloIndex && prevAtv && Number(prevAtv.total_atividades) > 0 && Number(prevAtv.atividades_aprovadas) < Number(prevAtv.total_atividades)) {
       return { unlocked: false, reason: "Passe na atividade do módulo anterior (nota ≥ " + Number(curso!.nota_minima).toFixed(1) + ")" };
     }
     return { unlocked: true, reason: null };
@@ -136,7 +138,7 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
 
       <CourseAccordion
         aulas={aulasComStatus}
-        atividades={atividades.filter((a) => a.aula_id !== aulas[0]?.id)}
+        atividades={primeiraAulaApresentacao ? atividades.filter((a) => a.aula_id !== aulas[0]?.id) : atividades}
         notaMinima={Number(curso.nota_minima)}
       />
     </AppShell>

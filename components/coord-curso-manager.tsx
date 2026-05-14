@@ -375,6 +375,8 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
   const [form, setForm] = useState({ titulo: "", tipo: "multipla_escolha", questao_texto: "", alt_a: "", alt_b: "", alt_c: "", alt_d: "", resposta: "0" });
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState("");
+  const primeiraAulaApresentacao = /apresent/i.test(aulas[0]?.titulo ?? "");
+  const aulasAvaliativas = primeiraAulaApresentacao ? aulas.slice(1) : aulas;
 
   async function criarAtividade() {
     if (modal && atvs.filter((a) => a.aula_id === modal.aulaId).length >= MAX_QUESTOES_AVALIACAO) {
@@ -415,11 +417,12 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
       {aulas.length > 0 && (
         <div style={{ marginBottom: "18px", padding: "12px 14px", borderRadius: "var(--cj-radius)", border: "1px solid var(--cj-dark-border)", background: "rgba(255,255,255,0.03)" }}>
           <div style={{ fontSize: "0.78rem", color: "var(--cj-text-muted)" }}>
-            A primeira aula e apresentacao e nao entra na contagem. Cada modulo de conteudo tem uma avaliacao com ate {MAX_QUESTOES_AVALIACAO} questoes.
+            {primeiraAulaApresentacao ? "A primeira aula e apresentacao e nao entra na contagem. " : ""}
+            Cada modulo de conteudo tem uma avaliacao com ate {MAX_QUESTOES_AVALIACAO} questoes.
           </div>
         </div>
       )}
-      {aulas.slice(1).map((aula, idx) => {
+      {aulasAvaliativas.map((aula, idx) => {
         const atvAula = atvs.filter((a) => a.aula_id === aula.id);
         const podeAdicionar = atvAula.length < MAX_QUESTOES_AVALIACAO;
         return (
@@ -460,10 +463,10 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
           </div>
         );
       })}
-      {aulas.length <= 1 && (
+      {aulasAvaliativas.length === 0 && (
         <div className="empty-state">
           <div className="empty-title">Nenhum modulo avaliativo</div>
-          <p className="empty-desc">Crie os modulos apos a aula de apresentacao para cadastrar as avaliacoes.</p>
+          <p className="empty-desc">Crie os modulos do curso para cadastrar as avaliacoes.</p>
         </div>
       )}
 

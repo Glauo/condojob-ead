@@ -114,15 +114,6 @@ export function PlayerClient({
       return;
     }
 
-    let nota: number | null = null;
-    if (objetivas.length > 0) {
-      let acertos = 0;
-      objetivas.forEach((a) => {
-        if (respostas[a.id] === a.questoes[0]?.resposta_correta) acertos++;
-      });
-      nota = Math.round((acertos / objetivas.length) * 10 * 10) / 10;
-    }
-
     setSalvando(true);
     const res = await fetch("/api/atividades/submeter", {
       method: "POST",
@@ -130,27 +121,27 @@ export function PlayerClient({
       body: JSON.stringify({
         atividade_ids: atividades.map((a) => a.id),
         respostas: { objetivas: respostas, discursivas: respostasTexto, arquivos: respostasArquivo },
-        nota,
         aula_id: aulaId,
       }),
     });
     setSalvando(false);
+    const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
       alert((data as { error?: string }).error || "Erro ao enviar avaliacao.");
       return;
     }
 
     const aguardando = discursivas.length > 0 || uploads.length > 0;
+    const notaFinal = typeof (data as { nota?: unknown }).nota === "number" ? (data as { nota: number }).nota : null;
     setResultado({
-      nota,
+      nota: notaFinal,
       aguardando,
       msg: aguardando
         ? "Avaliacao enviada. As questoes discursivas ou arquivos ficam aguardando correcao do coordenador."
-        : nota !== null && nota >= notaMinima
-          ? `Parabens! Nota ${nota.toFixed(1)} - proximo modulo desbloqueado!`
-          : `Nota ${nota?.toFixed(1)} - abaixo do minimo (${notaMinima}). Tente novamente.`,
+        : notaFinal !== null && notaFinal >= notaMinima
+          ? `Parabens! Nota ${notaFinal.toFixed(1)} - proximo modulo desbloqueado!`
+          : `Nota ${notaFinal?.toFixed(1)} - abaixo do minimo (${notaMinima}). Tente novamente.`,
     });
   }
 
