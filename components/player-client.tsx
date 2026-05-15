@@ -170,6 +170,8 @@ export function PlayerClient({
                 ) : (
                   <video
                     controls
+                    preload="metadata"
+                    playsInline
                     controlsList="nodownload noplaybackrate"
                     disablePictureInPicture
                     onContextMenu={(e) => e.preventDefault()}
