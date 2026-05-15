@@ -77,6 +77,11 @@ export function PlayerClient({
     return m ? m[1] : null;
   }
 
+  function protectedVideoUrl(url: string) {
+    if (!url.startsWith("/videos/")) return url;
+    return `/api/videos/${encodeURIComponent(url.replace("/videos/", ""))}`;
+  }
+
   async function uploadRespostaArquivo(atvId: string, file: File) {
     setUploadingResposta(atvId);
     const fd = new FormData();
@@ -165,6 +170,9 @@ export function PlayerClient({
                 ) : (
                   <video
                     controls
+                    controlsList="nodownload noplaybackrate"
+                    disablePictureInPicture
+                    onContextMenu={(e) => e.preventDefault()}
                     onTimeUpdate={(e) => {
                       const v = e.currentTarget;
                       const p = Math.round((v.currentTime / v.duration) * 100);
@@ -175,7 +183,7 @@ export function PlayerClient({
                       }
                     }}
                     onEnded={() => { setVideoConcluido(true); salvarProgresso(100); }}
-                    src={videoUrl}
+                    src={protectedVideoUrl(videoUrl)}
                   />
                 )}
               </div>
