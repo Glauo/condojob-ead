@@ -4,9 +4,22 @@ import { dbQueryOne, dbQuery } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
 import { PlayerClient } from "@/components/player-client";
 
-type Aula = { id: string; titulo: string; ordem: number; video_url: string | null; conteudo: string | null; materiais: string; curso_id: string; curso_nome: string; nota_minima: number };
-type Atividade = { id: string; titulo: string; tipo: string; questoes: string };
+type Material = { nome: string; url: string };
+type Questao = { texto: string; alternativas?: string[]; resposta_correta?: number };
+type Aula = { id: string; titulo: string; ordem: number; video_url: string | null; conteudo: string | null; materiais: string | Material[] | null; curso_id: string; curso_nome: string; nota_minima: number };
+type Atividade = { id: string; titulo: string; tipo: string; questoes: string | Questao[] | null };
 type Prog = { percentual: number; concluido: boolean };
+
+function parseArray<T>(value: string | T[] | null | undefined): T[] {
+  if (Array.isArray(value)) return value;
+  if (!value || typeof value !== "string" || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 export default async function AulaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -33,7 +46,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
     dbQuery<Atividade>("SELECT id, titulo, tipo, questoes FROM cj_atividades WHERE aula_id = $1 ORDER BY criado_em", [id]),
   ]);
 
-  const materiais = JSON.parse(aula.materiais || "[]") as { nome: string; url: string }[];
+  const materiais = parseArray<Material>(aula.materiais);
 
   return (
     <AppShell breadcrumb={aula.titulo} userName={session.nome} userRole="aluno">
@@ -60,7 +73,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
         jaConcluido={progresso?.concluido ?? false}
         atividades={atividades.map((a) => ({
           ...a,
-          questoes: JSON.parse(a.questoes || "[]"),
+          questoes: parseArray<Questao>(a.questoes),
         }))}
         notaMinima={Number(aula.nota_minima)}
         userId={session.id}
