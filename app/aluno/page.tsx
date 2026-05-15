@@ -26,6 +26,9 @@ type AulaConteudo = {
   materiais: string;
   concluido: boolean;
   percentual: number;
+  total_atividades: number;
+  submissoes_avaliacao: number;
+  nota_avaliacao: string | null;
 };
 
 type CursoExtra = {
@@ -94,7 +97,16 @@ export default async function AlunoDashboard() {
       `SELECT a.id, a.curso_id, c.nome AS curso_nome, a.titulo, a.ordem,
               a.conteudo, a.video_url, a.materiais,
               COALESCE(p.concluido, false) AS concluido,
-              COALESCE(p.percentual, 0) AS percentual
+              COALESCE(p.percentual, 0) AS percentual,
+              (SELECT COUNT(*)::int FROM cj_atividades atv WHERE atv.aula_id = a.id) AS total_atividades,
+              (SELECT COUNT(*)::int
+                 FROM cj_submissoes s
+                 JOIN cj_atividades atv ON atv.id = s.atividade_id
+                WHERE atv.aula_id = a.id AND s.usuario_id = $1) AS submissoes_avaliacao,
+              (SELECT MAX(s.nota)::text
+                 FROM cj_submissoes s
+                 JOIN cj_atividades atv ON atv.id = s.atividade_id
+                WHERE atv.aula_id = a.id AND s.usuario_id = $1) AS nota_avaliacao
          FROM cj_matriculas m
          JOIN cj_cursos c ON c.id = m.curso_id
          JOIN cj_aulas a ON a.curso_id = c.id
@@ -274,6 +286,11 @@ export default async function AlunoDashboard() {
               {aulas.map((aula) => {
                 const materiais = parseMateriais(aula.materiais);
                 const resumo = stripHtml(aula.conteudo);
+                const totalAtividades = Number(aula.total_atividades || 0);
+                const submissoesAvaliacao = Number(aula.submissoes_avaliacao || 0);
+                const notaAvaliacao = aula.nota_avaliacao !== null ? Number(aula.nota_avaliacao) : null;
+                const avaliacaoEnviada = totalAtividades > 0 && submissoesAvaliacao >= totalAtividades;
+                const avaliacaoDisponivel = totalAtividades > 0 && aula.concluido;
                 return (
                   <div key={aula.id} style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: "12px", alignItems: "start", padding: "12px", background: "var(--cj-dark)", border: "1px solid var(--cj-dark-border)", borderRadius: "var(--cj-radius)" }}>
                     <div className={`accordion-item-num${aula.concluido ? " done" : " active"}`}>
@@ -285,6 +302,26 @@ export default async function AlunoDashboard() {
                       <div style={{ fontSize: "0.78rem", color: "var(--cj-text-muted)", marginTop: "3px" }}>
                         {aula.video_url ? "Video disponivel" : "Sem video"} | {materiais.length} material(is) | {aula.concluido ? "Concluido" : `${aula.percentual}% assistido`}
                       </div>
+                      {totalAtividades > 0 && (
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px", alignItems: "center" }}>
+                          <span className={`badge ${
+                            avaliacaoEnviada ? "badge-success" :
+                            avaliacaoDisponivel ? "badge-teal" :
+                            "badge-muted"
+                          }`}>
+                            Avaliacao: {totalAtividades} questoes
+                          </span>
+                          {avaliacaoEnviada ? (
+                            <span className="badge badge-success">
+                              Enviada{notaAvaliacao !== null ? ` | Nota ${notaAvaliacao.toFixed(1)}` : ""}
+                            </span>
+                          ) : avaliacaoDisponivel ? (
+                            <span className="badge badge-teal">Disponivel apos video concluido</span>
+                          ) : (
+                            <span className="badge badge-muted">Bloqueada ate concluir o video</span>
+                          )}
+                        </div>
+                      )}
                       {resumo && (
                         <p style={{ color: "var(--cj-text-secondary)", fontSize: "0.82rem", marginTop: "7px" }}>
                           {resumo.slice(0, 220)}
