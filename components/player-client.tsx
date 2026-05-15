@@ -40,6 +40,7 @@ export function PlayerClient({
   const [salvando, setSalvando] = useState(false);
   const [anotacao, setAnotacao] = useState("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const saved = useRef(false);
 
   useEffect(() => {
@@ -152,6 +153,16 @@ export function PlayerClient({
 
   const ytId = videoUrl ? getYouTubeId(videoUrl) : null;
 
+  async function toggleVideo() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      await video.play();
+    } else {
+      video.pause();
+    }
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <div className="card">
@@ -169,6 +180,7 @@ export function PlayerClient({
                   />
                 ) : (
                   <video
+                    ref={videoRef}
                     controls
                     preload="metadata"
                     playsInline
@@ -189,6 +201,14 @@ export function PlayerClient({
                   />
                 )}
               </div>
+
+              {!ytId && (
+                <div style={{ marginTop: "10px", display: "flex", justifyContent: "flex-start" }}>
+                  <button className="btn btn-primary btn-sm" type="button" onClick={toggleVideo}>
+                    Reproduzir / pausar video
+                  </button>
+                </div>
+              )}
 
               <div style={{ marginTop: "12px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", color: "var(--cj-text-muted)", marginBottom: "6px" }}>
