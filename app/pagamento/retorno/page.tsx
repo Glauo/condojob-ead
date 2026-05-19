@@ -50,7 +50,7 @@ export default async function PagamentoRetornoPage({ searchParams }: Props) {
             </h1>
             <p className="page-desc" style={{ marginTop: "10px", lineHeight: 1.7 }}>
               {approved
-                ? "Agora voce pode entrar com o e-mail e a senha cadastrados para acessar o curso."
+                ? "Agora voce pode entrar com o login ou e-mail e a senha cadastrados para acessar o curso."
                 : cancelled
                   ? "Se a cobranca foi recusada, tente novamente pelo link de cadastro ou fale com a coordenacao."
                   : "Assim que o Mercado Pago confirmar, sua matricula sera liberada automaticamente."}

@@ -39,6 +39,7 @@ export async function initSchema() {
     CREATE TABLE IF NOT EXISTS cj_users (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       nome TEXT NOT NULL,
+      login TEXT,
       email TEXT UNIQUE NOT NULL,
       senha_hash TEXT NOT NULL,
       perfil TEXT NOT NULL CHECK (perfil IN ('aluno','coordenador')),
@@ -201,6 +202,7 @@ export async function initSchema() {
 
   await pool.query(`
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS celular_whatsapp TEXT;
+    ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS login TEXT;
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS data_nascimento DATE;
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS rg TEXT;
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS cpf TEXT;
@@ -222,5 +224,11 @@ export async function initSchema() {
     ALTER TABLE cj_club_beneficios ADD COLUMN IF NOT EXISTS endereco TEXT;
     ALTER TABLE cj_club_beneficios ADD COLUMN IF NOT EXISTS regras TEXT;
     ALTER TABLE cj_club_beneficios ADD COLUMN IF NOT EXISTS ativo BOOLEAN DEFAULT true;
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS cj_users_login_unique
+    ON cj_users (LOWER(login))
+    WHERE login IS NOT NULL AND login <> '';
   `);
 }

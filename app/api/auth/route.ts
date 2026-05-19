@@ -8,18 +8,24 @@ type User = { id: string; nome: string; email: string; senha_hash: string; perfi
 export async function POST(req: NextRequest) {
   try {
     await initSchema();
-    const { email, senha } = await req.json();
-    if (!email || !senha) {
-      return NextResponse.json({ error: "E-mail e senha são obrigatórios." }, { status: 400 });
+    const { email, login, senha } = await req.json();
+    const identificador = String(login || email || "").toLowerCase().trim();
+
+    if (!identificador || !senha) {
+      return NextResponse.json({ error: "Login/e-mail e senha sao obrigatorios." }, { status: 400 });
     }
 
     const user = await dbQueryOne<User>(
-      "SELECT id, nome, email, senha_hash, perfil FROM cj_users WHERE email = $1 AND ativo = true",
-      [email.toLowerCase().trim()]
+      `SELECT id, nome, email, senha_hash, perfil
+       FROM cj_users
+       WHERE ativo = true
+         AND (LOWER(email) = $1 OR LOWER(COALESCE(login, '')) = $1)
+       LIMIT 1`,
+      [identificador]
     );
 
     if (!user || !(await bcrypt.compare(senha, user.senha_hash))) {
-      return NextResponse.json({ error: "E-mail ou senha incorretos." }, { status: 401 });
+      return NextResponse.json({ error: "Login/e-mail ou senha incorretos." }, { status: 401 });
     }
 
     const token = await signSession({ id: user.id, nome: user.nome, email: user.email, perfil: user.perfil });
@@ -37,21 +43,22 @@ export async function DELETE() {
   return NextResponse.json({ ok: true });
 }
 
-/* Seed: POST /api/auth/seed — cria coordenador padrão */
+/* Seed: POST /api/auth/seed - cria coordenador padrao */
 export async function PUT(req: NextRequest) {
   try {
     await initSchema();
-    const { nome, email, senha, perfil, adminKey } = await req.json();
+    const { nome, email, login, senha, perfil, adminKey } = await req.json();
     if (adminKey !== process.env.ADMIN_KEY && adminKey !== "condojob2026") {
-      return NextResponse.json({ error: "Não autorizado." }, { status: 403 });
+      return NextResponse.json({ error: "Nao autorizado." }, { status: 403 });
     }
     const hash = await bcrypt.hash(senha, 10);
     await dbQueryOne(
-      `INSERT INTO cj_users (nome, email, senha_hash, perfil)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (email) DO UPDATE SET senha_hash = EXCLUDED.senha_hash, nome = EXCLUDED.nome
+      `INSERT INTO cj_users (nome, login, email, senha_hash, perfil)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (email) DO UPDATE
+       SET senha_hash = EXCLUDED.senha_hash, nome = EXCLUDED.nome, login = EXCLUDED.login
        RETURNING id`,
-      [nome, email.toLowerCase().trim(), hash, perfil || "coordenador"]
+      [nome, login?.toLowerCase().trim() || null, email.toLowerCase().trim(), hash, perfil || "coordenador"]
     );
     return NextResponse.json({ ok: true });
   } catch (err) {

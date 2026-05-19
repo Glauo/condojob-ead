@@ -7,6 +7,7 @@ import { NovoAlunoModal, MatricularAlunoModal, EditarAlunoModal } from "@/compon
 type Aluno = {
   id: string;
   nome: string;
+  login: string | null;
   email: string;
   telefone: string | null;
   celular_whatsapp: string | null;
@@ -33,7 +34,7 @@ export default async function AlunosPage() {
   await initSchema();
 
   const alunos = await dbQuery<Aluno>(
-    `SELECT u.id, u.nome, u.email, u.telefone, u.celular_whatsapp,
+    `SELECT u.id, u.nome, u.login, u.email, u.telefone, u.celular_whatsapp,
       TO_CHAR(u.data_nascimento, 'YYYY-MM-DD') AS data_nascimento,
       u.rg, u.cpf, u.estado_civil, u.cep, u.cidade, u.rua, u.numero, u.complemento,
       u.ativo, u.criado_em,
@@ -94,6 +95,7 @@ export default async function AlunosPage() {
                       <div className="table-name-cell">
                         <span className="table-name-primary">{a.nome}</span>
                         <span className="table-name-secondary">{a.email}</span>
+                        <span className="table-name-secondary">Login: {a.login || a.email}</span>
                       </div>
                     </td>
                     <td style={{ fontSize: "0.8rem", color: "var(--cj-text-muted)" }}>{a.telefone || "—"}</td>

@@ -109,6 +109,7 @@ export function CursoModal({ curso }: { curso?: CursoData } = {}) {
 export type AlunoCadastroData = {
   id: string;
   nome: string;
+  login?: string | null;
   email: string;
   telefone?: string | null;
   celular_whatsapp?: string | null;
@@ -130,6 +131,7 @@ export function NovoAlunoModal() {
   const [form, setForm] = useState({
     perfil: "aluno",
     nome: "",
+    login: "",
     email: "",
     senha: "",
     data_nascimento: "",
@@ -146,6 +148,7 @@ export function NovoAlunoModal() {
   });
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState("");
+  const [showSenha, setShowSenha] = useState(false);
 
   function upd(f: keyof typeof form, v: string) { setForm((p) => ({ ...p, [f]: v })); setErro(""); }
 
@@ -160,7 +163,7 @@ export function NovoAlunoModal() {
     setSaving(false);
     if (!res.ok) { const d = await res.json().catch(() => ({})); setErro((d as { error?: string }).error || "Erro ao salvar."); return; }
     setOpen(false);
-    setForm({ perfil: "aluno", nome: "", email: "", senha: "", data_nascimento: "", rg: "", cpf: "", estado_civil: "", cep: "", cidade: "", rua: "", numero: "", complemento: "", celular_whatsapp: "", telefone: "" });
+    setForm({ perfil: "aluno", nome: "", login: "", email: "", senha: "", data_nascimento: "", rg: "", cpf: "", estado_civil: "", cep: "", cidade: "", rua: "", numero: "", complemento: "", celular_whatsapp: "", telefone: "" });
     router.refresh();
   }
 
@@ -265,6 +268,11 @@ export function NovoAlunoModal() {
                   <input className="form-input" type="email" placeholder="aluno@email.com" value={form.email} onChange={(e) => upd("email", e.target.value)} />
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Login de acesso *</label>
+                  <input className="form-input" placeholder="ex: joao.silva" value={form.login} onChange={(e) => upd("login", e.target.value)} />
+                  <span className="form-hint">O aluno pode entrar com este login ou com o e-mail.</span>
+                </div>
+                <div className="form-group">
                   <label className="form-label">Celular / WhatsApp</label>
                   <input className="form-input" placeholder="(11) 99999-9999" value={form.celular_whatsapp} onChange={(e) => upd("celular_whatsapp", e.target.value)} />
                 </div>
@@ -293,6 +301,7 @@ export function EditarAlunoModal({ aluno }: { aluno: AlunoCadastroData }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     nome: aluno.nome || "",
+    login: aluno.login || aluno.email || "",
     email: aluno.email || "",
     senha: "",
     data_nascimento: aluno.data_nascimento?.slice(0, 10) || "",
@@ -310,6 +319,7 @@ export function EditarAlunoModal({ aluno }: { aluno: AlunoCadastroData }) {
   });
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState("");
+  const [showNovaSenha, setShowNovaSenha] = useState(false);
 
   function upd<K extends keyof typeof form>(f: K, v: (typeof form)[K]) {
     setForm((p) => ({ ...p, [f]: v }));
@@ -424,6 +434,11 @@ export function EditarAlunoModal({ aluno }: { aluno: AlunoCadastroData }) {
                   <input className="form-input" type="email" value={form.email} onChange={(e) => upd("email", e.target.value)} />
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Login de acesso *</label>
+                  <input className="form-input" value={form.login} onChange={(e) => upd("login", e.target.value)} />
+                  <span className="form-hint">Informe este login ao aluno. Ele tambem pode entrar com o e-mail.</span>
+                </div>
+                <div className="form-group">
                   <label className="form-label">Celular / WhatsApp</label>
                   <input className="form-input" value={form.celular_whatsapp} onChange={(e) => upd("celular_whatsapp", e.target.value)} />
                 </div>
@@ -433,7 +448,10 @@ export function EditarAlunoModal({ aluno }: { aluno: AlunoCadastroData }) {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Nova senha</label>
-                  <input className="form-input" type="password" placeholder="Deixe em branco para manter" value={form.senha} onChange={(e) => upd("senha", e.target.value)} />
+                  <input className="form-input" type={showNovaSenha ? "text" : "password"} placeholder="Deixe em branco para manter" value={form.senha} onChange={(e) => upd("senha", e.target.value)} />
+                  <button className="btn btn-ghost btn-sm" type="button" onClick={() => setShowNovaSenha((v) => !v)} style={{ marginTop: "8px" }}>
+                    {showNovaSenha ? "Ocultar senha" : "Ver senha"}
+                  </button>
                 </div>
                 <label className="form-group form-group-full" style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
                   <input type="checkbox" checked={form.ativo} onChange={(e) => upd("ativo", e.target.checked)} />

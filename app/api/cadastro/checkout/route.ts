@@ -13,12 +13,12 @@ export async function POST(req: NextRequest) {
     assertMercadoPagoConfigured();
 
     const {
-      nome, email, senha, curso_id, telefone, celular_whatsapp,
+      nome, login, email, senha, curso_id, telefone, celular_whatsapp,
       data_nascimento, rg, cpf, estado_civil, cep, cidade, rua, numero, complemento,
     } = await req.json();
 
-    if (!nome?.trim() || !email?.trim() || !senha || !curso_id) {
-      return NextResponse.json({ error: "Nome, e-mail, senha e curso sao obrigatorios." }, { status: 400 });
+    if (!nome?.trim() || !login?.trim() || !email?.trim() || !senha || !curso_id) {
+      return NextResponse.json({ error: "Nome, login, e-mail, senha e curso sao obrigatorios." }, { status: 400 });
     }
     if (senha.length < 6) {
       return NextResponse.json({ error: "Senha deve ter no minimo 6 caracteres." }, { status: 400 });
@@ -33,10 +33,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Este curso ainda nao possui preco configurado." }, { status: 400 });
     }
 
+    const loginLimpo = login.toLowerCase().trim();
     const emailLimpo = email.toLowerCase().trim();
     const alunoExistente = await dbQueryOne<Aluno>(
-      "SELECT id, ativo, perfil FROM cj_users WHERE email=$1",
-      [emailLimpo]
+      "SELECT id, ativo, perfil FROM cj_users WHERE email=$1 OR LOWER(COALESCE(login, ''))=$2",
+      [emailLimpo, loginLimpo]
     );
 
     if (alunoExistente?.perfil && alunoExistente.perfil !== "aluno") {
@@ -50,12 +51,14 @@ export async function POST(req: NextRequest) {
     const aluno = alunoExistente
       ? await dbQueryOne<Aluno>(
         `UPDATE cj_users SET
-          nome=$1, senha_hash=$2, telefone=$3, celular_whatsapp=$4, data_nascimento=$5, rg=$6, cpf=$7,
-          estado_civil=$8, cep=$9, cidade=$10, rua=$11, numero=$12, complemento=$13, ativo=false
-         WHERE id=$14 AND perfil='aluno'
+          nome=$1, login=$2, email=$3, senha_hash=$4, telefone=$5, celular_whatsapp=$6, data_nascimento=$7, rg=$8, cpf=$9,
+          estado_civil=$10, cep=$11, cidade=$12, rua=$13, numero=$14, complemento=$15, ativo=false
+         WHERE id=$16 AND perfil='aluno'
          RETURNING id, ativo, perfil`,
         [
           nome.trim(),
+          loginLimpo,
+          emailLimpo,
           hash,
           telefone || null,
           celular_whatsapp || null,
@@ -73,12 +76,13 @@ export async function POST(req: NextRequest) {
       )
       : await dbQueryOne<Aluno>(
         `INSERT INTO cj_users
-          (nome, email, senha_hash, perfil, telefone, celular_whatsapp, data_nascimento, rg, cpf,
+          (nome, login, email, senha_hash, perfil, telefone, celular_whatsapp, data_nascimento, rg, cpf,
            estado_civil, cep, cidade, rua, numero, complemento, ativo)
-         VALUES ($1,$2,$3,'aluno',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,false)
+         VALUES ($1,$2,$3,$4,'aluno',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,false)
          RETURNING id, ativo, perfil`,
         [
           nome.trim(),
+          loginLimpo,
           emailLimpo,
           hash,
           telefone || null,
@@ -121,7 +125,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(preference, { status: 201 });
   } catch (e: unknown) {
     if ((e as { code?: string }).code === "23505") {
-      return NextResponse.json({ error: "E-mail ja cadastrado. Acesse sua conta ou fale com o coordenador." }, { status: 409 });
+      return NextResponse.json({ error: "Login ou e-mail ja cadastrado. Acesse sua conta ou fale com o coordenador." }, { status: 409 });
     }
     console.error(e);
     return NextResponse.json({ error: (e as Error).message || "Erro interno." }, { status: 500 });

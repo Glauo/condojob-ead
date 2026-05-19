@@ -17,6 +17,7 @@ type Props = {
 export function CadastroCheckoutForm({ cursos }: Props) {
   const [form, setForm] = useState({
     nome: "",
+    login: "",
     email: "",
     senha: "",
     celular_whatsapp: "",
@@ -25,6 +26,7 @@ export function CadastroCheckoutForm({ cursos }: Props) {
   });
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showSenha, setShowSenha] = useState(false);
 
   const cursoSelecionado = cursos.find((curso) => curso.id === form.curso_id);
 
@@ -35,8 +37,8 @@ export function CadastroCheckoutForm({ cursos }: Props) {
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!form.nome.trim() || !form.email.trim() || !form.senha || !form.curso_id) {
-      setErro("Preencha nome, e-mail, senha e curso.");
+    if (!form.nome.trim() || !form.login.trim() || !form.email.trim() || !form.senha || !form.curso_id) {
+      setErro("Preencha nome, login, e-mail, senha e curso.");
       return;
     }
 
@@ -86,8 +88,41 @@ export function CadastroCheckoutForm({ cursos }: Props) {
       </div>
 
       <div className="form-group">
+        <label className="form-label">Login de acesso</label>
+        <input className="form-input login-input" value={form.login} onChange={(e) => upd("login", e.target.value)} placeholder="ex: fabio.luiz" />
+        <div className="form-hint">Esse sera o login que o aluno usara para entrar, alem do e-mail.</div>
+      </div>
+
+      <div className="form-group">
         <label className="form-label">Senha de acesso</label>
-        <input className="form-input login-input" type="password" value={form.senha} onChange={(e) => upd("senha", e.target.value)} placeholder="Minimo 6 caracteres" />
+        <div style={{ position: "relative" }}>
+          <input
+            className="form-input login-input"
+            type={showSenha ? "text" : "password"}
+            value={form.senha}
+            onChange={(e) => upd("senha", e.target.value)}
+            placeholder="Minimo 6 caracteres"
+            style={{ paddingRight: "74px" }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowSenha((v) => !v)}
+            style={{
+              position: "absolute",
+              right: "10px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              background: "transparent",
+              border: 0,
+              color: "var(--cj-teal)",
+              cursor: "pointer",
+              fontSize: "0.75rem",
+              fontWeight: 800,
+            }}
+          >
+            {showSenha ? "Ocultar" : "Ver"}
+          </button>
+        </div>
       </div>
 
       <div className="form-grid" style={{ gap: "12px" }}>
