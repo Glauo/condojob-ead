@@ -55,8 +55,7 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
 
   function displayModulo(aula: Aula, idx: number) {
     if (primeiraAulaApresentacao && idx === 0) return "AP";
-    const numero = primeiraAulaApresentacao ? aula.ordem - 1 : aula.ordem;
-    return String(Math.max(numero, 1)).padStart(2, "0");
+    return String(Math.max(aula.ordem, 1)).padStart(2, "0");
   }
 
   async function salvarVideo(aula: Aula) {
@@ -265,8 +264,7 @@ function TabMateriais({ aulas }: { aulas: Aula[] }) {
 
   function displayModulo(aula: Aula, idx: number) {
     if (primeiraAulaApresentacao && idx === 0) return "AP";
-    const numero = primeiraAulaApresentacao ? aula.ordem - 1 : aula.ordem;
-    return String(Math.max(numero, 1)).padStart(2, "0");
+    return String(Math.max(aula.ordem, 1)).padStart(2, "0");
   }
 
   async function uploadPdf(aula: Aula, file: File) {
