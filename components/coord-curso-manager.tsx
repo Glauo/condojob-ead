@@ -195,7 +195,7 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
             </div>
           ) : (
             /* ── Modo visualização ── */
-            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <div className="coord-module-row" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
               <div className={`coord-module-num${aula.video_url ? " has-video" : " no-video"}`}>
                 {displayModulo(aula, idx)}
               </div>
@@ -210,7 +210,7 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
                   {aula.total_atividades} atividade{aula.total_atividades !== 1 ? "s" : ""} · {aula.materiais.length} material{aula.materiais.length !== 1 ? "is" : ""}
                 </div>
               </div>
-              <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+              <div className="coord-module-actions" style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
                 <button
                   className={`btn btn-sm ${aula.video_url ? "btn-ghost" : "btn-primary"}`}
                   onClick={() => openEdit(aula)}
@@ -676,7 +676,7 @@ export function CoordCursoManager({
   return (
     <div className="card">
       {/* Tab bar */}
-      <div style={{ display: "flex", borderBottom: "1px solid var(--cj-dark-border)", padding: "0 20px" }}>
+      <div className="coord-tab-bar" style={{ display: "flex", borderBottom: "1px solid var(--cj-dark-border)", padding: "0 20px" }}>
         {TABS.map((t) => (
           <button key={t.key} className="coord-tab-btn" data-active={tab === t.key ? "true" : "false"}
             onClick={() => setTab(t.key)}>

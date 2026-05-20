@@ -1106,6 +1106,36 @@ img { max-width: 100%; }
 .coord-tab-btn:hover { color: var(--cj-text); }
 .coord-tab-btn[data-active="true"] { color: var(--cj-purple-light); border-bottom-color: var(--cj-purple); }
 
+@media(max-width:560px) {
+  .coord-tab-bar {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 12px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .coord-tab-btn {
+    flex: 0 0 auto;
+    padding: 12px 14px;
+  }
+
+  .coord-module-row {
+    align-items: flex-start !important;
+    flex-wrap: wrap;
+  }
+
+  .coord-module-actions {
+    width: 100%;
+    flex-shrink: 1 !important;
+  }
+
+  .coord-module-actions .btn {
+    flex: 1 1 0;
+    justify-content: center;
+    white-space: normal;
+  }
+}
+
 .coord-module-num {
   width: 32px;
   height: 32px;
