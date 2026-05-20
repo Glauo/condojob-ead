@@ -1,30 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { dbQueryOne, initSchema } from "@/lib/db";
+import { dbQuery, dbQueryOne, initSchema } from "@/lib/db";
 import { signSession, setSessionCookie, clearSessionCookie } from "@/lib/auth";
 
 type User = { id: string; nome: string; email: string; senha_hash: string; perfil: "aluno" | "coordenador" };
+
+async function senhaConfere(senha: string, hash: string) {
+  if (await bcrypt.compare(senha, hash)) return true;
+
+  const senhaSemEspacos = senha.trim();
+  if (senhaSemEspacos !== senha) {
+    return bcrypt.compare(senhaSemEspacos, hash);
+  }
+
+  return false;
+}
 
 export async function POST(req: NextRequest) {
   try {
     await initSchema();
     const { email, login, senha } = await req.json();
     const identificador = String(login || email || "").toLowerCase().trim();
+    const senhaInformada = String(senha ?? "");
 
-    if (!identificador || !senha) {
+    if (!identificador || !senhaInformada) {
       return NextResponse.json({ error: "Login/e-mail e senha sao obrigatorios." }, { status: 400 });
     }
 
-    const user = await dbQueryOne<User>(
+    const candidatos = await dbQuery<User>(
       `SELECT id, nome, email, senha_hash, perfil
        FROM cj_users
        WHERE ativo = true
-         AND (LOWER(email) = $1 OR LOWER(COALESCE(login, '')) = $1)
-       LIMIT 1`,
+         AND (
+           LOWER(email) = $1
+           OR LOWER(COALESCE(login, '')) = $1
+           OR LOWER(split_part(email, '@', 1)) = $1
+         )
+       ORDER BY
+         CASE
+           WHEN LOWER(COALESCE(login, '')) = $1 THEN 1
+           WHEN LOWER(email) = $1 THEN 2
+           ELSE 3
+         END
+       LIMIT 10`,
       [identificador]
     );
 
-    if (!user || !(await bcrypt.compare(senha, user.senha_hash))) {
+    let user: User | null = null;
+    for (const candidato of candidatos) {
+      if (await senhaConfere(senhaInformada, candidato.senha_hash)) {
+        user = candidato;
+        break;
+      }
+    }
+
+    if (!user) {
       return NextResponse.json({ error: "Login/e-mail ou senha incorretos." }, { status: 401 });
     }
 
