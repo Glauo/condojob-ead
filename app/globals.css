@@ -1032,6 +1032,64 @@ img { max-width: 100%; }
 .accordion-atv-dot.disponivel { background: var(--cj-teal); }
 .accordion-atv-dot.bloqueada { background: var(--cj-text-muted); opacity: 0.5; }
 
+@media(max-width:560px) {
+  .accordion-header {
+    gap: 8px;
+    padding: 13px 14px;
+  }
+
+  .accordion-header .badge {
+    margin-left: 0 !important;
+  }
+
+  .accordion-body {
+    padding: 12px 14px;
+  }
+
+  .accordion-item,
+  .accordion-atv-item {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .accordion-item-content {
+    flex: 1 1 calc(100% - 44px);
+  }
+
+  .accordion-item > div:last-child,
+  .accordion-atv-item > div:last-child {
+    width: 100%;
+    flex-shrink: 1 !important;
+    display: flex;
+  }
+
+  .accordion-item > div:last-child .btn,
+  .accordion-atv-item > div:last-child .btn,
+  .accordion-item > div:last-child .badge,
+  .accordion-atv-item > div:last-child .badge {
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
+    min-height: 36px;
+  }
+
+  .accordion-module-label {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .accordion-material-item {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .accordion-material-item span:first-of-type {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
 /* ===== COORDINATOR COURSE MANAGER (tabs) ===== */
 .coord-tab-btn {
   padding: 14px 18px;
