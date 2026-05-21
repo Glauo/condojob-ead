@@ -172,6 +172,15 @@ export async function initSchema() {
       criado_em TIMESTAMPTZ DEFAULT now()
     );
 
+    CREATE TABLE IF NOT EXISTS cj_user_delete_events (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      usuario_id UUID NOT NULL,
+      perfil TEXT NOT NULL,
+      evento TEXT NOT NULL,
+      dados JSONB NOT NULL,
+      criado_em TIMESTAMPTZ DEFAULT now()
+    );
+
     CREATE TABLE IF NOT EXISTS cj_chat_mensagens (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       aluno_id UUID REFERENCES cj_users(id) ON DELETE CASCADE,
@@ -230,5 +239,49 @@ export async function initSchema() {
     CREATE UNIQUE INDEX IF NOT EXISTS cj_users_login_unique
     ON cj_users (LOWER(login))
     WHERE login IS NOT NULL AND login <> '';
+  `);
+
+  await pool.query(`
+    CREATE OR REPLACE FUNCTION cj_protect_aluno_delete()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      INSERT INTO cj_user_delete_events (usuario_id, perfil, evento, dados)
+      VALUES (
+        OLD.id,
+        OLD.perfil,
+        CASE WHEN OLD.perfil = 'aluno' THEN 'exclusao_bloqueada' ELSE 'exclusao_permitida' END,
+        jsonb_build_object(
+          'id', OLD.id,
+          'nome', OLD.nome,
+          'login', OLD.login,
+          'email', OLD.email,
+          'ativo', OLD.ativo,
+          'criado_em', OLD.criado_em
+        )
+      );
+
+      IF OLD.perfil = 'aluno' THEN
+        RETURN NULL;
+      END IF;
+
+      RETURN OLD;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgname = 'cj_protect_aluno_delete_trigger'
+          AND tgrelid = 'cj_users'::regclass
+      ) THEN
+        CREATE TRIGGER cj_protect_aluno_delete_trigger
+        BEFORE DELETE ON cj_users
+        FOR EACH ROW
+        EXECUTE FUNCTION cj_protect_aluno_delete();
+      END IF;
+    END;
+    $$;
   `);
 }
