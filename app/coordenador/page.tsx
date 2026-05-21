@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQuery, dbQueryOne, initSchema } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
+import { ManualBackupButton } from "@/components/manual-backup-button";
 
 export default async function CoordenadorDashboard() {
   const session = await getSession();
@@ -42,6 +43,7 @@ export default async function CoordenadorDashboard() {
           <p className="page-desc">Visão geral da plataforma CondoJob Educação.</p>
         </div>
         <div className="page-actions">
+          <ManualBackupButton />
           <a href="/coordenador/cursos" className="btn btn-primary">+ Novo Curso</a>
         </div>
       </div>
