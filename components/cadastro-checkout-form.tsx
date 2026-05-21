@@ -17,7 +17,6 @@ type Props = {
 export function CadastroCheckoutForm({ cursos }: Props) {
   const [form, setForm] = useState({
     nome: "",
-    login: "",
     email: "",
     senha: "",
     celular_whatsapp: "",
@@ -37,8 +36,8 @@ export function CadastroCheckoutForm({ cursos }: Props) {
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!form.nome.trim() || !form.login.trim() || !form.email.trim() || !form.senha || !form.curso_id) {
-      setErro("Preencha nome, login, e-mail, senha e curso.");
+    if (!form.nome.trim() || !form.email.trim() || !form.senha || !form.curso_id) {
+      setErro("Preencha nome, e-mail, senha e curso.");
       return;
     }
 
@@ -85,12 +84,7 @@ export function CadastroCheckoutForm({ cursos }: Props) {
       <div className="form-group">
         <label className="form-label">E-mail</label>
         <input className="form-input login-input" type="email" value={form.email} onChange={(e) => upd("email", e.target.value)} placeholder="seu@email.com" />
-      </div>
-
-      <div className="form-group">
-        <label className="form-label">Login de acesso</label>
-        <input className="form-input login-input" value={form.login} onChange={(e) => upd("login", e.target.value)} placeholder="ex: fabio.luiz" />
-        <div className="form-hint">Esse sera o login que o aluno usara para entrar, alem do e-mail.</div>
+        <div className="form-hint">Este e-mail sera o login de acesso do aluno.</div>
       </div>
 
       <div className="form-group">

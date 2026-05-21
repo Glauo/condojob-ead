@@ -61,7 +61,7 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!form.email.trim() || !form.senha) { setErro("Preencha login/e-mail e senha."); return; }
+    if (!form.email.trim() || !form.senha) { setErro("Preencha e-mail e senha."); return; }
     setLoading(true);
     const res = await fetch("/api/auth", {
       method: "POST",
@@ -71,7 +71,7 @@ export default function LoginPage() {
     setLoading(false);
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
-      setErro((d as { error?: string }).error || "Login/e-mail ou senha incorretos.");
+      setErro((d as { error?: string }).error || "E-mail ou senha incorretos.");
       return;
     }
     const { perfil } = await res.json();
@@ -155,11 +155,11 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="form-group">
-              <label className="form-label">Login ou e-mail</label>
+              <label className="form-label">E-mail</label>
               <input
                 className="form-input login-input"
                 type="text"
-                placeholder="login do aluno ou e-mail"
+                placeholder="e-mail cadastrado"
                 value={form.email}
                 onChange={(e) => update("email", e.target.value)}
                 autoFocus

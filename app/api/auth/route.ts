@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const senhaInformada = String(senha ?? "");
 
     if (!identificador || !senhaInformada) {
-      return NextResponse.json({ error: "Login/e-mail e senha sao obrigatorios." }, { status: 400 });
+      return NextResponse.json({ error: "E-mail e senha sao obrigatorios." }, { status: 400 });
     }
 
     const candidatos = await dbQuery<User>(
@@ -33,14 +33,12 @@ export async function POST(req: NextRequest) {
        WHERE ativo = true
          AND (
            LOWER(email) = $1
-           OR LOWER(COALESCE(login, '')) = $1
-           OR LOWER(split_part(email, '@', 1)) = $1
+           OR (perfil = 'coordenador' AND LOWER(COALESCE(login, '')) = $1)
          )
        ORDER BY
          CASE
-           WHEN LOWER(COALESCE(login, '')) = $1 THEN 1
-           WHEN LOWER(email) = $1 THEN 2
-           ELSE 3
+           WHEN LOWER(email) = $1 THEN 1
+           ELSE 2
          END
        LIMIT 10`,
       [identificador]
@@ -55,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!user) {
-      return NextResponse.json({ error: "Login/e-mail ou senha incorretos." }, { status: 401 });
+      return NextResponse.json({ error: "E-mail ou senha incorretos." }, { status: 401 });
     }
 
     const token = await signSession({ id: user.id, nome: user.nome, email: user.email, perfil: user.perfil });
@@ -81,6 +79,9 @@ export async function PUT(req: NextRequest) {
     if (adminKey !== process.env.ADMIN_KEY && adminKey !== "condojob2026") {
       return NextResponse.json({ error: "Nao autorizado." }, { status: 403 });
     }
+    const perfilFinal = perfil === "aluno" ? "aluno" : "coordenador";
+    const emailLimpo = email.toLowerCase().trim();
+    const loginFinal = perfilFinal === "aluno" ? emailLimpo : login?.toLowerCase().trim() || null;
     const hash = await bcrypt.hash(senha, 10);
     await dbQueryOne(
       `INSERT INTO cj_users (nome, login, email, senha_hash, perfil)
@@ -88,7 +89,7 @@ export async function PUT(req: NextRequest) {
        ON CONFLICT (email) DO UPDATE
        SET senha_hash = EXCLUDED.senha_hash, nome = EXCLUDED.nome, login = EXCLUDED.login
        RETURNING id`,
-      [nome, login?.toLowerCase().trim() || null, email.toLowerCase().trim(), hash, perfil || "coordenador"]
+      [nome, loginFinal, emailLimpo, hash, perfilFinal]
     );
     return NextResponse.json({ ok: true });
   } catch (err) {

@@ -95,7 +95,7 @@ export default async function AlunosPage() {
                       <div className="table-name-cell">
                         <span className="table-name-primary">{a.nome}</span>
                         <span className="table-name-secondary">{a.email}</span>
-                        <span className="table-name-secondary">Login: {a.login || a.email}</span>
+                        <span className="table-name-secondary">Login: {a.email}</span>
                       </div>
                     </td>
                     <td style={{ fontSize: "0.8rem", color: "var(--cj-text-muted)" }}>{a.telefone || "—"}</td>

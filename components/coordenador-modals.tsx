@@ -266,12 +266,15 @@ export function NovoAlunoModal() {
                 <div className="form-group">
                   <label className="form-label">E-mail *</label>
                   <input className="form-input" type="email" placeholder="aluno@email.com" value={form.email} onChange={(e) => upd("email", e.target.value)} />
+                  {form.perfil === "aluno" && <span className="form-hint">O e-mail cadastrado sera o login do aluno.</span>}
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Login de acesso *</label>
-                  <input className="form-input" placeholder="ex: joao.silva" value={form.login} onChange={(e) => upd("login", e.target.value)} />
-                  <span className="form-hint">O aluno pode entrar com este login ou com o e-mail.</span>
-                </div>
+                {form.perfil === "coordenador" && (
+                  <div className="form-group">
+                    <label className="form-label">Login de acesso *</label>
+                    <input className="form-input" placeholder="ex: coordenacao" value={form.login} onChange={(e) => upd("login", e.target.value)} />
+                    <span className="form-hint">Campo usado apenas para acesso administrativo.</span>
+                  </div>
+                )}
                 <div className="form-group">
                   <label className="form-label">Celular / WhatsApp</label>
                   <input className="form-input" placeholder="(11) 99999-9999" value={form.celular_whatsapp} onChange={(e) => upd("celular_whatsapp", e.target.value)} />
@@ -301,7 +304,6 @@ export function EditarAlunoModal({ aluno }: { aluno: AlunoCadastroData }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     nome: aluno.nome || "",
-    login: aluno.login || aluno.email || "",
     email: aluno.email || "",
     senha: "",
     data_nascimento: aluno.data_nascimento?.slice(0, 10) || "",
@@ -432,11 +434,7 @@ export function EditarAlunoModal({ aluno }: { aluno: AlunoCadastroData }) {
                 <div className="form-group">
                   <label className="form-label">E-mail *</label>
                   <input className="form-input" type="email" value={form.email} onChange={(e) => upd("email", e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Login de acesso *</label>
-                  <input className="form-input" value={form.login} onChange={(e) => upd("login", e.target.value)} />
-                  <span className="form-hint">Informe este login ao aluno. Ele tambem pode entrar com o e-mail.</span>
+                  <span className="form-hint">Este e-mail e o login de acesso do aluno.</span>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Celular / WhatsApp</label>

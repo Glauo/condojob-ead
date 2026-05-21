@@ -13,12 +13,12 @@ export async function POST(req: NextRequest) {
     assertMercadoPagoConfigured();
 
     const {
-      nome, login, email, senha, curso_id, telefone, celular_whatsapp,
+      nome, email, senha, curso_id, telefone, celular_whatsapp,
       data_nascimento, rg, cpf, estado_civil, cep, cidade, rua, numero, complemento,
     } = await req.json();
 
-    if (!nome?.trim() || !login?.trim() || !email?.trim() || !senha || !curso_id) {
-      return NextResponse.json({ error: "Nome, login, e-mail, senha e curso sao obrigatorios." }, { status: 400 });
+    if (!nome?.trim() || !email?.trim() || !senha || !curso_id) {
+      return NextResponse.json({ error: "Nome, e-mail, senha e curso sao obrigatorios." }, { status: 400 });
     }
     if (senha.length < 6) {
       return NextResponse.json({ error: "Senha deve ter no minimo 6 caracteres." }, { status: 400 });
@@ -33,11 +33,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Este curso ainda nao possui preco configurado." }, { status: 400 });
     }
 
-    const loginLimpo = login.toLowerCase().trim();
     const emailLimpo = email.toLowerCase().trim();
     const alunoExistente = await dbQueryOne<Aluno>(
-      "SELECT id, ativo, perfil FROM cj_users WHERE email=$1 OR LOWER(COALESCE(login, ''))=$2",
-      [emailLimpo, loginLimpo]
+      "SELECT id, ativo, perfil FROM cj_users WHERE email=$1",
+      [emailLimpo]
     );
 
     if (alunoExistente?.perfil && alunoExistente.perfil !== "aluno") {
@@ -57,7 +56,7 @@ export async function POST(req: NextRequest) {
          RETURNING id, ativo, perfil`,
         [
           nome.trim(),
-          loginLimpo,
+          emailLimpo,
           emailLimpo,
           hash,
           telefone || null,
@@ -82,7 +81,7 @@ export async function POST(req: NextRequest) {
          RETURNING id, ativo, perfil`,
         [
           nome.trim(),
-          loginLimpo,
+          emailLimpo,
           emailLimpo,
           hash,
           telefone || null,
@@ -125,7 +124,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(preference, { status: 201 });
   } catch (e: unknown) {
     if ((e as { code?: string }).code === "23505") {
-      return NextResponse.json({ error: "Login ou e-mail ja cadastrado. Acesse sua conta ou fale com o coordenador." }, { status: 409 });
+      return NextResponse.json({ error: "E-mail ja cadastrado. Acesse sua conta ou fale com o coordenador." }, { status: 409 });
     }
     console.error(e);
     return NextResponse.json({ error: (e as Error).message || "Erro interno." }, { status: 500 });
