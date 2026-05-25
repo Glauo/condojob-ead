@@ -46,7 +46,7 @@ export default async function CursoDetalhe({ params }: { params: Promise<{ id: s
        FROM cj_aulas a
        LEFT JOIN cj_atividades atv ON atv.aula_id = a.id
        WHERE a.curso_id = $1
-       GROUP BY a.id ORDER BY a.ordem`,
+       GROUP BY a.id ORDER BY a.ordem ASC, a.id ASC`,
       [id]
     ),
     dbQuery<Atividade>(

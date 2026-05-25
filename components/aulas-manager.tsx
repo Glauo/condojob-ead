@@ -1,12 +1,21 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 
 type Curso = { id: string; nome: string };
 type Aula = { id: string; titulo: string; ordem: number; video_url: string | null; curso_id: string; curso_nome: string };
 
+function sortAulas(aulas: Aula[]) {
+  return [...aulas].sort((a, b) => {
+    const cursoCompare = a.curso_nome.localeCompare(b.curso_nome, "pt-BR");
+    if (cursoCompare !== 0) return cursoCompare;
+    if (a.ordem !== b.ordem) return a.ordem - b.ordem;
+    return a.titulo.localeCompare(b.titulo, "pt-BR");
+  });
+}
+
 export function AulasManager({ cursos, aulasIniciais }: { cursos: Curso[]; aulasIniciais: Aula[] }) {
-  const [aulas, setAulas] = useState<Aula[]>(aulasIniciais);
+  const [aulas, setAulas] = useState<Aula[]>(() => sortAulas(aulasIniciais));
   const [editando, setEditando] = useState<string | null>(null);
   const [videoMode, setVideoMode] = useState<"url" | "upload">("url");
   const [videoUrl, setVideoUrl] = useState("");
@@ -16,6 +25,10 @@ export function AulasManager({ cursos, aulasIniciais }: { cursos: Curso[]; aulas
   const [novaAula, setNovaAula] = useState<{ curso_id: string; titulo: string; ordem: number } | null>(null);
   const [cursoAberto, setCursoAberto] = useState<string | null>(cursos[0]?.id ?? null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setAulas(sortAulas(aulasIniciais));
+  }, [aulasIniciais]);
 
   const comVideo = aulas.filter((a) => a.video_url).length;
   const semVideo = aulas.length - comVideo;
@@ -51,7 +64,11 @@ export function AulasManager({ cursos, aulasIniciais }: { cursos: Curso[]; aulas
     });
     const nova = await res.json();
     const curso = cursos.find((c) => c.id === novaAula.curso_id);
-    setAulas((prev) => [...prev, { ...nova, titulo: novaAula.titulo, ordem: novaAula.ordem, video_url: null, curso_id: novaAula.curso_id, curso_nome: curso?.nome ?? "" }]);
+    const ordemCriada = Number(nova.ordem ?? novaAula.ordem);
+    setAulas((prev) => sortAulas([
+      ...prev.map((a) => a.curso_id === novaAula.curso_id && a.ordem >= ordemCriada ? { ...a, ordem: a.ordem + 1 } : a),
+      { ...nova, titulo: novaAula.titulo, ordem: ordemCriada, video_url: null, curso_id: novaAula.curso_id, curso_nome: curso?.nome ?? "" },
+    ]));
     setSalvando(false);
     setNovaAula(null);
   }
@@ -59,7 +76,16 @@ export function AulasManager({ cursos, aulasIniciais }: { cursos: Curso[]; aulas
   async function excluirAula(id: string) {
     if (!confirm("Excluir esta aula? O progresso dos alunos será perdido.")) return;
     await fetch(`/api/aulas?id=${id}`, { method: "DELETE" });
-    setAulas((prev) => prev.filter((a) => a.id !== id));
+    setAulas((prev) => {
+      const removida = prev.find((a) => a.id === id);
+      if (!removida) return prev;
+      const restantes = prev.filter((a) => a.id !== id);
+      const reordenadas = restantes
+        .filter((a) => a.curso_id === removida.curso_id)
+        .sort((a, b) => a.ordem - b.ordem)
+        .map((a, idx) => ({ ...a, ordem: idx + 1 }));
+      return sortAulas(restantes.map((a) => reordenadas.find((r) => r.id === a.id) ?? a));
+    });
   }
 
   return (
@@ -95,9 +121,9 @@ export function AulasManager({ cursos, aulasIniciais }: { cursos: Curso[]; aulas
         </div>
       ) : (
         cursos.map((curso) => {
-          const aulasC = aulas.filter((a) => a.curso_id === curso.id);
+          const aulasC = sortAulas(aulas.filter((a) => a.curso_id === curso.id));
           const aberto = cursoAberto === curso.id;
-          const proxOrdem = aulasC.length + 1;
+          const proxOrdem = Math.max(0, ...aulasC.map((aula) => Number(aula.ordem) || 0)) + 1;
           return (
             <div className="card" key={curso.id}>
               {/* Header do curso */}

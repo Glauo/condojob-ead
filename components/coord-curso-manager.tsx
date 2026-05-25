@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 type Material = { nome: string; url: string };
@@ -34,6 +34,13 @@ type Submissao = {
 
 const MAX_QUESTOES_AVALIACAO = 10;
 
+function sortAulas<T extends { ordem: number; titulo?: string }>(aulas: T[]) {
+  return [...aulas].sort((a, b) => {
+    if (a.ordem !== b.ordem) return a.ordem - b.ordem;
+    return (a.titulo ?? "").localeCompare(b.titulo ?? "", "pt-BR");
+  });
+}
+
 const CLOSE_SVG = (
   <svg viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -43,7 +50,7 @@ const CLOSE_SVG = (
 /* ── Tab: Módulos (vídeos) ── */
 function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Aula[]; notaMinima: number }) {
   const router = useRouter();
-  const [list, setList] = useState(aulas);
+  const [list, setList] = useState(() => sortAulas(aulas));
   const [editId, setEditId] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -52,6 +59,11 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
   const [novaForm, setNovaForm] = useState<{ titulo: string; ordem: number } | null>(null);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const primeiraAulaApresentacao = /apresent/i.test(list[0]?.titulo ?? "");
+  const proximaOrdem = Math.max(0, ...list.map((aula) => Number(aula.ordem) || 0)) + 1;
+
+  useEffect(() => {
+    setList(sortAulas(aulas));
+  }, [aulas]);
 
   function displayModulo(aula: Aula, idx: number) {
     if (primeiraAulaApresentacao && idx === 0) return "AP";
@@ -88,7 +100,7 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
       body: JSON.stringify({ id: aula.id, titulo: aula.titulo, ordem: aula.ordem, video_url: finalUrl, conteudo: aula.conteudo, materiais: aula.materiais }),
     });
     setSaving(false);
-    setList((p) => p.map((a) => a.id === aula.id ? { ...a, video_url: finalUrl } : a));
+    setList((p) => sortAulas(p.map((a) => a.id === aula.id ? { ...a, video_url: finalUrl } : a)));
     setEditId(null);
     setUploadFile(null);
     setVideoUrl("");
@@ -104,14 +116,19 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
     });
     const nova = await res.json();
     setSaving(false);
-    setList((p) => [...p, { ...nova, titulo: novaForm.titulo, ordem: novaForm.ordem, video_url: null, conteudo: null, materiais: [], total_atividades: 0 }]);
+    const ordemCriada = Number(nova.ordem ?? novaForm.ordem);
+    setList((p) => sortAulas([
+      ...p.map((a) => a.ordem >= ordemCriada ? { ...a, ordem: a.ordem + 1 } : a),
+      { ...nova, titulo: novaForm.titulo, ordem: ordemCriada, video_url: null, conteudo: null, materiais: [], total_atividades: 0 },
+    ]));
     setNovaForm(null);
+    router.refresh();
   }
 
   async function excluir(id: string, titulo: string) {
     if (!confirm(`Excluir o módulo "${titulo}"? O progresso dos alunos será perdido.`)) return;
     await fetch(`/api/aulas?id=${id}`, { method: "DELETE" });
-    setList((p) => p.filter((a) => a.id !== id));
+    setList((p) => sortAulas(p.filter((a) => a.id !== id).map((a, idx) => ({ ...a, ordem: idx + 1 }))));
     router.refresh();
   }
 
@@ -242,7 +259,7 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
           </div>
         ) : (
           <button className="btn btn-ghost btn-sm" style={{ color: "var(--cj-teal)" }}
-            onClick={() => setNovaForm({ titulo: "", ordem: list.length + 1 })}>
+            onClick={() => setNovaForm({ titulo: "", ordem: proximaOrdem })}>
             <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>

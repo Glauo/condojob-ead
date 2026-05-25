@@ -72,7 +72,7 @@ export default async function CoordAulasPage({
        FROM cj_aulas a
        LEFT JOIN cj_atividades atv ON atv.aula_id = a.id
        WHERE a.curso_id = $1
-       GROUP BY a.id ORDER BY a.ordem`,
+       GROUP BY a.id ORDER BY a.ordem ASC, a.id ASC`,
       [cursoId]
     ),
     dbQuery<Atividade>(
