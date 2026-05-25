@@ -4,7 +4,7 @@ import { dbQuery, initSchema } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
 import { CursoModal, NovoAlunoModal } from "@/components/coordenador-modals";
 
-type Curso = { id: string; nome: string; descricao: string; carga_horaria: number; preco: number; nota_minima: number; criado_em: string; total_aulas: number; total_matriculas: number };
+type Curso = { id: string; nome: string; descricao: string; carga_horaria: number; preco: number; link_pagamento: string | null; nota_minima: number; criado_em: string; total_aulas: number; total_matriculas: number };
 
 export default async function CursosPage() {
   const session = await getSession();
@@ -14,7 +14,7 @@ export default async function CursosPage() {
   await initSchema();
 
   const cursos = await dbQuery<Curso>(
-    `SELECT c.id, c.nome, c.descricao, c.carga_horaria, c.preco, c.nota_minima, c.criado_em,
+    `SELECT c.id, c.nome, c.descricao, c.carga_horaria, c.preco, c.link_pagamento, c.nota_minima, c.criado_em,
       (SELECT COUNT(*) FROM cj_aulas WHERE curso_id = c.id) AS total_aulas,
       (SELECT COUNT(*) FROM cj_matriculas WHERE curso_id = c.id) AS total_matriculas
      FROM cj_cursos c ORDER BY c.criado_em DESC`

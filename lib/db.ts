@@ -65,6 +65,7 @@ export async function initSchema() {
       descricao TEXT,
       carga_horaria INTEGER DEFAULT 0,
       preco NUMERIC(10,2) DEFAULT 0,
+      link_pagamento TEXT,
       nota_minima NUMERIC(4,2) DEFAULT 7.0,
       max_tentativas INTEGER DEFAULT 3,
       criado_por UUID REFERENCES cj_users(id),
@@ -221,6 +222,8 @@ export async function initSchema() {
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS rua TEXT;
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS numero TEXT;
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS complemento TEXT;
+
+    ALTER TABLE cj_cursos ADD COLUMN IF NOT EXISTS link_pagamento TEXT;
 
     ALTER TABLE cj_pagamentos ADD COLUMN IF NOT EXISTS mp_preference_id TEXT;
     ALTER TABLE cj_pagamentos ADD COLUMN IF NOT EXISTS mp_payment_id TEXT;

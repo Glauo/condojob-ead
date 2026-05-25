@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { dbQueryOne, dbRun, initSchema } from "@/lib/db";
-import { createMercadoPagoPreference, assertMercadoPagoConfigured } from "@/lib/mercadopago";
+import { createMercadoPagoPreference } from "@/lib/mercadopago";
 
-type Curso = { id: string; nome: string; preco: number };
+type Curso = { id: string; nome: string; preco: number; link_pagamento: string | null };
 type Aluno = { id: string; ativo: boolean; perfil: string };
 type NovoPagamento = { id: string };
 
 export async function POST(req: NextRequest) {
   try {
     await initSchema();
-    assertMercadoPagoConfigured();
 
     const {
       nome, email, senha, curso_id, telefone, celular_whatsapp,
@@ -25,7 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     const curso = await dbQueryOne<Curso>(
-      "SELECT id, nome, preco FROM cj_cursos WHERE id=$1",
+      "SELECT id, nome, preco, link_pagamento FROM cj_cursos WHERE id=$1",
       [curso_id]
     );
     if (!curso) return NextResponse.json({ error: "Curso nao encontrado." }, { status: 404 });
@@ -110,6 +109,17 @@ export async function POST(req: NextRequest) {
     if (!pagamento) {
       await dbRun("UPDATE cj_users SET ativo=false WHERE id=$1", [aluno.id]);
       return NextResponse.json({ error: "Nao foi possivel gerar a cobranca." }, { status: 500 });
+    }
+
+    if (curso.link_pagamento?.trim()) {
+      const checkoutUrl = curso.link_pagamento.trim();
+      await dbRun(
+        `UPDATE cj_pagamentos
+         SET checkout_url=$1, mp_external_reference=$2
+         WHERE id=$2`,
+        [checkoutUrl, pagamento.id]
+      );
+      return NextResponse.json({ checkoutUrl, pagamentoId: pagamento.id }, { status: 201 });
     }
 
     const preference = await createMercadoPagoPreference({

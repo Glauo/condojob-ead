@@ -22,6 +22,10 @@ type PaymentResponse = {
   status: string;
   status_detail?: string;
   external_reference?: string;
+  transaction_amount?: number;
+  payer?: {
+    email?: string;
+  };
 };
 
 type LocalPayment = {
@@ -100,6 +104,31 @@ function mapMercadoPagoStatus(status: string) {
   return "pendente";
 }
 
+async function findLocalPayment(data: Partial<PaymentResponse>) {
+  if (data.external_reference) {
+    return dbQueryOne<LocalPayment>(
+      "SELECT id, usuario_id, curso_id, status FROM cj_pagamentos WHERE id=$1 OR mp_external_reference=$1",
+      [data.external_reference]
+    );
+  }
+
+  const payerEmail = data.payer?.email?.toLowerCase().trim();
+  const amount = Number(data.transaction_amount);
+  if (!payerEmail || !Number.isFinite(amount) || amount <= 0) return null;
+
+  return dbQueryOne<LocalPayment>(
+    `SELECT p.id, p.usuario_id, p.curso_id, p.status
+     FROM cj_pagamentos p
+     JOIN cj_users u ON u.id = p.usuario_id
+     WHERE p.status = 'pendente'
+       AND LOWER(u.email) = $1
+       AND ABS(p.valor::numeric - $2::numeric) < 0.01
+     ORDER BY p.criado_em DESC
+     LIMIT 1`,
+    [payerEmail, amount]
+  );
+}
+
 export async function confirmMercadoPagoPayment(paymentId: string) {
   assertMercadoPagoConfigured();
 
@@ -112,13 +141,7 @@ export async function confirmMercadoPagoPayment(paymentId: string) {
     throw new Error(data.message || "Pagamento nao encontrado no Mercado Pago.");
   }
 
-  const externalReference = data.external_reference;
-  if (!externalReference) return { status: data.status || "unknown", localStatus: "pendente" };
-
-  const local = await dbQueryOne<LocalPayment>(
-    "SELECT id, usuario_id, curso_id, status FROM cj_pagamentos WHERE id=$1 OR mp_external_reference=$1",
-    [externalReference]
-  );
+  const local = await findLocalPayment(data);
   if (!local) return { status: data.status || "unknown", localStatus: "pendente" };
 
   const localStatus = mapMercadoPagoStatus(data.status || "");

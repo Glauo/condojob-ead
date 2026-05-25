@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 /* ─── Modal Novo Curso ─── */
-type CursoData = { id?: string; nome?: string; descricao?: string; carga_horaria?: number; preco?: number; nota_minima?: number; max_tentativas?: number };
+type CursoData = { id?: string; nome?: string; descricao?: string; carga_horaria?: number; preco?: number; link_pagamento?: string | null; nota_minima?: number; max_tentativas?: number };
 
 export function CursoModal({ curso }: { curso?: CursoData } = {}) {
   const router = useRouter();
@@ -15,6 +15,7 @@ export function CursoModal({ curso }: { curso?: CursoData } = {}) {
     descricao: String(curso?.descricao || ""),
     carga_horaria: String(curso?.carga_horaria || "0"),
     preco: String(curso?.preco || "0"),
+    link_pagamento: String(curso?.link_pagamento || ""),
     nota_minima: String(curso?.nota_minima || "7"),
     max_tentativas: String(curso?.max_tentativas || "3"),
   });
@@ -81,6 +82,11 @@ export function CursoModal({ curso }: { curso?: CursoData } = {}) {
                 <div className="form-group">
                   <label className="form-label">Preço (R$)</label>
                   <input className="form-input" type="number" min="0" step="0.01" value={form.preco} onChange={(e) => upd("preco", e.target.value)} />
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Link de pagamento Mercado Pago</label>
+                  <input className="form-input" placeholder="https://mpago.la/..." value={form.link_pagamento} onChange={(e) => upd("link_pagamento", e.target.value)} />
+                  <span className="form-hint">Quando preenchido, o aluno sera enviado para este link apos o cadastro.</span>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Nota mínima (0–10)</label>
