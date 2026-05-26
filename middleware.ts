@@ -26,6 +26,21 @@ export function middleware(req: NextRequest) {
 
   const res = NextResponse.next();
 
+  if (
+    pathname.startsWith("/coordenador") ||
+    pathname.startsWith("/aluno") ||
+    pathname.startsWith("/api/aulas") ||
+    pathname.startsWith("/api/atividades")
+  ) {
+    res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.headers.set("Pragma", "no-cache");
+    res.headers.set("Expires", "0");
+  }
+
+  if (pathname.startsWith("/coordenador/aulas") || pathname.startsWith("/coordenador/cursos")) {
+    res.headers.set("Clear-Site-Data", '"cache"');
+  }
+
   if (process.env.NODE_ENV === "production" && isCondoJobHost) {
     res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
     res.headers.set("X-Content-Type-Options", "nosniff");
