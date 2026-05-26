@@ -47,9 +47,16 @@ export function CourseAccordion({
 
   const totalMateriais = aulas.reduce((s, a) => s + a.materiais.length, 0);
   const totalAtv = atividades.length;
+  const primeiraAulaApresentacao = /apresent/i.test(aulas[0]?.titulo ?? "");
+  const totalModulos = primeiraAulaApresentacao ? Math.max(aulas.length - 1, 0) : aulas.length;
   const aprovadas = atividades.filter(
     (a) => a.nota !== null && Number(a.nota) >= notaMinima && a.sub_status === "corrigida"
   ).length;
+
+  function displayModulo(idx: number) {
+    if (primeiraAulaApresentacao && idx === 0) return "AP";
+    return String(primeiraAulaApresentacao ? idx : idx + 1).padStart(2, "0");
+  }
 
   function toggle(key: string) {
     setOpenSection((prev) => (prev === key ? null : key));
@@ -63,7 +70,7 @@ export function CourseAccordion({
         <button className={`accordion-header${openSection === "video" ? " open" : ""}`} onClick={() => toggle("video")}>
           <span className="accordion-section-icon">🎬</span>
           <span className="accordion-section-title">Videoaulas</span>
-          <span className="badge badge-purple" style={{ marginLeft: "10px" }}>{aulas.length} módulos</span>
+          <span className="badge badge-purple" style={{ marginLeft: "10px" }}>{totalModulos} módulos</span>
           <ChevronIcon open={openSection === "video"} />
         </button>
 
@@ -72,12 +79,12 @@ export function CourseAccordion({
             {aulas.length === 0 ? (
               <p className="accordion-empty">Nenhum módulo cadastrado ainda.</p>
             ) : (
-              aulas.map((aula) => (
+              aulas.map((aula, idx) => (
                 <div key={aula.id} className="accordion-item">
                   <div className={`accordion-item-num${aula.concluido ? " done" : aula.unlocked ? " active" : ""}`}>
                     {aula.concluido
                       ? <svg viewBox="0 0 20 20" fill="currentColor" width="11" height="11"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                      : String(aula.ordem).padStart(2, "0")
+                      : displayModulo(idx)
                     }
                   </div>
                   <div className="accordion-item-content">
@@ -131,11 +138,11 @@ export function CourseAccordion({
             {totalMateriais === 0 ? (
               <p className="accordion-empty">Nenhum material disponível ainda.</p>
             ) : (
-              aulas.map((aula) =>
+              aulas.map((aula, idx) =>
                 aula.materiais.length > 0 ? (
                   <div key={aula.id} style={{ marginBottom: "16px" }}>
                     <div className="accordion-module-label">
-                      Módulo {String(aula.ordem).padStart(2, "0")} — {aula.titulo}
+                      {displayModulo(idx) === "AP" ? "Apresentação" : `Módulo ${displayModulo(idx)}`} — {aula.titulo}
                     </div>
                     {aula.materiais.map((m, i) => (
                       <a key={i} href={m.url} target="_blank" rel="noopener noreferrer" className="accordion-material-item">
@@ -171,13 +178,13 @@ export function CourseAccordion({
             {totalAtv === 0 ? (
               <p className="accordion-empty">Nenhuma atividade avaliativa cadastrada.</p>
             ) : (
-              aulas.map((aula) => {
+              aulas.map((aula, idx) => {
                 const atvAula = atividades.filter((a) => a.aula_id === aula.id);
                 if (atvAula.length === 0) return null;
                 return (
                   <div key={aula.id} style={{ marginBottom: "16px" }}>
                     <div className="accordion-module-label">
-                      Módulo {String(aula.ordem).padStart(2, "0")} — {aula.titulo}
+                      Módulo {displayModulo(idx)} — {aula.titulo}
                     </div>
                     {atvAula.map((atv) => {
                       const nota = atv.nota !== null ? Number(atv.nota) : null;

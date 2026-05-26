@@ -67,6 +67,7 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
 
   function displayModulo(aula: Aula, idx: number) {
     if (primeiraAulaApresentacao && idx === 0) return "AP";
+    if (primeiraAulaApresentacao) return String(idx).padStart(2, "0");
     return String(Math.max(aula.ordem, 1)).padStart(2, "0");
   }
 
@@ -281,6 +282,7 @@ function TabMateriais({ aulas }: { aulas: Aula[] }) {
 
   function displayModulo(aula: Aula, idx: number) {
     if (primeiraAulaApresentacao && idx === 0) return "AP";
+    if (primeiraAulaApresentacao) return String(idx).padStart(2, "0");
     return String(Math.max(aula.ordem, 1)).padStart(2, "0");
   }
 

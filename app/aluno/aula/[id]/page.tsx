@@ -7,6 +7,7 @@ import { PlayerClient } from "@/components/player-client";
 type Material = { nome: string; url: string };
 type Questao = { texto: string; alternativas?: string[]; resposta_correta?: number };
 type Aula = { id: string; titulo: string; ordem: number; video_url: string | null; conteudo: string | null; materiais: string | Material[] | null; curso_id: string; curso_nome: string; nota_minima: number };
+type AulaOrdem = { id: string; titulo: string; ordem: number };
 type Atividade = { id: string; titulo: string; tipo: string; questoes: string | Questao[] | null };
 type Prog = { percentual: number; concluido: boolean };
 
@@ -19,6 +20,13 @@ function parseArray<T>(value: string | T[] | null | undefined): T[] {
   } catch {
     return [];
   }
+}
+
+function displayModulo(aulas: AulaOrdem[], aulaId: string) {
+  const idx = aulas.findIndex((aula) => aula.id === aulaId);
+  const primeiraAulaApresentacao = /apresent/i.test(aulas[0]?.titulo ?? "");
+  if (primeiraAulaApresentacao && idx === 0) return "AP";
+  return String(primeiraAulaApresentacao ? idx : idx + 1).padStart(2, "0");
 }
 
 export default async function AulaPage({ params }: { params: Promise<{ id: string }> }) {
@@ -41,12 +49,14 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
   );
   if (!matricula) redirect(`/aluno/curso/${aula.curso_id}`);
 
-  const [progresso, atividades] = await Promise.all([
+  const [progresso, atividades, aulasCurso] = await Promise.all([
     dbQueryOne<Prog>("SELECT percentual, concluido FROM cj_progresso WHERE usuario_id = $1 AND aula_id = $2", [session.id, id]),
     dbQuery<Atividade>("SELECT id, titulo, tipo, questoes FROM cj_atividades WHERE aula_id = $1 ORDER BY criado_em", [id]),
+    dbQuery<AulaOrdem>("SELECT id, titulo, ordem FROM cj_aulas WHERE curso_id = $1 ORDER BY ordem", [aula.curso_id]),
   ]);
 
   const materiais = parseArray<Material>(aula.materiais);
+  const moduloLabel = displayModulo(aulasCurso, aula.id);
 
   return (
     <AppShell breadcrumb={aula.titulo} userName={session.nome} userRole="aluno">
@@ -54,7 +64,7 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
         <div>
           <div className="page-eyebrow">
             <span className="page-eyebrow-dot" />
-            {aula.curso_nome} — Aula {String(aula.ordem).padStart(2, "0")}
+            {aula.curso_nome} — {moduloLabel === "AP" ? "Apresentação" : `Módulo ${moduloLabel}`}
           </div>
           <h1 className="page-title">{aula.titulo}</h1>
         </div>

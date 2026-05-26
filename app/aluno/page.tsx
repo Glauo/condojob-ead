@@ -71,6 +71,14 @@ function parseMateriais(raw: string) {
   }
 }
 
+function displayModulo(aulas: AulaConteudo[], aula: AulaConteudo) {
+  const aulasCurso = aulas.filter((item) => item.curso_id === aula.curso_id).sort((a, b) => a.ordem - b.ordem);
+  const idx = aulasCurso.findIndex((item) => item.id === aula.id);
+  const primeiraAulaApresentacao = /apresent/i.test(aulasCurso[0]?.titulo ?? "");
+  if (primeiraAulaApresentacao && idx === 0) return "AP";
+  return String(primeiraAulaApresentacao ? idx : idx + 1).padStart(2, "0");
+}
+
 export default async function AlunoDashboard() {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -294,7 +302,7 @@ export default async function AlunoDashboard() {
                 return (
                   <div key={aula.id} style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: "12px", alignItems: "start", padding: "12px", background: "var(--cj-dark)", border: "1px solid var(--cj-dark-border)", borderRadius: "var(--cj-radius)" }}>
                     <div className={`accordion-item-num${aula.concluido ? " done" : " active"}`}>
-                      {String(aula.ordem).padStart(2, "0")}
+                      {displayModulo(aulas, aula)}
                     </div>
                     <div>
                       <div style={{ fontSize: "0.76rem", color: "var(--cj-teal)", fontWeight: 700 }}>{aula.curso_nome}</div>
