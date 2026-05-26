@@ -4,6 +4,9 @@ import { dbQueryOne, dbQuery } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
 import { CoordCursoManager } from "@/components/coord-curso-manager";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type Curso = { id: string; nome: string; carga_horaria: number; nota_minima: number };
 type Material = { nome: string; url: string };
 type AulaRaw = {
@@ -86,6 +89,7 @@ export default async function CursoDetalhe({ params }: { params: Promise<{ id: s
       </div>
 
       <CoordCursoManager
+        key={`${id}-${aulas.map((a) => `${a.id}:${a.ordem}:${a.total_atividades}`).join("|")}-${atividades.length}`}
         cursoId={id}
         notaMinima={Number(curso.nota_minima)}
         aulas={aulas}

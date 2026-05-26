@@ -406,8 +406,13 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
   const [form, setForm] = useState({ titulo: "", tipo: "multipla_escolha", questao_texto: "", alt_a: "", alt_b: "", alt_c: "", alt_d: "", resposta: "0" });
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState("");
-  const primeiraAulaApresentacao = /apresent/i.test(aulas[0]?.titulo ?? "");
-  const aulasAvaliativas = primeiraAulaApresentacao ? aulas.slice(1) : aulas;
+  const aulasOrdenadas = sortAulas(aulas);
+  const primeiraAulaApresentacao = /apresent/i.test(aulasOrdenadas[0]?.titulo ?? "");
+  const aulasAvaliativas = primeiraAulaApresentacao ? aulasOrdenadas.slice(1) : aulasOrdenadas;
+
+  useEffect(() => {
+    setAtvs(atvsIniciais);
+  }, [atvsIniciais]);
 
   async function criarAtividade() {
     if (modal && atvs.filter((a) => a.aula_id === modal.aulaId).length >= MAX_QUESTOES_AVALIACAO) {

@@ -4,6 +4,9 @@ import { dbQuery, dbQueryOne, initSchema } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
 import { CoordCursoManager } from "@/components/coord-curso-manager";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type Curso = { id: string; nome: string; nota_minima: number };
 type Material = { nome: string; url: string };
 type AulaRaw = {
@@ -165,6 +168,7 @@ export default async function CoordAulasPage({
       </div>
 
       <CoordCursoManager
+        key={`${cursoId}-${aulas.map((a) => `${a.id}:${a.ordem}:${a.total_atividades}`).join("|")}-${atividades.length}`}
         cursoId={cursoId}
         notaMinima={Number(curso.nota_minima)}
         aulas={aulas}
