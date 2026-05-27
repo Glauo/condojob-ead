@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { dbRun, dbQuery, dbQueryOne } from "@/lib/db";
+import { tryIssueCertificateForAula } from "@/lib/certificados";
 
 type Questao = { resposta_correta?: number };
 type Atividade = { id: string; aula_id: string; tipo: string; questoes: Questao[] | string };
@@ -84,5 +85,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, nota, acertos, total: objetivas.length });
+  const certificado = await tryIssueCertificateForAula(session.id, aula_id);
+  return NextResponse.json({ ok: true, nota, acertos, total: objetivas.length, certificado });
 }

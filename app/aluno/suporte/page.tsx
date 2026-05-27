@@ -17,7 +17,7 @@ const FAQS = [
   },
   {
     q: "Como obtenho meu certificado?",
-    a: "O certificado é emitido automaticamente ao concluir todas as 10 aulas e atingir a nota mínima em todas as atividades. Acesse 'Certificados' no menu.",
+    a: "O certificado é emitido automaticamente ao concluir todas as aulas do curso e atingir a nota mínima em todas as atividades. Acesse 'Certificados' no menu.",
   },
   {
     q: "Esqueci minha senha. O que fazer?",

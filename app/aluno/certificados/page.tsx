@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQuery, initSchema } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
+import { issuePendingCertificatesForUser } from "@/lib/certificados";
 
 type Cert = { id: string; codigo: string; emitido_em: string; nome_curso: string; carga_horaria: number };
 
@@ -11,6 +12,7 @@ export default async function CertificadosPage() {
   if (session.perfil !== "aluno") redirect("/coordenador");
 
   await initSchema();
+  await issuePendingCertificatesForUser(session.id);
 
   const certs = await dbQuery<Cert>(
     `SELECT ce.id, ce.codigo, ce.emitido_em, c.nome AS nome_curso, c.carga_horaria
@@ -59,8 +61,8 @@ export default async function CertificadosPage() {
                 <a href={`/certificado/${cert.codigo}`} target="_blank" className="btn btn-primary btn-sm">
                   Ver certificado
                 </a>
-                <a href={`/api/certificados?codigo=${cert.codigo}&download=1`} className="btn btn-ghost btn-sm">
-                  Baixar PDF
+                <a href={`/certificado/${cert.codigo}`} target="_blank" className="btn btn-ghost btn-sm">
+                  Imprimir / salvar PDF
                 </a>
               </div>
             </div>

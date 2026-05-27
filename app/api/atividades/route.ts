@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { dbQuery, dbQueryOne, dbRun, initSchema } from "@/lib/db";
+import { tryIssueCertificateForCourse } from "@/lib/certificados";
 
 const MAX_QUESTOES_AVALIACAO = 10;
 
@@ -37,7 +38,18 @@ export async function PATCH(req: NextRequest) {
   const { nota } = await req.json();
   if (!id) return NextResponse.json({ error: "ID obrigatório." }, { status: 400 });
   await dbRun("UPDATE cj_submissoes SET nota=$1, status='corrigida' WHERE id=$2", [nota, id]);
-  return NextResponse.json({ ok: true });
+  const submissao = await dbQueryOne<{ usuario_id: string; curso_id: string }>(
+    `SELECT s.usuario_id, a.curso_id
+       FROM cj_submissoes s
+       JOIN cj_atividades atv ON atv.id = s.atividade_id
+       JOIN cj_aulas a ON a.id = atv.aula_id
+      WHERE s.id=$1`,
+    [id]
+  );
+  const certificado = submissao
+    ? await tryIssueCertificateForCourse(submissao.usuario_id, submissao.curso_id)
+    : null;
+  return NextResponse.json({ ok: true, certificado });
 }
 
 export async function DELETE(req: NextRequest) {

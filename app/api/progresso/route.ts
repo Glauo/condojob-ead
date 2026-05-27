@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { dbRun } from "@/lib/db";
+import { tryIssueCertificateForAula } from "@/lib/certificados";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -17,5 +18,8 @@ export async function POST(req: NextRequest) {
          atualizado_em = now()`,
     [session.id, aula_id, percentual || 0, Boolean(concluido), concluido ? new Date() : null]
   );
-  return NextResponse.json({ ok: true });
+  const certificado = Boolean(concluido)
+    ? await tryIssueCertificateForAula(session.id, aula_id)
+    : null;
+  return NextResponse.json({ ok: true, certificado });
 }
