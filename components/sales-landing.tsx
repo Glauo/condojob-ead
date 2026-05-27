@@ -44,6 +44,7 @@ export async function SalesLanding() {
             <span>8 modulos</span>
             <span>Avaliacoes automaticas</span>
             <span>Certificado digital</span>
+            <span>Plataforma de empregos</span>
             <span>Pagamento seguro</span>
           </div>
         </div>
@@ -60,6 +61,22 @@ export async function SalesLanding() {
         </p>
       </section>
 
+      <section className="landing-section landing-jobs-access" aria-label="Plataforma de empregos CondoJob">
+        <div className="landing-jobs-stat">
+          <span>+500</span>
+          <strong>condominios cadastrados</strong>
+        </div>
+        <div className="landing-jobs-copy">
+          <span className="landing-section-kicker">Oportunidade apos o curso</span>
+          <h2>Aprovado no curso, o aluno sera liberado na plataforma de empregos da CondoJob.</h2>
+          <p>
+            A CondoJob possui mais de 500 condominios cadastrados procurando profissionais
+            preparados e com certificado CondoJob. Ao concluir a formacao, o aluno fica apto
+            para acessar esse ambiente de oportunidades.
+          </p>
+        </div>
+      </section>
+
       <section className="landing-section">
         <div className="landing-section-head">
           <span className="landing-section-kicker">O que esta incluso</span>
@@ -71,6 +88,7 @@ export async function SalesLanding() {
             ["Avaliacoes com nota", "Cada modulo tem avaliacao objetiva e correcao automatica pela plataforma."],
             ["Materiais de apoio", "Biblioteca com arquivos e conteudos complementares para reforcar o aprendizado."],
             ["Certificado digital", "Conclusao com certificado para o aluno aprovado no curso."],
+            ["Liberacao para empregos", "Aluno aprovado fica liberado para acessar a plataforma de empregos da CondoJob."],
             ["Chat com coordenador", "Canal de suporte para tirar duvidas durante a formacao."],
             ["ClubCondoJob", "Clube de descontos para alunos premium, com beneficios cadastrados na plataforma."],
           ].map(([title, text]) => (

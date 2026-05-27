@@ -767,6 +767,59 @@ img { max-width: 100%; }
   margin-bottom: 28px;
 }
 
+.landing-jobs-access {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.42fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  padding: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(103,232,249,0.18);
+  background:
+    linear-gradient(135deg, rgba(103,232,249,0.12), rgba(129,140,248,0.08)),
+    #0D1422;
+}
+
+.landing-jobs-stat {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 26px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(3,7,18,0.44);
+}
+
+.landing-jobs-stat span {
+  color: #A5F3FC;
+  font-size: 4rem;
+  line-height: 0.95;
+  font-weight: 950;
+}
+
+.landing-jobs-stat strong {
+  margin-top: 10px;
+  color: rgba(248,250,252,0.86);
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.landing-jobs-copy h2 {
+  margin-top: 14px;
+  color: #FFFFFF;
+  font-size: 2rem;
+  line-height: 1.16;
+  font-weight: 920;
+}
+
+.landing-jobs-copy p {
+  margin-top: 14px;
+  color: rgba(248,250,252,0.66);
+  font-size: 0.98rem;
+  line-height: 1.72;
+}
+
 .landing-feature-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -881,6 +934,7 @@ img { max-width: 100%; }
   }
 
   .landing-course-strip,
+  .landing-jobs-access,
   .landing-feature-grid,
   .landing-module-list {
     grid-template-columns: 1fr;
