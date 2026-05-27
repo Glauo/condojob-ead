@@ -19,14 +19,17 @@ export async function POST(req: NextRequest) {
 
     const originalName = file.name || "";
     const originalExt = originalName.split(".").pop()?.toLowerCase() || "";
+    const genericMime = ["", "application/octet-stream"].includes(file.type);
     const allowedVideos = isResposta ? [] : ["video/mp4", "video/webm", "video/ogg", "video/quicktime"];
+    const allowedVideoExts = isResposta ? [] : ["mp4", "webm", "ogg", "mov", "m4v"];
     const allowedDocs = ["application/pdf", "application/x-pdf"];
     const allowedImages = isResposta ? ["image/jpeg", "image/png", "image/webp"] : [];
     const allAllowed = [...allowedVideos, ...allowedDocs, ...allowedImages];
-    const isPdf = allowedDocs.includes(file.type) || (["", "application/octet-stream"].includes(file.type) && originalExt === "pdf");
+    const isVideo = allowedVideos.includes(file.type) || (genericMime && allowedVideoExts.includes(originalExt));
+    const isPdf = allowedDocs.includes(file.type) || (genericMime && originalExt === "pdf");
     const isImage = allowedImages.includes(file.type);
 
-    if (!allAllowed.includes(file.type) && !isPdf && !isImage) {
+    if (!allAllowed.includes(file.type) && !isVideo && !isPdf && !isImage) {
       const formatos = isResposta ? "PDF, JPG, PNG ou WebP" : "MP4, WebM, OGG ou PDF";
       return NextResponse.json({ error: `Formato nao suportado (${file.type || originalExt}). Use ${formatos}.` }, { status: 400 });
     }
