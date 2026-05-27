@@ -31,11 +31,6 @@ export async function SalesLanding() {
             Formação prática para quem quer atuar em condomínios com atendimento profissional,
             tecnologia, segurança, rotina operacional e postura de alto padrão.
           </p>
-          <div className="landing-price-row" aria-label="Preco do curso">
-            <span className="landing-price-main">R$ 99,00</span>
-            <span className="landing-price-divider">ou</span>
-            <span className="landing-price-installments">12x de R$ 9,90</span>
-          </div>
           <div className="landing-hero-actions">
             <Link href="/cadastro" className="landing-primary-btn">Ir para a plataforma e fazer matrícula</Link>
             <Link href="/login" className="landing-secondary-btn">Já sou aluno</Link>
