@@ -2,9 +2,9 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQuery, dbQueryOne, initSchema } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
-import { AtividadeModal, CorrigirModal } from "@/components/atividade-modals";
+import { AtividadeModal, CorrigirModal, EditAtividadeModal } from "@/components/atividade-modals";
 
-type Atividade = { id: string; titulo: string; tipo: string; aula_titulo: string; total_submissoes: number; pendentes: number };
+type Atividade = { id: string; titulo: string; tipo: string; aula_titulo: string; curso_nome: string; total_submissoes: number; pendentes: number; total_matriculados: number };
 type Submissao = { id: string; nome_aluno: string; titulo_atividade: string; submetido_em: string; nota: number | null; status: string; respostas: string };
 
 export default async function AtividadesPage({ searchParams }: { searchParams: Promise<{ aula_id?: string }> }) {
@@ -19,11 +19,15 @@ export default async function AtividadesPage({ searchParams }: { searchParams: P
     dbQuery<Atividade>(
       `SELECT at.id, at.titulo, at.tipo,
         a.titulo AS aula_titulo,
+        c.nome AS curso_nome,
         (SELECT COUNT(*) FROM cj_submissoes WHERE atividade_id = at.id) AS total_submissoes,
-        (SELECT COUNT(*) FROM cj_submissoes WHERE atividade_id = at.id AND status = 'aguardando_correcao') AS pendentes
-       FROM cj_atividades at JOIN cj_aulas a ON a.id = at.aula_id
+        (SELECT COUNT(*) FROM cj_submissoes WHERE atividade_id = at.id AND status = 'aguardando_correcao') AS pendentes,
+        (SELECT COUNT(*) FROM cj_matriculas WHERE curso_id = a.curso_id AND status = 'ativo') AS total_matriculados
+       FROM cj_atividades at
+       JOIN cj_aulas a ON a.id = at.aula_id
+       JOIN cj_cursos c ON c.id = a.curso_id
        ${aula_id ? "WHERE at.aula_id = $1" : ""}
-       ORDER BY a.ordem, at.titulo`,
+       ORDER BY c.nome, a.ordem, at.titulo`,
       aula_id ? [aula_id] : []
     ),
     dbQuery<Submissao>(
@@ -89,15 +93,24 @@ export default async function AtividadesPage({ searchParams }: { searchParams: P
             </div>
           ) : (
             <table className="data-table">
-              <thead><tr><th>Título</th><th>Tipo</th><th>Aula</th><th>Submissões</th><th>Pendentes</th></tr></thead>
+              <thead><tr><th>Título</th><th>Tipo</th><th>Turma</th><th>Módulo</th><th>Andamento</th><th>Pendentes</th><th>Ações</th></tr></thead>
               <tbody>
                 {atividades.map((a) => (
                   <tr key={a.id}>
                     <td style={{ fontWeight: 600 }}>{a.titulo}</td>
                     <td><span className="badge badge-purple">{a.tipo.replace("_", " ")}</span></td>
+                    <td style={{ fontSize: "0.8rem", color: "var(--cj-text)" }}>{a.curso_nome}</td>
                     <td style={{ fontSize: "0.8rem", color: "var(--cj-text-muted)" }}>{a.aula_titulo}</td>
-                    <td>{a.total_submissoes}</td>
+                    <td style={{ fontSize: "0.82rem" }}>
+                      {a.total_submissoes}/{a.total_matriculados}
+                      {Number(a.total_matriculados) > 0 && (
+                        <span style={{ color: "var(--cj-text-muted)", marginLeft: "4px" }}>
+                          ({Math.round((Number(a.total_submissoes) / Number(a.total_matriculados)) * 100)}%)
+                        </span>
+                      )}
+                    </td>
                     <td>{Number(a.pendentes) > 0 ? <span className="badge badge-warning">{a.pendentes}</span> : "0"}</td>
+                    <td><EditAtividadeModal atividadeId={a.id} /></td>
                   </tr>
                 ))}
               </tbody>

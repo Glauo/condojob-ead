@@ -7,7 +7,13 @@ const MAX_QUESTOES_AVALIACAO = 10;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
   const aulaId = searchParams.get("aula_id");
+  if (id) {
+    const atv = await dbQueryOne("SELECT id, titulo, tipo, questoes FROM cj_atividades WHERE id=$1", [id]);
+    if (!atv) return NextResponse.json({ error: "Não encontrado." }, { status: 404 });
+    return NextResponse.json(atv);
+  }
   if (!aulaId) return NextResponse.json({ error: "aula_id obrigatório." }, { status: 400 });
   const atividades = await dbQuery("SELECT id, titulo, tipo, questoes FROM cj_atividades WHERE aula_id=$1 ORDER BY criado_em", [aulaId]);
   return NextResponse.json(atividades);
@@ -50,6 +56,18 @@ export async function PATCH(req: NextRequest) {
     ? await tryIssueCertificateForCourse(submissao.usuario_id, submissao.curso_id)
     : null;
   return NextResponse.json({ ok: true, certificado });
+}
+
+export async function PUT(req: NextRequest) {
+  const session = await getSession();
+  if (!session || session.perfil !== "coordenador") return NextResponse.json({ error: "Não autorizado." }, { status: 403 });
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "ID obrigatório." }, { status: 400 });
+  const { titulo, tipo, questoes } = await req.json();
+  if (!titulo?.trim()) return NextResponse.json({ error: "Título é obrigatório." }, { status: 400 });
+  await dbRun("UPDATE cj_atividades SET titulo=$1, tipo=$2, questoes=$3 WHERE id=$4", [titulo, tipo || "multipla_escolha", JSON.stringify(questoes || []), id]);
+  return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(req: NextRequest) {

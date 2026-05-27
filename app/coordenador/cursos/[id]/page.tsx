@@ -18,7 +18,7 @@ type AulaRaw = {
   materiais: Material[];
   total_atividades: number;
 };
-type Atividade = { id: string; aula_id: string; titulo: string; tipo: string };
+type Atividade = { id: string; aula_id: string; titulo: string; tipo: string; questoes: Array<{ texto: string; alternativas?: string[]; resposta_correta?: number }> };
 type Submissao = {
   id: string;
   aula_titulo: string;
@@ -53,7 +53,7 @@ export default async function CursoDetalhe({ params }: { params: Promise<{ id: s
       [id]
     ),
     dbQuery<Atividade>(
-      `SELECT id, aula_id, titulo, tipo FROM cj_atividades
+      `SELECT id, aula_id, titulo, tipo, questoes FROM cj_atividades
        WHERE aula_id IN (SELECT id FROM cj_aulas WHERE curso_id = $1)
        ORDER BY criado_em`,
       [id]

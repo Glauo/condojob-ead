@@ -15,11 +15,14 @@ type Aula = {
   total_atividades: number;
 };
 
+type Questao = { texto: string; alternativas?: string[]; resposta_correta?: number };
+
 type Atividade = {
   id: string;
   aula_id: string;
   titulo: string;
   tipo: string;
+  questoes: Questao[];
 };
 
 type Submissao = {
@@ -417,6 +420,10 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
   const [form, setForm] = useState({ titulo: "", tipo: "multipla_escolha", questao_texto: "", alt_a: "", alt_b: "", alt_c: "", alt_d: "", resposta: "0" });
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState("");
+  const [editModal, setEditModal] = useState<Atividade | null>(null);
+  const [editForm, setEditForm] = useState({ titulo: "", tipo: "multipla_escolha", questao_texto: "", alt_a: "", alt_b: "", alt_c: "", alt_d: "", resposta: "0" });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editErro, setEditErro] = useState("");
   const aulasOrdenadas = sortAulas(aulas);
   const primeiraAulaApresentacao = /apresent/i.test(aulasOrdenadas[0]?.titulo ?? "");
   const aulasAvaliativas = primeiraAulaApresentacao ? aulasOrdenadas.slice(1) : aulasOrdenadas;
@@ -447,7 +454,7 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
     setSaving(false);
     if (!res.ok) { setErro("Erro ao criar atividade."); return; }
     const nova = await res.json();
-    setAtvs((p) => [...p, { id: nova.id, aula_id: modal.aulaId, titulo: form.titulo, tipo: form.tipo }]);
+    setAtvs((p) => [...p, { id: nova.id, aula_id: modal.aulaId, titulo: form.titulo, tipo: form.tipo, questoes }]);
     setModal(null);
     setForm({ titulo: "", tipo: "multipla_escolha", questao_texto: "", alt_a: "", alt_b: "", alt_c: "", alt_d: "", resposta: "0" });
     router.refresh();
@@ -457,6 +464,45 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
     if (!confirm("Excluir esta atividade?")) return;
     await fetch(`/api/atividades?id=${id}`, { method: "DELETE" });
     setAtvs((p) => p.filter((a) => a.id !== id));
+  }
+
+  function abrirEditModal(atv: Atividade) {
+    const q = atv.questoes?.[0];
+    setEditForm({
+      titulo: atv.titulo,
+      tipo: atv.tipo,
+      questao_texto: q?.texto || "",
+      alt_a: q?.alternativas?.[0] || "",
+      alt_b: q?.alternativas?.[1] || "",
+      alt_c: q?.alternativas?.[2] || "",
+      alt_d: q?.alternativas?.[3] || "",
+      resposta: String(q?.resposta_correta ?? 0),
+    });
+    setEditErro("");
+    setEditModal(atv);
+  }
+
+  async function salvarEdicao() {
+    if (!editModal) return;
+    if (!editForm.titulo.trim() || !editForm.questao_texto.trim()) { setEditErro("Título e enunciado são obrigatórios."); return; }
+    const questoes: Questao[] = [{
+      texto: editForm.questao_texto,
+      alternativas: editForm.tipo === "multipla_escolha"
+        ? [editForm.alt_a, editForm.alt_b, editForm.alt_c, editForm.alt_d].filter(Boolean)
+        : editForm.tipo === "verdadeiro_falso" ? ["Verdadeiro", "Falso"] : undefined,
+      resposta_correta: (editForm.tipo === "multipla_escolha" || editForm.tipo === "verdadeiro_falso") ? Number(editForm.resposta) : undefined,
+    }];
+    setEditSaving(true);
+    const res = await fetch(`/api/atividades?id=${editModal.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ titulo: editForm.titulo, tipo: editForm.tipo, questoes }),
+    });
+    setEditSaving(false);
+    if (!res.ok) { setEditErro("Erro ao salvar alterações."); return; }
+    setAtvs((p) => p.map((a) => a.id === editModal.id ? { ...a, titulo: editForm.titulo, tipo: editForm.tipo, questoes } : a));
+    setEditModal(null);
+    router.refresh();
   }
 
   return (
@@ -501,6 +547,7 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
                     {atv.tipo === "multipla_escolha" ? "Múltipla" : atv.tipo === "verdadeiro_falso" ? "V/F" : atv.tipo === "dissertativa" ? "Dissertativa" : "Upload"}
                   </span>
                   <span style={{ flex: 1, fontSize: "0.875rem", fontWeight: 600 }}>{atv.titulo}</span>
+                  <button className="btn btn-ghost btn-sm" onClick={() => abrirEditModal(atv)}>Editar</button>
                   <button className="btn btn-ghost btn-sm" style={{ color: "var(--cj-danger)" }} onClick={() => excluirAtividade(atv.id)}>
                     Excluir
                   </button>
@@ -514,6 +561,69 @@ function TabAvaliacoes({ aulas, atividades: atvsIniciais }: { aulas: Aula[]; ati
         <div className="empty-state">
           <div className="empty-title">Nenhum modulo avaliativo</div>
           <p className="empty-desc">Crie os modulos do curso para cadastrar as avaliacoes.</p>
+        </div>
+      )}
+
+      {/* Modal editar atividade */}
+      {editModal && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setEditModal(null)}>
+          <div className="modal-box" style={{ maxWidth: "600px" }}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Editar atividade</div>
+                <div className="modal-subtitle">{editModal.titulo}</div>
+              </div>
+              <button className="modal-close" onClick={() => setEditModal(null)}>{CLOSE_SVG}</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-grid">
+                <div className="form-group form-group-full">
+                  <label className="form-label">Título *</label>
+                  <input className="form-input" value={editForm.titulo} onChange={(e) => setEditForm((p) => ({ ...p, titulo: e.target.value }))} autoFocus />
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Tipo</label>
+                  <select className="form-input" value={editForm.tipo} onChange={(e) => setEditForm((p) => ({ ...p, tipo: e.target.value }))}>
+                    <option value="multipla_escolha">Múltipla escolha</option>
+                    <option value="verdadeiro_falso">Verdadeiro / Falso</option>
+                    <option value="dissertativa">Dissertativa</option>
+                    <option value="upload">Upload de arquivo</option>
+                  </select>
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Enunciado *</label>
+                  <textarea className="form-input form-textarea" rows={3} value={editForm.questao_texto} onChange={(e) => setEditForm((p) => ({ ...p, questao_texto: e.target.value }))} />
+                </div>
+                {editForm.tipo === "multipla_escolha" && (
+                  <>
+                    <div className="form-group form-group-full"><label className="form-label">Alternativa A *</label><input className="form-input" value={editForm.alt_a} onChange={(e) => setEditForm((p) => ({ ...p, alt_a: e.target.value }))} /></div>
+                    <div className="form-group form-group-full"><label className="form-label">Alternativa B *</label><input className="form-input" value={editForm.alt_b} onChange={(e) => setEditForm((p) => ({ ...p, alt_b: e.target.value }))} /></div>
+                    <div className="form-group"><label className="form-label">Alternativa C</label><input className="form-input" value={editForm.alt_c} onChange={(e) => setEditForm((p) => ({ ...p, alt_c: e.target.value }))} /></div>
+                    <div className="form-group"><label className="form-label">Alternativa D</label><input className="form-input" value={editForm.alt_d} onChange={(e) => setEditForm((p) => ({ ...p, alt_d: e.target.value }))} /></div>
+                    <div className="form-group form-group-full">
+                      <label className="form-label">Resposta correta</label>
+                      <select className="form-input" value={editForm.resposta} onChange={(e) => setEditForm((p) => ({ ...p, resposta: e.target.value }))}>
+                        <option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+                {editForm.tipo === "verdadeiro_falso" && (
+                  <div className="form-group form-group-full">
+                    <label className="form-label">Resposta correta</label>
+                    <select className="form-input" value={editForm.resposta} onChange={(e) => setEditForm((p) => ({ ...p, resposta: e.target.value }))}>
+                      <option value="0">Verdadeiro</option><option value="1">Falso</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+              {editErro && <div className="form-error">{editErro}</div>}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setEditModal(null)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={salvarEdicao} disabled={editSaving}>{editSaving ? "Salvando…" : "Salvar alterações"}</button>
+            </div>
+          </div>
         </div>
       )}
 
