@@ -14,6 +14,14 @@ function sortAulas(aulas: Aula[]) {
   });
 }
 
+function normalizeVideoLink(value: string) {
+  const url = value.trim();
+  if (!url) return "";
+  const youtube = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([^?&/\s]+)/i);
+  if (youtube?.[1]) return `https://www.youtube.com/watch?v=${youtube[1]}`;
+  return url;
+}
+
 export function AulasManager({ cursos, aulasIniciais }: { cursos: Curso[]; aulasIniciais: Aula[] }) {
   const [aulas, setAulas] = useState<Aula[]>(() => sortAulas(aulasIniciais));
   const [editando, setEditando] = useState<string | null>(null);
@@ -34,7 +42,7 @@ export function AulasManager({ cursos, aulasIniciais }: { cursos: Curso[]; aulas
   const semVideo = aulas.length - comVideo;
 
   async function salvarVideo(aula: Aula) {
-    let finalUrl = videoUrl.trim() || null;
+    let finalUrl = normalizeVideoLink(videoUrl) || null;
     if (videoMode === "upload" && uploadFile) {
       setUploading(true);
       const fd = new FormData();
@@ -166,7 +174,7 @@ export function AulasManager({ cursos, aulasIniciais }: { cursos: Curso[]; aulas
                                 <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>{aula.titulo}</div>
                               </div>
                               <div style={{ display: "flex", gap: "8px", paddingLeft: "42px" }}>
-                                <button className={`btn btn-sm ${videoMode === "url" ? "btn-primary" : "btn-ghost"}`} onClick={() => setVideoMode("url")}>🔗 URL</button>
+                                <button className={`btn btn-sm ${videoMode === "url" ? "btn-primary" : "btn-ghost"}`} onClick={() => setVideoMode("url")}>🔗 Link do YouTube</button>
                                 <button className={`btn btn-sm ${videoMode === "upload" ? "btn-primary" : "btn-ghost"}`} onClick={() => setVideoMode("upload")}>⬆ Upload</button>
                               </div>
                               <div style={{ paddingLeft: "42px", display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -174,7 +182,7 @@ export function AulasManager({ cursos, aulasIniciais }: { cursos: Curso[]; aulas
                                   <input
                                     className="form-input"
                                     style={{ fontSize: "0.85rem", padding: "8px 12px" }}
-                                    placeholder="https://youtube.com/... ou URL .mp4"
+                                    placeholder="Cole aqui o link do YouTube: https://youtube.com/watch?v=..."
                                     value={videoUrl}
                                     onChange={(e) => setVideoUrl(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && salvarVideo(aula)}

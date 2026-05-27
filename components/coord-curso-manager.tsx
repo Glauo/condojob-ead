@@ -41,6 +41,14 @@ function sortAulas<T extends { ordem: number; titulo?: string }>(aulas: T[]) {
   });
 }
 
+function normalizeVideoLink(value: string) {
+  const url = value.trim();
+  if (!url) return "";
+  const youtube = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([^?&/\s]+)/i);
+  if (youtube?.[1]) return `https://www.youtube.com/watch?v=${youtube[1]}`;
+  return url;
+}
+
 const CLOSE_SVG = (
   <svg viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -72,7 +80,7 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
   }
 
   async function salvarVideo(aula: Aula) {
-    let finalUrl = videoUrl.trim() || null;
+    let finalUrl = normalizeVideoLink(videoUrl) || null;
     if (uploadFile) {
       setUploading(true);
       const fd = new FormData();
@@ -187,19 +195,22 @@ function TabModulos({ cursoId, aulas, notaMinima }: { cursoId: string; aulas: Au
                 </div>
               </div>
 
-              {/* Ou URL */}
+              {/* Link do YouTube ou outra URL */}
               <div style={{ paddingLeft: "42px" }}>
                 <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--cj-text-muted)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  🔗 Ou cole uma URL (YouTube, Vimeo, MP4)
+                  Link da aula no YouTube
                 </div>
                 <input
                   className="form-input"
-                  placeholder="https://youtube.com/watch?v=... ou https://..."
+                  placeholder="Cole aqui o link do YouTube: https://youtube.com/watch?v=..."
                   value={videoUrl}
                   onChange={(e) => { setVideoUrl(e.target.value); setUploadFile(null); }}
                   onKeyDown={(e) => e.key === "Enter" && salvarVideo(aula)}
                   style={{ opacity: uploadFile ? 0.4 : 1 }}
                 />
+                <div style={{ fontSize: "0.72rem", color: "var(--cj-text-muted)", marginTop: "6px" }}>
+                  Tambem aceita links youtu.be, YouTube Shorts, lives, Vimeo ou MP4 externo.
+                </div>
               </div>
 
               <div style={{ paddingLeft: "42px", display: "flex", gap: "8px" }}>

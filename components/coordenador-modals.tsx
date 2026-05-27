@@ -3,6 +3,14 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
+function normalizeVideoLink(value: string) {
+  const url = value.trim();
+  if (!url) return "";
+  const youtube = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([^?&/\s]+)/i);
+  if (youtube?.[1]) return `https://www.youtube.com/watch?v=${youtube[1]}`;
+  return url;
+}
+
 /* ─── Modal Novo Curso ─── */
 type CursoData = { id?: string; nome?: string; descricao?: string; carga_horaria?: number; preco?: number; link_pagamento?: string | null; nota_minima?: number; max_tentativas?: number };
 
@@ -562,7 +570,7 @@ export function AulaModal({ cursoId, aula }: { cursoId: string; aula?: AulaData 
   async function salvar() {
     if (!form.titulo.trim()) { setErro("Título da aula é obrigatório."); return; }
 
-    let finalVideoUrl = form.video_url;
+    let finalVideoUrl = normalizeVideoLink(form.video_url);
 
     if (videoMode === "upload" && uploadFile) {
       setUploading(true);
@@ -624,7 +632,7 @@ export function AulaModal({ cursoId, aula }: { cursoId: string; aula?: AulaData 
                       className={`btn btn-sm ${videoMode === "url" ? "btn-primary" : "btn-ghost"}`}
                       onClick={() => setVideoMode("url")}
                     >
-                      🔗 Link (YouTube / URL)
+                      Link do YouTube
                     </button>
                     <button
                       type="button"
@@ -640,11 +648,11 @@ export function AulaModal({ cursoId, aula }: { cursoId: string; aula?: AulaData 
                       <input
                         className="form-input"
                         type="url"
-                        placeholder="https://youtube.com/watch?v=... ou link .mp4"
+                        placeholder="Cole aqui o link do YouTube: https://youtube.com/watch?v=..."
                         value={form.video_url}
                         onChange={(e) => upd("video_url", e.target.value)}
                       />
-                      <span className="form-hint">Suporta YouTube, Vimeo ou vídeo direto (.mp4, .webm)</span>
+                      <span className="form-hint">Tambem aceita youtu.be, Shorts, lives, Vimeo ou MP4 externo.</span>
                     </>
                   ) : (
                     <div

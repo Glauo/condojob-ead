@@ -74,7 +74,7 @@ export function PlayerClient({
   }
 
   function getYouTubeId(url: string) {
-    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([^?&\s]+)/);
+    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([^?&/\s]+)/i);
     return m ? m[1] : null;
   }
 
