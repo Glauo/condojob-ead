@@ -76,7 +76,7 @@ export function AppShell({
       <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="sidebar-logo">
           <Image src={LOGO_URL} alt="CondoJob" width={120} height={36} style={{ objectFit: "contain" }} />
-          <span className="sidebar-logo-tag">EAD</span>
+          <span className="sidebar-logo-tag">Educacional</span>
         </div>
 
         <nav className="sidebar-nav">
@@ -127,7 +127,7 @@ export function AppShell({
             </svg>
           </button>
           <div className="topbar-breadcrumb">
-            CondoJob EAD {breadcrumb ? <> / <strong>{breadcrumb}</strong></> : null}
+            CondoJob Educacional {breadcrumb ? <> / <strong>{breadcrumb}</strong></> : null}
           </div>
           <div className="topbar-spacer" />
           <div className="topbar-actions">

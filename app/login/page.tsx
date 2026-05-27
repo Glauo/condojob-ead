@@ -98,7 +98,7 @@ export default function LoginPage() {
             <span className="login-left-title-accent">condominial do futuro.</span>
           </h1>
           <p className="login-left-desc">
-            A CondoJob é a plataforma oficial de capacitação condominial, oferecendo cursos,
+            A CondoJob Educacional é a plataforma oficial de capacitação condominial, oferecendo cursos,
             conteúdos práticos e certificação para quem deseja se profissionalizar e atuar com
             mais segurança no setor de condomínios.
           </p>

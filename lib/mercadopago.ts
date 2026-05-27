@@ -60,7 +60,7 @@ export async function createMercadoPagoPreference(input: PreferenceInput) {
         {
           id: input.pagamentoId,
           title: input.cursoNome,
-          description: "Curso CondoJob EAD",
+          description: "Curso CondoJob Educacional",
           quantity: 1,
           currency_id: "BRL",
           unit_price: Number(input.valor),
@@ -78,7 +78,7 @@ export async function createMercadoPagoPreference(input: PreferenceInput) {
         pending: `${baseUrl}/pagamento/retorno?status=pending`,
       },
       auto_return: "approved",
-      statement_descriptor: "CONDOJOB EAD",
+      statement_descriptor: "CONDOJOB EDUCACIONAL",
     }),
   });
 

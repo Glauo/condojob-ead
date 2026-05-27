@@ -25,7 +25,7 @@ export default async function CertificadosPage() {
         <div>
           <div className="page-eyebrow"><span className="page-eyebrow-dot" />Conquistas</div>
           <h1 className="page-title">Meus Certificados</h1>
-          <p className="page-desc">Certificados de conclusão de cursos CondoJob Educação.</p>
+          <p className="page-desc">Certificados de conclusão de cursos CondoJob Educacional.</p>
         </div>
       </div>
 

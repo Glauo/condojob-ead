@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     const preference = await createMercadoPagoPreference({
       pagamentoId: pagamento.id,
-      cursoNome: pagamento.curso_nome || pagamento.descricao || "Curso CondoJob EAD",
+      cursoNome: pagamento.curso_nome || pagamento.descricao || "Curso CondoJob Educacional",
       alunoNome: pagamento.aluno_nome,
       alunoEmail: pagamento.aluno_email,
       valor: Number(pagamento.valor),

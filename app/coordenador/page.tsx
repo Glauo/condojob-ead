@@ -40,7 +40,7 @@ export default async function CoordenadorDashboard() {
         <div>
           <div className="page-eyebrow"><span className="page-eyebrow-dot" />Gestão</div>
           <h1 className="page-title">Painel do Coordenador</h1>
-          <p className="page-desc">Visão geral da plataforma CondoJob Educação.</p>
+          <p className="page-desc">Visão geral da plataforma CondoJob Educacional.</p>
         </div>
         <div className="page-actions">
           <ManualBackupButton />
