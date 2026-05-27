@@ -12,7 +12,7 @@ export async function SalesLanding() {
   return (
     <main className="landing-page">
       <section className="landing-hero">
-        <nav className="landing-nav" aria-label="Navegacao principal">
+        <nav className="landing-nav" aria-label="Navegação principal">
           <Link href="/" className="landing-logo">
             <Image src={LOGO_URL} alt="CondoJob Educacional" width={168} height={50} priority />
           </Link>
@@ -28,8 +28,8 @@ export async function SalesLanding() {
           <div className="landing-eyebrow">Curso online com certificado</div>
           <h1>Curso de Assistente Condominial</h1>
           <p>
-            Formacao pratica para quem quer atuar em condominios com atendimento profissional,
-            tecnologia, seguranca, rotina operacional e postura de alto padrao.
+            Formação prática para quem quer atuar em condomínios com atendimento profissional,
+            tecnologia, segurança, rotina operacional e postura de alto padrão.
           </p>
           <div className="landing-price-row" aria-label="Preco do curso">
             <span className="landing-price-main">R$ 99,00</span>
@@ -37,14 +37,14 @@ export async function SalesLanding() {
             <span className="landing-price-installments">12x de R$ 9,90</span>
           </div>
           <div className="landing-hero-actions">
-            <Link href="/cadastro" className="landing-primary-btn">Ir para plataforma e fazer matricula</Link>
-            <Link href="/login" className="landing-secondary-btn">Ja sou aluno</Link>
+            <Link href="/cadastro" className="landing-primary-btn">Ir para a plataforma e fazer matrícula</Link>
+            <Link href="/login" className="landing-secondary-btn">Já sou aluno</Link>
           </div>
           <div className="landing-trust-row">
-            <span>8 modulos</span>
-            <span>Avaliacoes automaticas</span>
+            <span>8 módulos</span>
+            <span>Avaliações automáticas</span>
             <span>Certificado digital</span>
-            <span>Plataforma de empregos</span>
+            <span>Acesso à plataforma de empregos</span>
             <span>Pagamento seguro</span>
           </div>
         </div>
@@ -56,24 +56,30 @@ export async function SalesLanding() {
           <h2>Uma trilha direta para o mercado condominial.</h2>
         </div>
         <p>
-          O lead e encaminhado para a plataforma CondoJob Educacional, onde faz o cadastro,
-          conclui o pagamento pelo Mercado Pago e recebe acesso ao curso apos a confirmacao.
+          O interessado é encaminhado para a plataforma CondoJob Educacional, onde faz o cadastro,
+          conclui o pagamento pelo Mercado Pago e recebe acesso ao curso após a confirmação.
         </p>
       </section>
 
       <section className="landing-section landing-jobs-access" aria-label="Plataforma de empregos CondoJob">
         <div className="landing-jobs-stat">
           <span>+500</span>
-          <strong>condominios cadastrados</strong>
+          <strong>condomínios cadastrados</strong>
         </div>
         <div className="landing-jobs-copy">
-          <span className="landing-section-kicker">Oportunidade apos o curso</span>
-          <h2>Aprovado no curso, o aluno sera liberado na plataforma de empregos da CondoJob.</h2>
+          <span className="landing-section-kicker">Oportunidade após o curso</span>
+          <h2>Concluiu, certificou, entrou no radar das oportunidades CondoJob.</h2>
           <p>
-            A CondoJob possui mais de 500 condominios cadastrados procurando profissionais
-            preparados e com certificado CondoJob. Ao concluir a formacao, o aluno fica apto
-            para acessar esse ambiente de oportunidades.
+            O aluno aprovado no Curso de Assistente Condominial será liberado na plataforma
+            de empregos da CondoJob, onde existem mais de 500 condomínios cadastrados em busca
+            de profissionais preparados e com certificado CondoJob.
           </p>
+          <div className="landing-jobs-points">
+            <span>Certificado CondoJob como diferencial</span>
+            <span>Perfil liberado para oportunidades</span>
+            <span>Mais visibilidade para contratação</span>
+          </div>
+          <Link href="/cadastro" className="landing-jobs-cta">Quero me certificar e acessar as oportunidades</Link>
         </div>
       </section>
 
@@ -84,13 +90,13 @@ export async function SalesLanding() {
         </div>
         <div className="landing-feature-grid">
           {[
-            ["Videoaulas por modulo", "Aulas organizadas em sequencia, com liberacao conforme o desempenho do aluno."],
-            ["Avaliacoes com nota", "Cada modulo tem avaliacao objetiva e correcao automatica pela plataforma."],
-            ["Materiais de apoio", "Biblioteca com arquivos e conteudos complementares para reforcar o aprendizado."],
-            ["Certificado digital", "Conclusao com certificado para o aluno aprovado no curso."],
-            ["Liberacao para empregos", "Aluno aprovado fica liberado para acessar a plataforma de empregos da CondoJob."],
-            ["Chat com coordenador", "Canal de suporte para tirar duvidas durante a formacao."],
-            ["ClubCondoJob", "Clube de descontos para alunos premium, com beneficios cadastrados na plataforma."],
+            ["Videoaulas por módulo", "Aulas organizadas em sequência, com liberação conforme o desempenho do aluno."],
+            ["Avaliações com nota", "Cada módulo tem avaliação objetiva e correção automática pela plataforma."],
+            ["Materiais de apoio", "Biblioteca com arquivos e conteúdos complementares para reforçar o aprendizado."],
+            ["Certificado digital", "Conclusão com certificado para o aluno aprovado no curso."],
+            ["Liberação para empregos", "Aluno aprovado fica liberado para acessar a plataforma de empregos da CondoJob."],
+            ["Chat com coordenador", "Canal de suporte para tirar dúvidas durante a formação."],
+            ["ClubCondoJob", "Clube de descontos para alunos premium, com benefícios cadastrados na plataforma."],
           ].map(([title, text]) => (
             <article className="landing-feature-card" key={title}>
               <div className="landing-feature-dot" />
@@ -104,18 +110,18 @@ export async function SalesLanding() {
       <section className="landing-section landing-syllabus">
         <div className="landing-section-head">
           <span className="landing-section-kicker">Programa do curso</span>
-          <h2>8 modulos essenciais para a rotina condominial.</h2>
+          <h2>8 módulos essenciais para a rotina condominial.</h2>
         </div>
         <div className="landing-module-list">
           {[
-            "Introducao a Profissao",
-            "Comunicacao de Excelencia",
+            "Introdução à Profissão",
+            "Comunicação de Excelência",
             "Atendimento ao Morador e Visitantes",
             "Tecnologia e Sistemas Modernos",
-            "Seguranca Patrimonial e Predial",
+            "Segurança Patrimonial e Predial",
             "Rotinas e Procedimentos Operacionais",
-            "Postura Profissional e Etica",
-            "Solucoes Proativas e Gestao de Conflitos",
+            "Postura Profissional e Ética",
+            "Soluções Proativas e Gestão de Conflitos",
           ].map((module, index) => (
             <div className="landing-module-item" key={module}>
               <span>{String(index + 1).padStart(2, "0")}</span>
@@ -127,11 +133,11 @@ export async function SalesLanding() {
 
       <section className="landing-section landing-offer" aria-label="Oferta do curso">
         <div className="landing-offer-copy">
-          <span className="landing-section-kicker">Matricula online</span>
+          <span className="landing-section-kicker">Matrícula online</span>
           <h2>Comece agora por R$ 99,00.</h2>
           <p>
-            Tambem disponivel em ate 12x de R$ 9,90 pelo Mercado Pago.
-            Apos o cadastro, o aluno segue automaticamente para o pagamento dentro da plataforma.
+            Também disponível em até 12x de R$ 9,90 pelo Mercado Pago.
+            Após o cadastro, o aluno segue automaticamente para o pagamento dentro da plataforma.
           </p>
         </div>
         <div className="landing-offer-actions">

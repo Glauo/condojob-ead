@@ -778,6 +778,7 @@ img { max-width: 100%; }
   background:
     linear-gradient(135deg, rgba(103,232,249,0.12), rgba(129,140,248,0.08)),
     #0D1422;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 .landing-jobs-stat {
@@ -787,8 +788,10 @@ img { max-width: 100%; }
   justify-content: center;
   padding: 26px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(3,7,18,0.44);
+  border: 1px solid rgba(103,232,249,0.24);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(103,232,249,0.20), transparent 38%),
+    rgba(3,7,18,0.52);
 }
 
 .landing-jobs-stat span {
@@ -818,6 +821,46 @@ img { max-width: 100%; }
   color: rgba(248,250,252,0.66);
   font-size: 0.98rem;
   line-height: 1.72;
+}
+
+.landing-jobs-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.landing-jobs-points span {
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(103,232,249,0.18);
+  background: rgba(103,232,249,0.08);
+  color: rgba(236,254,255,0.86);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.landing-jobs-cta {
+  width: fit-content;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 22px;
+  padding: 0 18px;
+  border-radius: 10px;
+  background: rgba(103,232,249,0.12);
+  border: 1px solid rgba(103,232,249,0.34);
+  color: #A5F3FC;
+  font-size: 0.9rem;
+  font-weight: 900;
+  transition: transform 0.16s, background 0.16s, border-color 0.16s;
+}
+
+.landing-jobs-cta:hover {
+  transform: translateY(-1px);
+  background: rgba(103,232,249,0.18);
+  border-color: rgba(103,232,249,0.52);
 }
 
 .landing-feature-grid {
@@ -989,6 +1032,10 @@ img { max-width: 100%; }
 
   .landing-feature-card {
     min-height: auto;
+  }
+
+  .landing-jobs-cta {
+    width: 100%;
   }
 
   .landing-offer {
