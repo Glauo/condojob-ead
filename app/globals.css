@@ -529,9 +529,9 @@ img { max-width: 100%; }
   flex-direction: column;
   justify-content: space-between;
   background:
-    linear-gradient(90deg, rgba(5,9,18,0.95) 0%, rgba(5,9,18,0.86) 46%, rgba(5,9,18,0.46) 100%),
-    linear-gradient(0deg, #070B14 0%, rgba(7,11,20,0) 28%),
-    url("https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1920&q=85") center/cover no-repeat;
+    linear-gradient(90deg, rgba(3,7,18,0.97) 0%, rgba(3,7,18,0.88) 42%, rgba(3,7,18,0.46) 100%),
+    linear-gradient(0deg, #070B14 0%, rgba(7,11,20,0.18) 34%, rgba(7,11,20,0) 100%),
+    url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=88") center/cover no-repeat;
 }
 
 .landing-hero::after {
@@ -540,8 +540,11 @@ img { max-width: 100%; }
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(135deg, rgba(56,189,248,0.12), transparent 34%),
-    radial-gradient(circle at 18% 70%, rgba(129,140,248,0.18), transparent 34%);
+    linear-gradient(135deg, rgba(56,189,248,0.16) 0%, rgba(56,189,248,0) 28%),
+    linear-gradient(110deg, rgba(129,140,248,0.18) 0%, rgba(129,140,248,0.03) 26%, rgba(3,7,18,0) 58%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 112px);
+  mix-blend-mode: screen;
+  opacity: 0.72;
 }
 
 .landing-nav {
@@ -856,8 +859,8 @@ img { max-width: 100%; }
     min-height: auto;
     padding: 18px 22px 64px;
     background:
-      linear-gradient(180deg, rgba(5,9,18,0.82) 0%, rgba(5,9,18,0.96) 62%, #070B14 100%),
-      url("https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=85") center/cover no-repeat;
+      linear-gradient(180deg, rgba(3,7,18,0.82) 0%, rgba(3,7,18,0.96) 62%, #070B14 100%),
+      url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&q=88") center/cover no-repeat;
   }
 
   .landing-nav {
