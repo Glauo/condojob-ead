@@ -39,6 +39,15 @@ type CursoExtra = {
   total_aulas: string;
 };
 
+type MaterialBiblioteca = {
+  aula_id: string;
+  aula_titulo: string;
+  ordem: number;
+  curso_nome: string;
+  material_nome: string;
+  material_url: string;
+};
+
 type Nota = {
   id: string;
   nota: number | null;
@@ -86,7 +95,7 @@ export default async function AlunoDashboard() {
 
   await initSchema();
 
-  const [matriculas, aulas, cursosExtras, notas, certs, notifs, proxPagamento, chatMessages] = await Promise.all([
+  const [matriculas, aulas, cursosExtras, materiaisBiblioteca, notas, certs, notifs, proxPagamento, chatMessages] = await Promise.all([
     dbQuery<Matricula>(
       `SELECT m.curso_id, c.nome, c.descricao, c.carga_horaria, m.status,
               (SELECT COUNT(*) FROM cj_aulas WHERE curso_id = m.curso_id)::text AS total_aulas,
@@ -131,6 +140,23 @@ export default async function AlunoDashboard() {
           SELECT 1 FROM cj_matriculas m WHERE m.curso_id = c.id AND m.usuario_id = $1
         )
         ORDER BY c.criado_em DESC
+        LIMIT 6`,
+      [session.id]
+    ),
+    dbQuery<MaterialBiblioteca>(
+      `SELECT a.id AS aula_id,
+              a.titulo AS aula_titulo,
+              a.ordem,
+              c.nome AS curso_nome,
+              material->>'nome' AS material_nome,
+              material->>'url' AS material_url
+         FROM cj_matriculas m
+         JOIN cj_cursos c ON c.id = m.curso_id
+         JOIN cj_aulas a ON a.curso_id = c.id
+         CROSS JOIN LATERAL jsonb_array_elements(COALESCE(a.materiais, '[]'::jsonb)) AS material
+        WHERE m.usuario_id = $1
+          AND COALESCE(material->>'url', '') <> ''
+        ORDER BY c.nome, a.ordem, material->>'nome'
         LIMIT 6`,
       [session.id]
     ),
@@ -351,6 +377,45 @@ export default async function AlunoDashboard() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <div>
+            <div className="section-eyebrow">Biblioteca</div>
+            <h3 className="section-title">Materiais para download</h3>
+          </div>
+          <a href="/aluno/biblioteca" className="btn btn-ghost btn-sm">Ver biblioteca</a>
+        </div>
+        <div className="card-body" style={{ paddingTop: "10px" }}>
+          {materiaisBiblioteca.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-title">Nenhum material disponivel</div>
+              <p className="empty-desc">Quando houver PDFs anexados ao curso, eles aparecem aqui para download.</p>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: "10px" }}>
+              {materiaisBiblioteca.map((m) => (
+                <a
+                  key={`${m.aula_id}-${m.material_url}`}
+                  href={m.material_url}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="accordion-material-item"
+                >
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <strong>{m.material_nome || "Material de apoio"}</strong><br />
+                    <span style={{ color: "var(--cj-text-muted)", fontSize: "0.76rem" }}>
+                      {m.curso_nome} | {m.aula_titulo}
+                    </span>
+                  </span>
+                  <span className="badge badge-teal">Baixar PDF</span>
+                </a>
+              ))}
             </div>
           )}
         </div>
