@@ -3,7 +3,13 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "CondoJob Educacional",
-  description: "CondoJob Educacional — Formação de profissionais condominiais",
+  description: "CondoJob Educacional - Formacao de profissionais condominiais",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/app-icon.svg",
+    shortcut: "/app-icon.svg",
+    apple: "/app-icon.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
