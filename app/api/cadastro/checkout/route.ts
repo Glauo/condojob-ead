@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { dbQueryOne, dbRun, initSchema } from "@/lib/db";
-import { createMercadoPagoPreference } from "@/lib/mercadopago";
+import { createMercadoPagoPixPayment, createMercadoPagoPreference } from "@/lib/mercadopago";
 
 type Curso = { id: string; nome: string; preco: number; link_pagamento: string | null };
 type Aluno = { id: string; ativo: boolean; perfil: string };
@@ -122,16 +122,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ checkoutUrl, pagamentoId: pagamento.id }, { status: 201 });
     }
 
-    const preference = await createMercadoPagoPreference({
+    const pagamentoInput = {
       pagamentoId: pagamento.id,
       cursoNome: curso.nome,
       alunoNome: nome.trim(),
       alunoEmail: emailLimpo,
       valor: Number(curso.preco),
       origin: req.nextUrl.origin,
-    });
+    };
 
-    return NextResponse.json(preference, { status: 201 });
+    const preference = await createMercadoPagoPreference(pagamentoInput);
+    let pix = null;
+    try {
+      pix = await createMercadoPagoPixPayment(pagamentoInput);
+    } catch (pixError) {
+      console.error("Erro ao gerar Pix Mercado Pago", pixError);
+    }
+
+    return NextResponse.json({ ...preference, pix, pagamentoId: pagamento.id }, { status: 201 });
   } catch (e: unknown) {
     if ((e as { code?: string }).code === "23505") {
       return NextResponse.json({ error: "E-mail ja cadastrado. Acesse sua conta ou fale com o coordenador." }, { status: 409 });

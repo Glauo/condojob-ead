@@ -17,6 +17,16 @@ type PreferenceResponse = {
   sandbox_init_point?: string;
 };
 
+type PixPaymentResponse = PaymentResponse & {
+  point_of_interaction?: {
+    transaction_data?: {
+      qr_code?: string;
+      qr_code_base64?: string;
+      ticket_url?: string;
+    };
+  };
+};
+
 type PaymentResponse = {
   id: number;
   status: string;
@@ -78,6 +88,9 @@ export async function createMercadoPagoPreference(input: PreferenceInput) {
         pending: `${baseUrl}/pagamento/retorno?status=pending`,
       },
       auto_return: "approved",
+      payment_methods: {
+        installments: 12,
+      },
       statement_descriptor: "CONDOJOB EDUCACIONAL",
     }),
   });
@@ -96,6 +109,52 @@ export async function createMercadoPagoPreference(input: PreferenceInput) {
   );
 
   return { preferenceId: data.id, checkoutUrl };
+}
+
+export async function createMercadoPagoPixPayment(input: PreferenceInput) {
+  assertMercadoPagoConfigured();
+
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || input.origin).replace(/\/$/, "");
+  const response = await fetch(`${MP_API}/v1/payments`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+      "Content-Type": "application/json",
+      "X-Idempotency-Key": `pix-${input.pagamentoId}`,
+    },
+    body: JSON.stringify({
+      transaction_amount: Number(input.valor),
+      description: input.cursoNome,
+      payment_method_id: "pix",
+      external_reference: input.pagamentoId,
+      notification_url: `${baseUrl}/api/mercadopago/webhook`,
+      payer: {
+        email: input.alunoEmail,
+        first_name: input.alunoNome,
+      },
+    }),
+  });
+
+  const data = (await response.json().catch(() => ({}))) as Partial<PixPaymentResponse> & { message?: string };
+  if (!response.ok || !data.id) {
+    throw new Error(data.message || "Nao foi possivel gerar o Pix no Mercado Pago.");
+  }
+
+  const transactionData = data.point_of_interaction?.transaction_data;
+  await dbRun(
+    `UPDATE cj_pagamentos
+     SET mp_payment_id=$1, mp_external_reference=$2, checkout_url=COALESCE(checkout_url, $3), mp_status_detail=$4
+     WHERE id=$2`,
+    [String(data.id), input.pagamentoId, transactionData?.ticket_url || null, data.status_detail || null]
+  );
+
+  return {
+    paymentId: String(data.id),
+    status: data.status || "pending",
+    qrCode: transactionData?.qr_code || "",
+    qrCodeBase64: transactionData?.qr_code_base64 || "",
+    ticketUrl: transactionData?.ticket_url || "",
+  };
 }
 
 function mapMercadoPagoStatus(status: string) {

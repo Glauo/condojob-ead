@@ -14,6 +14,17 @@ type Props = {
   cursos: Curso[];
 };
 
+type PagamentoGerado = {
+  checkoutUrl: string;
+  preferenceId?: string;
+  pix?: {
+    paymentId: string;
+    qrCode: string;
+    qrCodeBase64: string;
+    ticketUrl: string;
+  } | null;
+};
+
 export function CadastroCheckoutForm({ cursos }: Props) {
   const [form, setForm] = useState({
     nome: "",
@@ -26,12 +37,23 @@ export function CadastroCheckoutForm({ cursos }: Props) {
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSenha, setShowSenha] = useState(false);
+  const [pagamento, setPagamento] = useState<PagamentoGerado | null>(null);
+  const [copiado, setCopiado] = useState(false);
 
   const cursoSelecionado = cursos.find((curso) => curso.id === form.curso_id);
 
   function upd(field: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErro("");
+    setPagamento(null);
+  }
+
+  async function copiarPix() {
+    const codigo = pagamento?.pix?.qrCode;
+    if (!codigo) return;
+    await navigator.clipboard.writeText(codigo);
+    setCopiado(true);
+    window.setTimeout(() => setCopiado(false), 2200);
   }
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -55,7 +77,7 @@ export function CadastroCheckoutForm({ cursos }: Props) {
       return;
     }
 
-    window.location.href = data.checkoutUrl;
+    setPagamento(data as PagamentoGerado);
   }
 
   return (
@@ -132,8 +154,41 @@ export function CadastroCheckoutForm({ cursos }: Props) {
 
       {erro && <div className="form-error">{erro}</div>}
 
+      {pagamento && (
+        <div className="card" style={{ padding: "16px", background: "rgba(15,23,42,0.72)", borderColor: "rgba(34,211,238,0.35)" }}>
+          <div style={{ fontWeight: 800, color: "var(--cj-text)", marginBottom: "6px" }}>Pagamento gerado</div>
+          <p style={{ color: "var(--cj-text-secondary)", fontSize: "0.84rem", lineHeight: 1.6, marginBottom: "12px" }}>
+            Para evitar travamento do botao dentro do Mercado Pago, voce pode pagar por Pix direto aqui ou abrir o checkout para cartao/parcelamento.
+          </p>
+
+          {pagamento.pix?.qrCode && (
+            <div style={{ display: "grid", gap: "10px", marginBottom: "12px" }}>
+              {pagamento.pix.qrCodeBase64 && (
+                <img
+                  src={`data:image/png;base64,${pagamento.pix.qrCodeBase64}`}
+                  alt="QR Code Pix"
+                  style={{ width: "150px", height: "150px", borderRadius: "10px", background: "#fff", padding: "8px", justifySelf: "center" }}
+                />
+              )}
+              <button type="button" className="btn btn-secondary" onClick={copiarPix}>
+                {copiado ? "Codigo Pix copiado" : "Copiar Pix copia e cola"}
+              </button>
+              {pagamento.pix.ticketUrl && (
+                <a className="btn btn-ghost" href={pagamento.pix.ticketUrl} target="_blank" rel="noopener noreferrer">
+                  Abrir Pix no Mercado Pago
+                </a>
+              )}
+            </div>
+          )}
+
+          <button type="button" className="login-btn" onClick={() => { window.location.href = pagamento.checkoutUrl; }}>
+            Abrir cartao, boleto ou parcelamento
+          </button>
+        </div>
+      )}
+
       <button className="login-btn" disabled={loading || cursos.length === 0} type="submit">
-        {loading ? "Gerando pagamento..." : "Cadastrar e pagar com Mercado Pago"}
+        {loading ? "Gerando pagamento..." : pagamento ? "Gerar novo pagamento" : "Cadastrar e pagar com Mercado Pago"}
       </button>
     </form>
   );
