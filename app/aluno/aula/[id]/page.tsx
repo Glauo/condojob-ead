@@ -51,7 +51,15 @@ export default async function AulaPage({ params }: { params: Promise<{ id: strin
 
   const [progresso, atividades, aulasCurso] = await Promise.all([
     dbQueryOne<Prog>("SELECT percentual, concluido FROM cj_progresso WHERE usuario_id = $1 AND aula_id = $2", [session.id, id]),
-    dbQuery<Atividade>("SELECT id, titulo, tipo, questoes FROM cj_atividades WHERE aula_id = $1 ORDER BY criado_em", [id]),
+    dbQuery<Atividade>(
+      `SELECT id, titulo, tipo, questoes
+         FROM cj_atividades
+        WHERE aula_id = $1
+        ORDER BY COALESCE(NULLIF(regexp_replace(titulo, '\\D', '', 'g'), '')::int, 9999),
+                 criado_em ASC,
+                 id ASC`,
+      [id]
+    ),
     dbQuery<AulaOrdem>("SELECT id, titulo, ordem FROM cj_aulas WHERE curso_id = $1 ORDER BY ordem", [aula.curso_id]),
   ]);
 

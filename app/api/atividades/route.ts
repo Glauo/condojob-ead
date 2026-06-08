@@ -15,7 +15,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(atv);
   }
   if (!aulaId) return NextResponse.json({ error: "aula_id obrigatório." }, { status: 400 });
-  const atividades = await dbQuery("SELECT id, titulo, tipo, questoes FROM cj_atividades WHERE aula_id=$1 ORDER BY criado_em", [aulaId]);
+  const atividades = await dbQuery(
+    `SELECT id, titulo, tipo, questoes
+       FROM cj_atividades
+      WHERE aula_id=$1
+      ORDER BY COALESCE(NULLIF(regexp_replace(titulo, '\\D', '', 'g'), '')::int, 9999),
+               criado_em ASC,
+               id ASC`,
+    [aulaId]
+  );
   return NextResponse.json(atividades);
 }
 

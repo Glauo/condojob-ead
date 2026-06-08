@@ -27,7 +27,11 @@ export default async function AtividadesPage({ searchParams }: { searchParams: P
        JOIN cj_aulas a ON a.id = at.aula_id
        JOIN cj_cursos c ON c.id = a.curso_id
        ${aula_id ? "WHERE at.aula_id = $1" : ""}
-       ORDER BY c.nome, a.ordem, at.titulo`,
+       ORDER BY c.nome,
+                a.ordem,
+                COALESCE(NULLIF(regexp_replace(at.titulo, '\\D', '', 'g'), '')::int, 9999),
+                at.titulo,
+                at.id`,
       aula_id ? [aula_id] : []
     ),
     dbQuery<Submissao>(

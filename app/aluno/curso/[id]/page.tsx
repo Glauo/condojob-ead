@@ -54,13 +54,21 @@ export default async function CursoPage({ params }: { params: Promise<{ id: stri
     ),
     // Melhor submissão por atividade (maior nota)
     dbQuery<AtvComSub>(
-      `SELECT DISTINCT ON (atv.id)
-         atv.id, atv.aula_id, atv.titulo, atv.tipo,
-         s.nota, s.status AS sub_status
-       FROM cj_atividades atv
-       LEFT JOIN cj_submissoes s ON s.atividade_id = atv.id AND s.usuario_id = $1
-       WHERE atv.aula_id IN (SELECT id FROM cj_aulas WHERE curso_id = $2)
-       ORDER BY atv.id, s.nota DESC NULLS LAST`,
+      `WITH melhores AS (
+        SELECT atv.id, atv.aula_id, atv.titulo, atv.tipo,
+               s.nota, s.status AS sub_status,
+               a.ordem AS aula_ordem,
+               COALESCE(NULLIF(regexp_replace(atv.titulo, '\\D', '', 'g'), '')::int, 9999) AS questao_ordem,
+               ROW_NUMBER() OVER (PARTITION BY atv.id ORDER BY s.nota DESC NULLS LAST, s.submetido_em DESC NULLS LAST) AS rn
+          FROM cj_atividades atv
+          JOIN cj_aulas a ON a.id = atv.aula_id
+          LEFT JOIN cj_submissoes s ON s.atividade_id = atv.id AND s.usuario_id = $1
+         WHERE atv.aula_id IN (SELECT id FROM cj_aulas WHERE curso_id = $2)
+       )
+       SELECT id, aula_id, titulo, tipo, nota, sub_status
+         FROM melhores
+        WHERE rn = 1
+        ORDER BY aula_ordem ASC, questao_ordem ASC, titulo ASC, id ASC`,
       [session.id, id]
     ),
   ]);

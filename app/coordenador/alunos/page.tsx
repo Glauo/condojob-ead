@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQuery, initSchema } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
-import { NovoAlunoModal, MatricularAlunoModal, EditarAlunoModal } from "@/components/coordenador-modals";
+import { NovoAlunoModal, MatricularAlunoModal, EditarAlunoModal, ExcluirUsuarioButton } from "@/components/coordenador-modals";
 
 type Aluno = {
   id: string;
@@ -26,6 +26,15 @@ type Aluno = {
   total_concluidos: number;
 };
 
+type UsuarioAdmin = {
+  id: string;
+  nome: string;
+  login: string | null;
+  email: string;
+  ativo: boolean;
+  criado_em: string;
+};
+
 export default async function AlunosPage() {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -33,15 +42,23 @@ export default async function AlunosPage() {
 
   await initSchema();
 
-  const alunos = await dbQuery<Aluno>(
-    `SELECT u.id, u.nome, u.login, u.email, u.telefone, u.celular_whatsapp,
-      TO_CHAR(u.data_nascimento, 'YYYY-MM-DD') AS data_nascimento,
-      u.rg, u.cpf, u.estado_civil, u.cep, u.cidade, u.rua, u.numero, u.complemento,
-      u.ativo, u.criado_em,
-      (SELECT COUNT(*) FROM cj_matriculas WHERE usuario_id = u.id) AS total_matriculas,
-      (SELECT COUNT(*) FROM cj_matriculas WHERE usuario_id = u.id AND status = 'concluido') AS total_concluidos
-     FROM cj_users u WHERE u.perfil = 'aluno' ORDER BY u.criado_em DESC`
-  );
+  const [alunos, usuariosAdmin] = await Promise.all([
+    dbQuery<Aluno>(
+      `SELECT u.id, u.nome, u.login, u.email, u.telefone, u.celular_whatsapp,
+        TO_CHAR(u.data_nascimento, 'YYYY-MM-DD') AS data_nascimento,
+        u.rg, u.cpf, u.estado_civil, u.cep, u.cidade, u.rua, u.numero, u.complemento,
+        u.ativo, u.criado_em,
+        (SELECT COUNT(*) FROM cj_matriculas WHERE usuario_id = u.id) AS total_matriculas,
+        (SELECT COUNT(*) FROM cj_matriculas WHERE usuario_id = u.id AND status = 'concluido') AS total_concluidos
+       FROM cj_users u WHERE u.perfil = 'aluno' ORDER BY u.criado_em DESC`
+    ),
+    dbQuery<UsuarioAdmin>(
+      `SELECT id, nome, login, email, ativo, criado_em
+         FROM cj_users
+        WHERE perfil = 'coordenador'
+        ORDER BY criado_em DESC`
+    ),
+  ]);
 
   const cursos = await dbQuery<{ id: string; nome: string }>("SELECT id, nome FROM cj_cursos ORDER BY nome");
 
@@ -51,7 +68,7 @@ export default async function AlunosPage() {
         <div>
           <div className="page-eyebrow"><span className="page-eyebrow-dot" />Gestão</div>
           <h1 className="page-title">Alunos</h1>
-          <p className="page-desc">Cadastre, matricule e acompanhe o progresso dos alunos.</p>
+          <p className="page-desc">Cadastre, matricule, acompanhe e gerencie os usuarios da plataforma.</p>
         </div>
         <div className="page-actions">
           <NovoAlunoModal />
@@ -111,7 +128,55 @@ export default async function AlunosPage() {
                         <EditarAlunoModal aluno={a} />
                         <MatricularAlunoModal alunoId={a.id} alunoNome={a.nome} cursos={cursos} />
                         <a href={`/coordenador/alunos/${a.id}`} className="btn btn-ghost btn-sm">Relatório</a>
+                        <ExcluirUsuarioButton usuarioId={a.id} usuarioNome={a.nome} perfil="aluno" />
                       </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: "18px" }}>
+        <div className="card-header">
+          <div>
+            <div className="section-eyebrow">Administracao</div>
+            <h3 className="section-title">Usuarios administrativos</h3>
+          </div>
+        </div>
+        <div className="card-body" style={{ padding: "0" }}>
+          {usuariosAdmin.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-title">Nenhum usuario administrativo cadastrado</div>
+              <p className="empty-desc">Use o botao "Novo Cadastro" para criar um coordenador.</p>
+            </div>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr><th>Usuario</th><th>Login</th><th>Status</th><th>Criado em</th><th>Acoes</th></tr>
+              </thead>
+              <tbody>
+                {usuariosAdmin.map((u) => (
+                  <tr key={u.id}>
+                    <td>
+                      <div className="table-name-cell">
+                        <span className="table-name-primary">{u.nome}</span>
+                        <span className="table-name-secondary">{u.email}</span>
+                      </div>
+                    </td>
+                    <td>{u.login || "—"}</td>
+                    <td>
+                      <span className={`badge ${u.ativo ? "badge-success" : "badge-muted"}`}>
+                        {u.ativo ? "Ativo" : "Inativo"}
+                      </span>
+                    </td>
+                    <td style={{ color: "var(--cj-text-muted)", fontSize: "0.8rem" }}>
+                      {new Date(u.criado_em).toLocaleDateString("pt-BR")}
+                    </td>
+                    <td>
+                      <ExcluirUsuarioButton usuarioId={u.id} usuarioNome={u.nome} perfil="coordenador" />
                     </td>
                   </tr>
                 ))}

@@ -139,6 +139,34 @@ export type AlunoCadastroData = {
   ativo?: boolean | null;
 };
 
+export function ExcluirUsuarioButton({ usuarioId, usuarioNome, perfil }: { usuarioId: string; usuarioNome: string; perfil: "aluno" | "coordenador" }) {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+
+  async function excluir() {
+    const tipo = perfil === "coordenador" ? "usuario administrativo" : "aluno";
+    if (!confirm(`Excluir ${tipo} "${usuarioNome}"? Esta acao remove matriculas, progresso, pagamentos, documentos e mensagens vinculadas.`)) return;
+
+    setSaving(true);
+    const res = await fetch(`/api/alunos?id=${usuarioId}`, { method: "DELETE" });
+    setSaving(false);
+
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      alert((d as { error?: string }).error || "Erro ao excluir usuario.");
+      return;
+    }
+
+    router.refresh();
+  }
+
+  return (
+    <button className="btn btn-danger btn-sm" onClick={excluir} disabled={saving}>
+      {saving ? "Excluindo..." : "Excluir"}
+    </button>
+  );
+}
+
 export function NovoAlunoModal() {
   const router = useRouter();
   const [open, setOpen] = useState(false);

@@ -247,12 +247,16 @@ export async function initSchema() {
   await pool.query(`
     CREATE OR REPLACE FUNCTION cj_protect_aluno_delete()
     RETURNS TRIGGER AS $$
+    DECLARE
+      allow_delete BOOLEAN;
     BEGIN
+      allow_delete := COALESCE(current_setting('app.allow_user_delete', true), '') = 'true';
+
       INSERT INTO cj_user_delete_events (usuario_id, perfil, evento, dados)
       VALUES (
         OLD.id,
         OLD.perfil,
-        CASE WHEN OLD.perfil = 'aluno' THEN 'exclusao_bloqueada' ELSE 'exclusao_permitida' END,
+        CASE WHEN OLD.perfil = 'aluno' AND NOT allow_delete THEN 'exclusao_bloqueada' ELSE 'exclusao_permitida' END,
         jsonb_build_object(
           'id', OLD.id,
           'nome', OLD.nome,
@@ -263,7 +267,7 @@ export async function initSchema() {
         )
       );
 
-      IF OLD.perfil = 'aluno' THEN
+      IF OLD.perfil = 'aluno' AND NOT allow_delete THEN
         RETURN NULL;
       END IF;
 

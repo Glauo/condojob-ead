@@ -81,7 +81,10 @@ export default async function CoordAulasPage({
     dbQuery<Atividade>(
       `SELECT id, aula_id, titulo, tipo, questoes FROM cj_atividades
        WHERE aula_id IN (SELECT id FROM cj_aulas WHERE curso_id = $1)
-       ORDER BY criado_em`,
+       ORDER BY (SELECT ordem FROM cj_aulas WHERE id = cj_atividades.aula_id),
+                COALESCE(NULLIF(regexp_replace(titulo, '\\D', '', 'g'), '')::int, 9999),
+                criado_em,
+                id`,
       [cursoId]
     ),
     dbQuery<Submissao>(
