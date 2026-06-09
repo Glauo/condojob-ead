@@ -1,5 +1,7 @@
 ﻿import { Pool } from "pg";
 
+import bcrypt from "bcryptjs";
+
 const rawUrl = (process.env.DATABASE_URL ?? "").replace(/^\uFEFF/, "");
 const connectionString = rawUrl
   .replace(/[?&]sslmode=[^&]*/g, "")
@@ -222,6 +224,7 @@ export async function initSchema() {
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS rua TEXT;
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS numero TEXT;
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS complemento TEXT;
+    ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS acesso_enviado_em TIMESTAMPTZ;
 
     ALTER TABLE cj_cursos ADD COLUMN IF NOT EXISTS link_pagamento TEXT;
 
@@ -291,4 +294,48 @@ export async function initSchema() {
     END;
     $$;
   `);
+
+  await ensureDefaultAdmin();
+}
+
+async function ensureDefaultAdmin() {
+  const login = (process.env.DEFAULT_ADMIN_LOGIN || "admin").toLowerCase().trim();
+  const password = process.env.DEFAULT_ADMIN_PASSWORD || "250488";
+  const email = (process.env.DEFAULT_ADMIN_EMAIL || "admin@condojobeducacional.local").toLowerCase().trim();
+  const nome = process.env.DEFAULT_ADMIN_NAME || "Administrador";
+
+  const admin = await pool.query<{ id: string; senha_hash: string }>(
+    `SELECT id, senha_hash
+       FROM cj_users
+      WHERE perfil='coordenador'
+        AND (LOWER(COALESCE(login, ''))=$1 OR LOWER(email)=$2)
+      ORDER BY CASE WHEN LOWER(COALESCE(login, ''))=$1 THEN 1 ELSE 2 END
+      LIMIT 1`,
+    [login, email]
+  );
+
+  const current = admin.rows[0];
+  const hashOk = current ? await bcrypt.compare(password, current.senha_hash) : false;
+  const hash = hashOk ? current.senha_hash : await bcrypt.hash(password, 10);
+
+  if (current) {
+    await pool.query(
+      `UPDATE cj_users
+          SET nome=$1, login=$2, email=$3, senha_hash=$4, ativo=true
+        WHERE id=$5`,
+      [nome, login, email, hash, current.id]
+    );
+    return;
+  }
+
+  await pool.query(
+    `INSERT INTO cj_users (nome, login, email, senha_hash, perfil, ativo)
+     VALUES ($1,$2,$3,$4,'coordenador',true)
+     ON CONFLICT (email) DO UPDATE
+       SET nome=EXCLUDED.nome,
+           login=EXCLUDED.login,
+           senha_hash=EXCLUDED.senha_hash,
+           ativo=true`,
+    [nome, login, email, hash]
+  );
 }

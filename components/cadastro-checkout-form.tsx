@@ -29,14 +29,12 @@ export function CadastroCheckoutForm({ cursos }: Props) {
   const [form, setForm] = useState({
     nome: "",
     email: "",
-    senha: "",
     celular_whatsapp: "",
     cpf: "",
     curso_id: cursos[0]?.id || "",
   });
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showSenha, setShowSenha] = useState(false);
   const [pagamento, setPagamento] = useState<PagamentoGerado | null>(null);
   const [copiado, setCopiado] = useState(false);
 
@@ -58,8 +56,8 @@ export function CadastroCheckoutForm({ cursos }: Props) {
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!form.nome.trim() || !form.email.trim() || !form.senha || !form.curso_id) {
-      setErro("Preencha nome, e-mail, senha e curso.");
+    if (!form.nome.trim() || !form.email.trim() || !form.curso_id) {
+      setErro("Preencha nome, e-mail e curso.");
       return;
     }
 
@@ -106,39 +104,7 @@ export function CadastroCheckoutForm({ cursos }: Props) {
       <div className="form-group">
         <label className="form-label">E-mail</label>
         <input className="form-input login-input" type="email" value={form.email} onChange={(e) => upd("email", e.target.value)} placeholder="seu@email.com" />
-        <div className="form-hint">Este e-mail sera o login de acesso do aluno.</div>
-      </div>
-
-      <div className="form-group">
-        <label className="form-label">Senha de acesso</label>
-        <div style={{ position: "relative" }}>
-          <input
-            className="form-input login-input"
-            type={showSenha ? "text" : "password"}
-            value={form.senha}
-            onChange={(e) => upd("senha", e.target.value)}
-            placeholder="Minimo 6 caracteres"
-            style={{ paddingRight: "74px" }}
-          />
-          <button
-            type="button"
-            onClick={() => setShowSenha((v) => !v)}
-            style={{
-              position: "absolute",
-              right: "10px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              background: "transparent",
-              border: 0,
-              color: "var(--cj-teal)",
-              cursor: "pointer",
-              fontSize: "0.75rem",
-              fontWeight: 800,
-            }}
-          >
-            {showSenha ? "Ocultar" : "Ver"}
-          </button>
-        </div>
+        <div className="form-hint">Este e-mail sera o login. A senha temporaria sera enviada apos o pagamento aprovado.</div>
       </div>
 
       <div className="form-grid" style={{ gap: "12px" }}>
@@ -159,6 +125,7 @@ export function CadastroCheckoutForm({ cursos }: Props) {
           <div style={{ fontWeight: 800, color: "var(--cj-text)", marginBottom: "6px" }}>Pagamento gerado</div>
           <p style={{ color: "var(--cj-text-secondary)", fontSize: "0.84rem", lineHeight: 1.6, marginBottom: "12px" }}>
             Para evitar travamento do botao dentro do Mercado Pago, voce pode pagar por Pix direto aqui ou abrir o checkout para cartao/parcelamento.
+            Quando o pagamento for aprovado, o login e a senha temporaria serao enviados por e-mail e WhatsApp.
           </p>
 
           {pagamento.pix?.qrCode && (

@@ -1,4 +1,5 @@
 import { dbQueryOne, dbRun } from "@/lib/db";
+import { issueStudentAccessCredentials } from "@/lib/access-credentials";
 
 const MP_API = "https://api.mercadopago.com";
 
@@ -226,6 +227,7 @@ export async function confirmMercadoPagoPayment(paymentId: string) {
        VALUES ($1, 'Pagamento aprovado. Seu curso foi liberado.', 'success')`,
       [local.usuario_id]
     );
+    await issueStudentAccessCredentials(local.usuario_id);
   } else if (localStatus === "cancelado") {
     await dbRun(
       `UPDATE cj_pagamentos

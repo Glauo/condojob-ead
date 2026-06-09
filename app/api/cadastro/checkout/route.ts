@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { dbQueryOne, dbRun, initSchema } from "@/lib/db";
 import { createMercadoPagoPixPayment, createMercadoPagoPreference } from "@/lib/mercadopago";
 
@@ -12,15 +13,12 @@ export async function POST(req: NextRequest) {
     await initSchema();
 
     const {
-      nome, email, senha, curso_id, telefone, celular_whatsapp,
+      nome, email, curso_id, telefone, celular_whatsapp,
       data_nascimento, rg, cpf, estado_civil, cep, cidade, rua, numero, complemento,
     } = await req.json();
 
-    if (!nome?.trim() || !email?.trim() || !senha || !curso_id) {
-      return NextResponse.json({ error: "Nome, e-mail, senha e curso sao obrigatorios." }, { status: 400 });
-    }
-    if (senha.length < 6) {
-      return NextResponse.json({ error: "Senha deve ter no minimo 6 caracteres." }, { status: 400 });
+    if (!nome?.trim() || !email?.trim() || !curso_id) {
+      return NextResponse.json({ error: "Nome, e-mail e curso sao obrigatorios." }, { status: 400 });
     }
 
     const curso = await dbQueryOne<Curso>(
@@ -45,7 +43,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "E-mail ja cadastrado. Acesse sua conta para pagar pelo financeiro." }, { status: 409 });
     }
 
-    const hash = await bcrypt.hash(senha, 10);
+    const hash = await bcrypt.hash(crypto.randomUUID(), 10);
     const aluno = alunoExistente
       ? await dbQueryOne<Aluno>(
         `UPDATE cj_users SET
@@ -111,17 +109,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Nao foi possivel gerar a cobranca." }, { status: 500 });
     }
 
-    if (curso.link_pagamento?.trim()) {
-      const checkoutUrl = curso.link_pagamento.trim();
-      await dbRun(
-        `UPDATE cj_pagamentos
-         SET checkout_url=$1, mp_external_reference=$2
-         WHERE id=$2`,
-        [checkoutUrl, pagamento.id]
-      );
-      return NextResponse.json({ checkoutUrl, pagamentoId: pagamento.id }, { status: 201 });
-    }
-
     const pagamentoInput = {
       pagamentoId: pagamento.id,
       cursoNome: curso.nome,
@@ -131,7 +118,20 @@ export async function POST(req: NextRequest) {
       origin: req.nextUrl.origin,
     };
 
-    const preference = await createMercadoPagoPreference(pagamentoInput);
+    let preference;
+    try {
+      preference = await createMercadoPagoPreference(pagamentoInput);
+    } catch (mpError) {
+      if (!curso.link_pagamento?.trim()) throw mpError;
+      const checkoutUrl = curso.link_pagamento.trim();
+      await dbRun(
+        `UPDATE cj_pagamentos
+         SET checkout_url=$1, mp_external_reference=$2
+         WHERE id=$2`,
+        [checkoutUrl, pagamento.id]
+      );
+      return NextResponse.json({ checkoutUrl, pagamentoId: pagamento.id }, { status: 201 });
+    }
     let pix = null;
     try {
       pix = await createMercadoPagoPixPayment(pagamentoInput);
