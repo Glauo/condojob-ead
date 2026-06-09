@@ -1846,3 +1846,373 @@ img { max-width: 100%; }
   margin-bottom: 10px;
   font-size: 0.875rem;
 }
+
+/* ===== RESPONSIVE STABILITY LAYER ===== */
+@media (max-width: 1024px) {
+  .page-content {
+    padding: 24px 22px 48px;
+  }
+
+  .topbar {
+    padding: 0 20px;
+  }
+
+  .landing-hero-content {
+    max-width: 680px;
+  }
+
+  .login-right {
+    width: min(480px, 48vw);
+  }
+}
+
+@media (max-width: 768px) {
+  html,
+  body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .shell,
+  .main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .main {
+    flex: 1 1 auto;
+  }
+
+  .topbar {
+    height: 56px;
+    padding: 0 14px;
+    position: sticky;
+    top: 0;
+    z-index: 120;
+  }
+
+  .topbar-breadcrumb {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.78rem;
+  }
+
+  .topbar-actions {
+    flex-shrink: 0;
+  }
+
+  .page-content {
+    width: 100%;
+    min-height: calc(100vh - 56px);
+    padding: 18px 14px 38px;
+    gap: 18px;
+  }
+
+  .page-header {
+    gap: 12px;
+  }
+
+  .page-title {
+    font-size: 1.28rem;
+    overflow-wrap: anywhere;
+  }
+
+  .page-desc {
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+  }
+
+  .page-actions,
+  .card-header,
+  .card-footer,
+  .modal-footer {
+    width: 100%;
+  }
+
+  .page-actions .btn,
+  .card-footer .btn,
+  .modal-footer .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    white-space: normal;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .card-body {
+    padding: 16px;
+  }
+
+  .data-table {
+    min-width: 680px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 10px 12px;
+  }
+
+  .table-name-primary,
+  .table-name-secondary {
+    overflow-wrap: anywhere;
+  }
+
+  .btn {
+    min-height: 38px;
+    padding: 8px 12px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .metric-card {
+    padding: 18px;
+  }
+
+  .metric-value {
+    font-size: 1.55rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-overlay {
+    align-items: flex-start;
+    place-items: start center;
+    padding: 10px;
+    overflow-y: auto;
+  }
+
+  .modal-box {
+    width: 100% !important;
+    max-width: min(100%, 720px) !important;
+    max-height: calc(100vh - 20px);
+    border-radius: 12px;
+  }
+
+  .modal-header {
+    padding: 16px 16px 0;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    padding: 14px 16px;
+    flex-wrap: wrap;
+  }
+
+  .login-page {
+    display: block;
+    min-height: 100svh;
+    overflow-x: hidden;
+  }
+
+  .login-left {
+    display: none;
+  }
+
+  .login-right {
+    width: 100%;
+    min-height: 100svh;
+    padding: 28px 18px;
+    border-left: 0;
+    justify-content: flex-start;
+  }
+
+  .login-card {
+    width: min(100%, 420px);
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .login-logo {
+    margin-bottom: 20px;
+  }
+
+  .login-logo-beacon {
+    display: none;
+  }
+
+  .login-logo-wrap {
+    padding: 12px 20px;
+  }
+
+  .login-logo img {
+    height: 44px;
+    max-width: 210px;
+  }
+
+  .login-title {
+    font-size: 1.16rem;
+  }
+
+  .login-subtitle {
+    margin-bottom: 18px;
+  }
+
+  .landing-hero {
+    min-height: auto;
+    padding: 16px 16px 46px;
+  }
+
+  .landing-hero-content {
+    padding: 58px 0 0;
+    max-width: 100%;
+  }
+
+  .landing-hero h1 {
+    font-size: 2.15rem;
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+  }
+
+  .landing-hero p,
+  .landing-section p,
+  .landing-feature-card p,
+  .landing-offer p {
+    font-size: 0.92rem;
+  }
+
+  .landing-section {
+    width: min(100% - 28px, 1120px);
+    padding: 44px 0;
+  }
+
+  .landing-jobs-access,
+  .landing-offer,
+  .landing-how-card,
+  .landing-feature-card,
+  .landing-module-item {
+    padding: 18px;
+  }
+
+  .landing-jobs-stat {
+    min-height: auto;
+    padding: 20px;
+  }
+
+  .landing-jobs-stat span {
+    font-size: 2.8rem;
+  }
+
+  .landing-module-item {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-content {
+    padding: 14px 10px 32px;
+  }
+
+  .topbar {
+    padding: 0 10px;
+  }
+
+  .notif-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .page-header {
+    display: block;
+  }
+
+  .page-actions {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .page-actions .btn,
+  .login-btn,
+  .landing-primary-btn,
+  .landing-secondary-btn,
+  .landing-nav-link,
+  .landing-nav-cta {
+    width: 100%;
+  }
+
+  .card-header {
+    padding: 16px 14px 0;
+  }
+
+  .card-body {
+    padding: 14px;
+  }
+
+  .metric-grid {
+    gap: 12px;
+  }
+
+  .metric-card {
+    padding: 16px;
+  }
+
+  .empty-state {
+    padding: 34px 14px;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+  }
+
+  .modal-footer {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .login-right {
+    padding: 22px 14px;
+  }
+
+  .login-logo-wrap {
+    max-width: 100%;
+  }
+
+  .login-logo img {
+    max-width: 180px;
+  }
+
+  .landing-nav {
+    align-items: stretch;
+  }
+
+  .landing-logo {
+    justify-content: center;
+  }
+
+  .landing-logo img {
+    height: 36px;
+  }
+
+  .landing-hero h1 {
+    font-size: 1.9rem;
+  }
+
+  .landing-section h2,
+  .landing-offer h2,
+  .landing-jobs-copy h2 {
+    font-size: 1.42rem;
+  }
+
+  .landing-trust-row span,
+  .landing-jobs-points span {
+    width: 100%;
+    text-align: center;
+  }
+
+  .public-cert-page {
+    padding: 18px 10px;
+  }
+}
