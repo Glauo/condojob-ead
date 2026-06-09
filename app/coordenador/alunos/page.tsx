@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQuery, initSchema } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
-import { NovoAlunoModal, MatricularAlunoModal, EditarAlunoModal, ExcluirUsuarioButton } from "@/components/coordenador-modals";
+import { NovoAlunoModal, MatricularAlunoModal, EditarAlunoModal, EditarUsuarioAdminModal, ExcluirUsuarioButton } from "@/components/coordenador-modals";
 
 type Aluno = {
   id: string;
@@ -176,7 +176,16 @@ export default async function AlunosPage() {
                       {new Date(u.criado_em).toLocaleDateString("pt-BR")}
                     </td>
                     <td>
-                      <ExcluirUsuarioButton usuarioId={u.id} usuarioNome={u.nome} perfil="coordenador" />
+                      <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                        <EditarUsuarioAdminModal usuario={u} />
+                        {String(u.login || "").toLowerCase().trim() === "admin" || u.id === session.id ? (
+                          <span className="badge badge-muted">
+                            {u.id === session.id ? "Usuario atual" : "Protegido"}
+                          </span>
+                        ) : (
+                          <ExcluirUsuarioButton usuarioId={u.id} usuarioNome={u.nome} perfil="coordenador" />
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

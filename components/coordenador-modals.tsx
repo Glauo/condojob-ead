@@ -167,6 +167,138 @@ export function ExcluirUsuarioButton({ usuarioId, usuarioNome, perfil }: { usuar
   );
 }
 
+type UsuarioAdminData = {
+  id: string;
+  nome: string;
+  login?: string | null;
+  email: string;
+  ativo?: boolean | null;
+};
+
+export function EditarUsuarioAdminModal({ usuario }: { usuario: UsuarioAdminData }) {
+  const router = useRouter();
+  const protectedAdmin = String(usuario.login || "").toLowerCase().trim() === "admin";
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    nome: usuario.nome || "",
+    login: usuario.login || "",
+    email: usuario.email || "",
+    senha: "",
+    ativo: usuario.ativo ?? true,
+  });
+  const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState("");
+  const [showSenha, setShowSenha] = useState(false);
+
+  function upd<K extends keyof typeof form>(field: K, value: (typeof form)[K]) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setErro("");
+  }
+
+  async function salvar() {
+    if (!form.nome.trim() || !form.email.trim() || !form.login.trim()) {
+      setErro("Nome, e-mail e login sao obrigatorios.");
+      return;
+    }
+    if (form.senha && form.senha.length < 6) {
+      setErro("A nova senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    setSaving(true);
+    const res = await fetch("/api/alunos", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: usuario.id,
+        nome: form.nome,
+        login: protectedAdmin ? "admin" : form.login,
+        email: form.email,
+        senha: form.senha.trim() || undefined,
+        ativo: protectedAdmin ? true : form.ativo,
+      }),
+    });
+    setSaving(false);
+
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setErro((d as { error?: string }).error || "Erro ao salvar usuario administrativo.");
+      return;
+    }
+
+    setOpen(false);
+    setForm((prev) => ({ ...prev, senha: "" }));
+    router.refresh();
+  }
+
+  return (
+    <>
+      <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)}>Editar</button>
+      {open && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
+          <div className="modal-box" style={{ maxWidth: "560px" }}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Editar usuario administrativo</div>
+                <div className="modal-subtitle">{usuario.nome}</div>
+              </div>
+              <button className="modal-close" onClick={() => setOpen(false)}>
+                <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              {protectedAdmin && (
+                <div className="form-hint" style={{ marginBottom: "14px" }}>
+                  Este e o usuario principal do sistema. Login, senha e status ativo ficam protegidos.
+                </div>
+              )}
+              <div className="form-grid">
+                <div className="form-group form-group-full">
+                  <label className="form-label">Nome *</label>
+                  <input className="form-input" value={form.nome} onChange={(e) => upd("nome", e.target.value)} autoFocus />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Login *</label>
+                  <input className="form-input" value={form.login} onChange={(e) => upd("login", e.target.value)} disabled={protectedAdmin} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">E-mail *</label>
+                  <input className="form-input" type="email" value={form.email} onChange={(e) => upd("email", e.target.value)} />
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Nova senha</label>
+                  <input
+                    className="form-input"
+                    type={showSenha ? "text" : "password"}
+                    placeholder="Deixe em branco para manter"
+                    value={form.senha}
+                    disabled={protectedAdmin}
+                    onChange={(e) => upd("senha", e.target.value)}
+                  />
+                  {!protectedAdmin && (
+                    <button className="btn btn-ghost btn-sm" type="button" onClick={() => setShowSenha((v) => !v)} style={{ marginTop: "8px" }}>
+                      {showSenha ? "Ocultar senha" : "Ver senha"}
+                    </button>
+                  )}
+                </div>
+                <label className="form-group form-group-full" style={{ display: "flex", alignItems: "center", gap: "10px", cursor: protectedAdmin ? "not-allowed" : "pointer" }}>
+                  <input type="checkbox" checked={form.ativo} disabled={protectedAdmin} onChange={(e) => upd("ativo", e.target.checked)} />
+                  <span className="form-label" style={{ margin: 0 }}>Usuario ativo</span>
+                </label>
+              </div>
+              {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
+              <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Salvando..." : "Salvar alteracoes"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function NovoAlunoModal() {
   const router = useRouter();
   const [open, setOpen] = useState(false);

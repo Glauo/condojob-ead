@@ -79,7 +79,7 @@ export async function PUT(req: NextRequest) {
   await initSchema();
 
   const {
-    id, nome, email, senha, telefone, celular_whatsapp,
+    id, nome, login, email, senha, telefone, celular_whatsapp,
     data_nascimento, rg, cpf, estado_civil,
     cep, cidade, rua, numero, complemento, ativo,
   } = await req.json();
@@ -90,8 +90,44 @@ export async function PUT(req: NextRequest) {
   if (senha && senha.length < 6)
     return NextResponse.json({ error: "Senha deve ter minimo 6 caracteres." }, { status: 400 });
 
+  const atual = await dbQueryOne<{ id: string; perfil: "aluno" | "coordenador"; login: string | null }>(
+    "SELECT id, perfil, login FROM cj_users WHERE id=$1",
+    [id]
+  );
+  if (!atual) return NextResponse.json({ error: "Usuario nao encontrado." }, { status: 404 });
+
   const hash = senha ? await bcrypt.hash(senha, 10) : null;
   const emailLimpo = normalizeEmail(email);
+  const loginAtual = normalizeLogin(atual.login);
+
+  if (atual.perfil === "coordenador") {
+    const loginFinal = loginAtual === "admin" ? "admin" : normalizeLogin(login);
+    if (!loginFinal) return NextResponse.json({ error: "Login administrativo e obrigatorio." }, { status: 400 });
+
+    try {
+      const user = await dbQueryOne(
+        `UPDATE cj_users SET
+          nome=$1, login=$2, email=$3, ativo=$4,
+          senha_hash = COALESCE($5, senha_hash)
+         WHERE id=$6 AND perfil='coordenador'
+         RETURNING id`,
+        [
+          nome.trim(),
+          loginFinal,
+          emailLimpo,
+          loginAtual === "admin" ? true : ativo ?? true,
+          loginAtual === "admin" ? null : hash,
+          id,
+        ]
+      );
+      if (!user) return NextResponse.json({ error: "Usuario administrativo nao encontrado." }, { status: 404 });
+      return NextResponse.json({ ok: true });
+    } catch (e: unknown) {
+      if ((e as { code?: string }).code === "23505")
+        return NextResponse.json({ error: "Login administrativo ou e-mail ja cadastrado." }, { status: 409 });
+      throw e;
+    }
+  }
 
   try {
     const user = await dbQueryOne(
@@ -143,11 +179,23 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Voce nao pode excluir o proprio usuario logado." }, { status: 400 });
   }
 
-  const usuario = await dbQueryOne<{ id: string; nome: string; perfil: string }>(
-    "SELECT id, nome, perfil FROM cj_users WHERE id=$1",
+  const usuario = await dbQueryOne<{ id: string; nome: string; perfil: string; login: string | null }>(
+    "SELECT id, nome, perfil, login FROM cj_users WHERE id=$1",
     [id]
   );
   if (!usuario) return NextResponse.json({ error: "Usuario nao encontrado." }, { status: 404 });
+  if (normalizeLogin(usuario.login) === "admin") {
+    return NextResponse.json({ error: "O usuario principal admin nao pode ser excluido." }, { status: 400 });
+  }
+
+  if (usuario.perfil === "coordenador") {
+    const totalAdmins = await dbQueryOne<{ total: string }>(
+      "SELECT COUNT(*)::text AS total FROM cj_users WHERE perfil='coordenador' AND ativo=true"
+    );
+    if (Number(totalAdmins?.total || 0) <= 1) {
+      return NextResponse.json({ error: "Nao e permitido excluir o ultimo usuario administrativo." }, { status: 400 });
+    }
+  }
 
   const client = await db.connect();
   try {

@@ -321,9 +321,9 @@ async function ensureDefaultAdmin() {
   if (current) {
     await pool.query(
       `UPDATE cj_users
-          SET nome=$1, login=$2, email=$3, senha_hash=$4, ativo=true
-        WHERE id=$5`,
-      [nome, login, email, hash, current.id]
+          SET login=$1, senha_hash=$2, ativo=true
+        WHERE id=$3`,
+      [login, hash, current.id]
     );
     return;
   }
