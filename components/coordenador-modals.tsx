@@ -12,7 +12,7 @@ function normalizeVideoLink(value: string) {
 }
 
 /* ─── Modal Novo Curso ─── */
-type CursoData = { id?: string; nome?: string; descricao?: string; carga_horaria?: number; preco?: number; link_pagamento?: string | null; nota_minima?: number; max_tentativas?: number };
+type CursoData = { id?: string; nome?: string; descricao?: string | null; carga_horaria?: number; preco?: number; link_pagamento?: string | null; tipo?: string | null; nota_minima?: number; max_tentativas?: number };
 
 export function CursoModal({ curso }: { curso?: CursoData } = {}) {
   const router = useRouter();
@@ -24,6 +24,7 @@ export function CursoModal({ curso }: { curso?: CursoData } = {}) {
     carga_horaria: String(curso?.carga_horaria || "0"),
     preco: String(curso?.preco || "0"),
     link_pagamento: String(curso?.link_pagamento || ""),
+    tipo: String(curso?.tipo || "principal"),
     nota_minima: String(curso?.nota_minima || "7"),
     max_tentativas: String(curso?.max_tentativas || "3"),
   });
@@ -82,6 +83,14 @@ export function CursoModal({ curso }: { curso?: CursoData } = {}) {
                 <div className="form-group form-group-full">
                   <label className="form-label">Descrição</label>
                   <textarea className="form-input form-textarea" placeholder="Descrição do curso…" value={form.descricao} onChange={(e) => upd("descricao", e.target.value)} rows={3} />
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Tipo do curso</label>
+                  <select className="form-input" value={form.tipo} onChange={(e) => upd("tipo", e.target.value)}>
+                    <option value="principal">Curso principal</option>
+                    <option value="especializacao">Curso de especializacao</option>
+                  </select>
+                  <span className="form-hint">Especializacoes aparecem no painel do aluno e usam aulas, materiais, avaliacoes e certificados normalmente.</span>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Carga horária (h)</label>

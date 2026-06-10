@@ -136,10 +136,11 @@ export default async function AlunoDashboard() {
       `SELECT c.id, c.nome, c.descricao, c.carga_horaria,
               (SELECT COUNT(*) FROM cj_aulas a WHERE a.curso_id = c.id)::text AS total_aulas
          FROM cj_cursos c
-        WHERE NOT EXISTS (
+        WHERE COALESCE(c.tipo, 'principal') = 'especializacao'
+          AND NOT EXISTS (
           SELECT 1 FROM cj_matriculas m WHERE m.curso_id = c.id AND m.usuario_id = $1
         )
-        ORDER BY c.criado_em DESC
+        ORDER BY c.criado_em ASC
         LIMIT 6`,
       [session.id]
     ),
@@ -326,7 +327,7 @@ export default async function AlunoDashboard() {
                 const avaliacaoEnviada = totalAtividades > 0 && submissoesAvaliacao >= totalAtividades;
                 const avaliacaoDisponivel = totalAtividades > 0 && aula.concluido;
                 return (
-                  <div key={aula.id} style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: "12px", alignItems: "start", padding: "12px", background: "var(--cj-dark)", border: "1px solid var(--cj-dark-border)", borderRadius: "var(--cj-radius)" }}>
+                  <div key={aula.id} className="student-content-row" style={{ display: "grid", gap: "12px", alignItems: "start", padding: "12px", background: "var(--cj-dark)", border: "1px solid var(--cj-dark-border)", borderRadius: "var(--cj-radius)" }}>
                     <div className={`accordion-item-num${aula.concluido ? " done" : " active"}`}>
                       {displayModulo(aulas, aula)}
                     </div>
@@ -426,12 +427,13 @@ export default async function AlunoDashboard() {
           <div className="card-header">
             <div>
               <div className="section-eyebrow">Biblioteca</div>
-              <h3 className="section-title">Cursos extras</h3>
+              <h3 className="section-title">Especializacoes</h3>
             </div>
+            <a href="/aluno/especializacoes" className="btn btn-ghost btn-sm">Ver cursos</a>
           </div>
           <div className="card-body" style={{ paddingTop: "10px" }}>
             {cursosExtras.length === 0 ? (
-              <p style={{ color: "var(--cj-text-muted)", fontSize: "0.85rem" }}>Nenhum curso extra disponivel no momento.</p>
+              <p style={{ color: "var(--cj-text-muted)", fontSize: "0.85rem" }}>Nenhuma especializacao disponivel no momento.</p>
             ) : (
               <div style={{ display: "grid", gap: "10px" }}>
                 {cursosExtras.map((curso) => (
@@ -443,13 +445,16 @@ export default async function AlunoDashboard() {
                           {curso.carga_horaria}h | {curso.total_aulas} aula(s)
                         </div>
                       </div>
-                      <span className="badge badge-teal">Extra</span>
+                      <span className="badge badge-teal">Especializacao</span>
                     </div>
                     {curso.descricao && (
                       <p style={{ fontSize: "0.82rem", color: "var(--cj-text-secondary)", marginTop: "8px" }}>
                         {stripHtml(curso.descricao).slice(0, 150)}
                       </p>
                     )}
+                    <div style={{ marginTop: "10px" }}>
+                      <a href="/aluno/especializacoes" className="btn btn-primary btn-sm">Conhecer curso</a>
+                    </div>
                   </div>
                 ))}
               </div>

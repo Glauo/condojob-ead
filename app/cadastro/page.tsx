@@ -19,7 +19,7 @@ type Curso = {
 export default async function CadastroPage() {
   await initSchema();
   const cursos = await dbQuery<Curso>(
-    "SELECT id, nome, descricao, carga_horaria, preco FROM cj_cursos WHERE preco > 0 ORDER BY criado_em ASC"
+    "SELECT id, nome, descricao, carga_horaria, preco FROM cj_cursos WHERE preco > 0 AND COALESCE(tipo, 'principal') = 'principal' ORDER BY criado_em ASC"
   );
 
   return (
