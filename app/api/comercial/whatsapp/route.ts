@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
     ok: true,
     status: result.status,
     mensagem: result.mensagem,
-    whatsappUrl,
+    whatsappUrl: result.status === "rascunho" ? whatsappUrl : null,
     warning: result.status === "rascunho" ? "Webhook nao configurado. Abrindo WhatsApp para envio manual." : null,
   });
 }
