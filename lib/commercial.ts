@@ -24,6 +24,13 @@ type OptimizeInput = {
   assunto?: string | null;
 };
 
+type CommercialCopyResult = {
+  assunto: string;
+  mensagem: string;
+  source?: "fallback" | "openai";
+  warning?: string;
+};
+
 export function normalizeStage(value: unknown) {
   const stage = String(value || "").trim().toLowerCase();
   return COMMERCIAL_STAGES.some((item) => item.id === stage) ? stage : "novo";
@@ -49,7 +56,7 @@ export function fillTemplate(template: string, vars: Record<string, string | nul
   return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => String(vars[key] || "").trim());
 }
 
-export function optimizeCommercialCopy(input: OptimizeInput) {
+export function optimizeCommercialCopy(input: OptimizeInput): CommercialCopyResult {
   const canal = normalizeChannel(input.canal);
   const objetivo = normalizeObjective(input.objetivo);
   const tom = normalizeTone(input.tom);
@@ -96,11 +103,118 @@ export function optimizeCommercialCopy(input: OptimizeInput) {
           ? "Proposta comercial CondoJob Educacional"
           : "Capacitacao profissional para sua operacao condominial");
     const mensagem = `${abertura}\n\n${prova}\n\n${valor}${contextoLinha}\n\n${callToAction}\n\nFico a disposicao.`;
-    return { assunto, mensagem };
+    return { assunto, mensagem, source: "fallback" };
   }
 
   const mensagem = `${abertura} ${prova} ${valor}${contexto ? ` Contexto: ${contexto}.` : ""} ${callToAction}`.replace(/\s+/g, " ").trim();
-  return { assunto: "", mensagem };
+  return { assunto: "", mensagem, source: "fallback" };
+}
+
+function extractOpenAIText(payload: any) {
+  if (typeof payload?.output_text === "string" && payload.output_text.trim()) {
+    return payload.output_text.trim();
+  }
+
+  const output = Array.isArray(payload?.output) ? payload.output : [];
+  const texts: string[] = [];
+
+  for (const item of output) {
+    const content = Array.isArray(item?.content) ? item.content : [];
+    for (const part of content) {
+      if (typeof part?.text === "string" && part.text.trim()) {
+        texts.push(part.text.trim());
+      }
+    }
+  }
+
+  return texts.join("\n").trim();
+}
+
+export async function optimizeCommercialCopyWithAI(input: OptimizeInput): Promise<CommercialCopyResult> {
+  const fallback = optimizeCommercialCopy(input);
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+
+  if (!apiKey) {
+    return {
+      ...fallback,
+      warning: "OPENAI_API_KEY nao configurada. Copy gerada pelo modelo interno.",
+    };
+  }
+
+  const model = process.env.OPENAI_COMMERCIAL_MODEL?.trim() || "gpt-4.1-mini";
+  const canal = normalizeChannel(input.canal);
+  const objetivo = normalizeObjective(input.objetivo);
+  const tom = normalizeTone(input.tom);
+  const empresa = String(input.empresa || "a operacao do cliente").trim();
+  const nomeContato = String(input.nomeContato || "responsavel").trim();
+  const contexto = String(input.contexto || "").trim();
+  const assuntoAtual = String(input.assunto || "").trim();
+
+  const prompt = [
+    "Voce e um especialista comercial B2B da CondoJob Educacional.",
+    "Gere uma copy curta, persuasiva, profissional e natural em portugues do Brasil.",
+    `Canal: ${canal}.`,
+    `Objetivo: ${objetivo}.`,
+    `Tom: ${tom}.`,
+    `Empresa alvo: ${empresa}.`,
+    `Contato: ${nomeContato}.`,
+    contexto ? `Contexto adicional: ${contexto}.` : "",
+    assuntoAtual ? `Assunto atual de referencia: ${assuntoAtual}.` : "",
+    canal === "email"
+      ? "Responda em JSON com as chaves assunto e mensagem."
+      : "Responda em JSON com as chaves assunto e mensagem. Para WhatsApp, deixe assunto vazio.",
+    "Nao use markdown, cercas de codigo nem explicacoes extras.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        input: prompt,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      return {
+        ...fallback,
+        warning: `Falha na OpenAI (${response.status}). Copy gerada pelo modelo interno.${errorText ? ` ${errorText.slice(0, 180)}` : ""}`,
+      };
+    }
+
+    const payload = await response.json().catch(() => ({}));
+    const rawText = extractOpenAIText(payload);
+    if (!rawText) {
+      return {
+        ...fallback,
+        warning: "Resposta vazia da OpenAI. Copy gerada pelo modelo interno.",
+      };
+    }
+
+    const jsonStart = rawText.indexOf("{");
+    const jsonEnd = rawText.lastIndexOf("}");
+    const jsonText = jsonStart >= 0 && jsonEnd > jsonStart ? rawText.slice(jsonStart, jsonEnd + 1) : rawText;
+    const parsed = JSON.parse(jsonText);
+
+    return {
+      assunto: canal === "email" ? String(parsed?.assunto || fallback.assunto || "").trim() : "",
+      mensagem: String(parsed?.mensagem || fallback.mensagem || "").trim(),
+      source: "openai",
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro desconhecido";
+    return {
+      ...fallback,
+      warning: `Falha na OpenAI: ${message}. Copy gerada pelo modelo interno.`,
+    };
+  }
 }
 
 export async function requireCommercialSession() {

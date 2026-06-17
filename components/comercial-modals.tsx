@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 
 type LeadData = {
   id?: string;
@@ -48,6 +49,21 @@ type CampanhaData = {
 };
 
 const STAGES = ["novo", "qualificado", "reuniao", "proposta", "negociacao", "ganho", "perdido"];
+
+function ModalPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    document.body.classList.add("modal-open");
+    return () => {
+      document.body.classList.remove("modal-open");
+    };
+  }, []);
+
+  if (!mounted) return null;
+  return createPortal(children, document.body);
+}
 
 function DeleteButton({ url, label, confirmText }: { url: string; label: string; confirmText: string }) {
   const router = useRouter();
@@ -177,17 +193,18 @@ export function LeadModal({ lead }: { lead?: LeadData }) {
         {isEdit ? "Editar" : "+ Nova lead"}
       </button>
       {open && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
-          <div className="modal-box" style={{ maxWidth: "760px" }}>
-            <div className="modal-header">
-              <div>
-                <div className="modal-title">{isEdit ? "Editar lead" : "Nova lead"}</div>
-                <div className="modal-subtitle">Cadastro comercial completo</div>
+        <ModalPortal>
+          <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
+            <div className="modal-box commercial-modal" style={{ maxWidth: "760px" }}>
+              <div className="modal-header">
+                <div>
+                  <div className="modal-title">{isEdit ? "Editar lead" : "Nova lead"}</div>
+                  <div className="modal-subtitle">Cadastro comercial completo</div>
+                </div>
+                <button className="modal-close" onClick={() => setOpen(false)}>x</button>
               </div>
-              <button className="modal-close" onClick={() => setOpen(false)}>x</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-grid">
+              <div className="modal-body commercial-modal-body">
+                <div className="form-grid">
                 <div className="form-group">
                   <label className="form-label">Empresa *</label>
                   <input className="form-input" value={form.empresa} onChange={(e) => upd("empresa", e.target.value)} />
@@ -250,16 +267,17 @@ export function LeadModal({ lead }: { lead?: LeadData }) {
                   <label className="form-label">Observacoes</label>
                   <textarea className="form-input form-textarea" rows={4} value={form.observacoes} onChange={(e) => upd("observacoes", e.target.value)} />
                 </div>
+                </div>
+                {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
               </div>
-              {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
-            </div>
-            <div className="modal-footer">
-              {lead?.id && <DeleteButton url={`/api/comercial/leads?id=${lead.id}`} label="Excluir" confirmText={`Excluir a lead ${lead.empresa}?`} />}
-              <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
-              <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Salvando..." : "Salvar lead"}</button>
+              <div className="modal-footer">
+                {lead?.id && <DeleteButton url={`/api/comercial/leads?id=${lead.id}`} label="Excluir" confirmText={`Excluir a lead ${lead.empresa}?`} />}
+                <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
+                <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Salvando..." : "Salvar lead"}</button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </>
   );
@@ -270,7 +288,9 @@ export function TemplateModal({ template }: { template?: TemplateData }) {
   const isEdit = Boolean(template?.id);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [erro, setErro] = useState("");
+  const [iaInfo, setIaInfo] = useState("");
   const [form, setForm] = useState({
     nome: String(template?.nome || ""),
     canal: String(template?.canal || "whatsapp"),
@@ -288,6 +308,9 @@ export function TemplateModal({ template }: { template?: TemplateData }) {
   }
 
   async function gerarComIA() {
+    setGenerating(true);
+    setErro("");
+    setIaInfo("");
     const res = await fetch("/api/comercial/copy", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -301,13 +324,22 @@ export function TemplateModal({ template }: { template?: TemplateData }) {
       }),
     });
     const data = await res.json().catch(() => ({}));
+    setGenerating(false);
     if (!res.ok) {
       setErro((data as { error?: string }).error || "Erro ao gerar copy.");
       return;
     }
-    upd("assunto", (data as { assunto?: string }).assunto || "");
-    upd("conteudo", (data as { mensagem?: string }).mensagem || "");
+    const payload = data as { assunto?: string; mensagem?: string; warning?: string; source?: string };
+    upd("assunto", payload.assunto || "");
+    upd("conteudo", payload.mensagem || "");
     upd("ai_gerado", true);
+    setIaInfo(
+      payload.warning
+        ? payload.warning
+        : payload.source === "openai"
+          ? "Copy gerada com OpenAI."
+          : "Copy gerada pelo modelo interno."
+    );
   }
 
   async function salvar() {
@@ -338,17 +370,18 @@ export function TemplateModal({ template }: { template?: TemplateData }) {
         {isEdit ? "Editar" : "+ Novo template"}
       </button>
       {open && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
-          <div className="modal-box" style={{ maxWidth: "760px" }}>
-            <div className="modal-header">
-              <div>
-                <div className="modal-title">{isEdit ? "Editar template" : "Novo template IA"}</div>
-                <div className="modal-subtitle">Mensagens comerciais otimizadas</div>
+        <ModalPortal>
+          <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
+            <div className="modal-box commercial-modal" style={{ maxWidth: "760px" }}>
+              <div className="modal-header">
+                <div>
+                  <div className="modal-title">{isEdit ? "Editar template" : "Novo template IA"}</div>
+                  <div className="modal-subtitle">Mensagens comerciais otimizadas</div>
+                </div>
+                <button className="modal-close" onClick={() => setOpen(false)}>x</button>
               </div>
-              <button className="modal-close" onClick={() => setOpen(false)}>x</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-grid">
+              <div className="modal-body commercial-modal-body">
+                <div className="form-grid">
                 <div className="form-group">
                   <label className="form-label">Nome</label>
                   <input className="form-input" value={form.nome} onChange={(e) => upd("nome", e.target.value)} />
@@ -385,19 +418,23 @@ export function TemplateModal({ template }: { template?: TemplateData }) {
                   <label className="form-label">Mensagem</label>
                   <textarea className="form-input form-textarea" rows={8} value={form.conteudo} onChange={(e) => upd("conteudo", e.target.value)} />
                   <div style={{ marginTop: "10px" }}>
-                    <button className="btn btn-ghost btn-sm" type="button" onClick={gerarComIA}>Gerar copy com IA</button>
+                    <button className="btn btn-ghost btn-sm" type="button" onClick={gerarComIA} disabled={generating}>
+                      {generating ? "Gerando..." : "Gerar copy com IA"}
+                    </button>
                   </div>
                 </div>
+                </div>
+                {iaInfo && <div className="form-hint" style={{ marginTop: "12px" }}>{iaInfo}</div>}
+                {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
               </div>
-              {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
-            </div>
-            <div className="modal-footer">
-              {template?.id && <DeleteButton url={`/api/comercial/templates?id=${template.id}`} label="Excluir" confirmText={`Excluir o template ${template.nome}?`} />}
-              <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
-              <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Salvando..." : "Salvar template"}</button>
+              <div className="modal-footer">
+                {template?.id && <DeleteButton url={`/api/comercial/templates?id=${template.id}`} label="Excluir" confirmText={`Excluir o template ${template.nome}?`} />}
+                <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
+                <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Salvando..." : "Salvar template"}</button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </>
   );
@@ -476,17 +513,18 @@ export function CampanhaModal({
         {isEdit ? "Editar" : "+ Nova campanha"}
       </button>
       {open && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
-          <div className="modal-box" style={{ maxWidth: "760px" }}>
-            <div className="modal-header">
-              <div>
-                <div className="modal-title">{isEdit ? "Editar campanha" : "Nova campanha"}</div>
-                <div className="modal-subtitle">Email e WhatsApp em massa com filtro por funil</div>
+        <ModalPortal>
+          <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
+            <div className="modal-box commercial-modal" style={{ maxWidth: "760px" }}>
+              <div className="modal-header">
+                <div>
+                  <div className="modal-title">{isEdit ? "Editar campanha" : "Nova campanha"}</div>
+                  <div className="modal-subtitle">Email e WhatsApp em massa com filtro por funil</div>
+                </div>
+                <button className="modal-close" onClick={() => setOpen(false)}>x</button>
               </div>
-              <button className="modal-close" onClick={() => setOpen(false)}>x</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-grid">
+              <div className="modal-body commercial-modal-body">
+                <div className="form-grid">
                 <div className="form-group">
                   <label className="form-label">Nome</label>
                   <input className="form-input" value={form.nome} onChange={(e) => upd("nome", e.target.value)} />
@@ -530,16 +568,17 @@ export function CampanhaModal({
                   <label className="form-label">Mensagem</label>
                   <textarea className="form-input form-textarea" rows={8} value={form.mensagem} onChange={(e) => upd("mensagem", e.target.value)} />
                 </div>
+                </div>
+                {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
               </div>
-              {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
-            </div>
-            <div className="modal-footer">
-              {campanha?.id && <DeleteButton url={`/api/comercial/campanhas?id=${campanha.id}`} label="Excluir" confirmText={`Excluir a campanha ${campanha.nome}?`} />}
-              <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
-              <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Salvando..." : "Salvar campanha"}</button>
+              <div className="modal-footer">
+                {campanha?.id && <DeleteButton url={`/api/comercial/campanhas?id=${campanha.id}`} label="Excluir" confirmText={`Excluir a campanha ${campanha.nome}?`} />}
+                <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
+                <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Salvando..." : "Salvar campanha"}</button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </>
   );

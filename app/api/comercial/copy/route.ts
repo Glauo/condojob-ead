@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { initSchema } from "@/lib/db";
-import { optimizeCommercialCopy, requireCommercialSession } from "@/lib/commercial";
+import { optimizeCommercialCopyWithAI, requireCommercialSession } from "@/lib/commercial";
 
 export async function POST(req: NextRequest) {
   await initSchema();
@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Nao autorizado." }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
-  const result = optimizeCommercialCopy({
+  const result = await optimizeCommercialCopyWithAI({
     canal: body.canal,
     objetivo: body.objetivo,
     tom: body.tom,
