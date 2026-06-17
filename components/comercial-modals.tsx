@@ -1,0 +1,546 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+type LeadData = {
+  id?: string;
+  empresa?: string | null;
+  nome_contato?: string | null;
+  email?: string | null;
+  whatsapp?: string | null;
+  cargo?: string | null;
+  origem?: string | null;
+  segmento?: string | null;
+  cidade?: string | null;
+  tags?: string[] | null;
+  score?: number | null;
+  valor_potencial?: number | null;
+  estagio?: string | null;
+  observacoes?: string | null;
+  ai_resumo?: string | null;
+  proxima_acao_em?: string | null;
+};
+
+type TemplateData = {
+  id: string;
+  nome: string;
+  canal: "whatsapp" | "email";
+  objetivo: string;
+  tom: string;
+  assunto: string | null;
+  conteudo: string;
+  ai_gerado: boolean;
+  ativo: boolean;
+};
+
+type CampanhaData = {
+  id?: string;
+  nome?: string | null;
+  canal?: "whatsapp" | "email" | null;
+  status?: string | null;
+  template_id?: string | null;
+  filtro_estagio?: string | null;
+  filtro_origem?: string | null;
+  assunto?: string | null;
+  mensagem?: string | null;
+  agendado_em?: string | null;
+};
+
+const STAGES = ["novo", "qualificado", "reuniao", "proposta", "negociacao", "ganho", "perdido"];
+
+function DeleteButton({ url, label, confirmText }: { url: string; label: string; confirmText: string }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  async function onDelete() {
+    if (!confirm(confirmText)) return;
+    setLoading(true);
+    await fetch(url, { method: "DELETE" });
+    setLoading(false);
+    router.refresh();
+  }
+
+  return (
+    <button className="btn btn-danger btn-sm" onClick={onDelete} disabled={loading}>
+      {loading ? "Excluindo..." : label}
+    </button>
+  );
+}
+
+export function LeadStageSelect({ leadId, value }: { leadId: string; value: string }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  async function onChange(next: string) {
+    setLoading(true);
+    await fetch("/api/comercial/leads", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: leadId, estagio: next }),
+    });
+    setLoading(false);
+    router.refresh();
+  }
+
+  return (
+    <select className="form-input" value={value} disabled={loading} onChange={(e) => onChange(e.target.value)}>
+      {STAGES.map((stage) => <option key={stage} value={stage}>{stage}</option>)}
+    </select>
+  );
+}
+
+export function CampanhaDisparoButton({ campanhaId }: { campanhaId: string }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  async function disparar() {
+    setLoading(true);
+    const res = await fetch("/api/comercial/campanhas/disparar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: campanhaId }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setLoading(false);
+    if (!res.ok) {
+      alert((data as { error?: string }).error || "Erro ao disparar campanha.");
+      return;
+    }
+    alert(`Disparo concluido. Enviados: ${data.enviados}. Rascunhos: ${data.rascunhos}. Erros: ${data.erros}.`);
+    router.refresh();
+  }
+
+  return (
+    <button className="btn btn-primary btn-sm" onClick={disparar} disabled={loading}>
+      {loading ? "Disparando..." : "Disparar"}
+    </button>
+  );
+}
+
+export function LeadModal({ lead }: { lead?: LeadData }) {
+  const router = useRouter();
+  const isEdit = Boolean(lead?.id);
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState("");
+  const [form, setForm] = useState({
+    empresa: String(lead?.empresa || ""),
+    nome_contato: String(lead?.nome_contato || ""),
+    email: String(lead?.email || ""),
+    whatsapp: String(lead?.whatsapp || ""),
+    cargo: String(lead?.cargo || ""),
+    origem: String(lead?.origem || "site"),
+    segmento: String(lead?.segmento || ""),
+    cidade: String(lead?.cidade || ""),
+    tags: Array.isArray(lead?.tags) ? lead?.tags.join(", ") : "",
+    score: String(lead?.score ?? 50),
+    valor_potencial: String(lead?.valor_potencial ?? 0),
+    estagio: String(lead?.estagio || "novo"),
+    observacoes: String(lead?.observacoes || ""),
+    ai_resumo: String(lead?.ai_resumo || ""),
+    proxima_acao_em: String(lead?.proxima_acao_em || ""),
+  });
+
+  function upd(field: keyof typeof form, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setErro("");
+  }
+
+  async function salvar() {
+    if (!form.empresa.trim() || !form.nome_contato.trim()) {
+      setErro("Empresa e contato sao obrigatorios.");
+      return;
+    }
+
+    setSaving(true);
+    const res = await fetch("/api/comercial/leads", {
+      method: isEdit ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: lead?.id, ...form }),
+    });
+    setSaving(false);
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setErro((data as { error?: string }).error || "Erro ao salvar lead.");
+      return;
+    }
+
+    setOpen(false);
+    router.refresh();
+  }
+
+  return (
+    <>
+      <button className={isEdit ? "btn btn-ghost btn-sm" : "btn btn-primary"} onClick={() => setOpen(true)}>
+        {isEdit ? "Editar" : "+ Nova lead"}
+      </button>
+      {open && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
+          <div className="modal-box" style={{ maxWidth: "760px" }}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">{isEdit ? "Editar lead" : "Nova lead"}</div>
+                <div className="modal-subtitle">Cadastro comercial completo</div>
+              </div>
+              <button className="modal-close" onClick={() => setOpen(false)}>x</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">Empresa *</label>
+                  <input className="form-input" value={form.empresa} onChange={(e) => upd("empresa", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Contato *</label>
+                  <input className="form-input" value={form.nome_contato} onChange={(e) => upd("nome_contato", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">E-mail</label>
+                  <input className="form-input" value={form.email} onChange={(e) => upd("email", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">WhatsApp</label>
+                  <input className="form-input" value={form.whatsapp} onChange={(e) => upd("whatsapp", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Cargo</label>
+                  <input className="form-input" value={form.cargo} onChange={(e) => upd("cargo", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Origem</label>
+                  <input className="form-input" value={form.origem} onChange={(e) => upd("origem", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Segmento</label>
+                  <input className="form-input" value={form.segmento} onChange={(e) => upd("segmento", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Cidade</label>
+                  <input className="form-input" value={form.cidade} onChange={(e) => upd("cidade", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Score</label>
+                  <input className="form-input" type="number" min="0" max="100" value={form.score} onChange={(e) => upd("score", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Valor potencial</label>
+                  <input className="form-input" type="number" min="0" step="0.01" value={form.valor_potencial} onChange={(e) => upd("valor_potencial", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Estagio</label>
+                  <select className="form-input" value={form.estagio} onChange={(e) => upd("estagio", e.target.value)}>
+                    {STAGES.map((stage) => <option key={stage} value={stage}>{stage}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Proxima acao</label>
+                  <input className="form-input" type="datetime-local" value={form.proxima_acao_em} onChange={(e) => upd("proxima_acao_em", e.target.value)} />
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Tags</label>
+                  <input className="form-input" value={form.tags} onChange={(e) => upd("tags", e.target.value)} placeholder="premium, administradora, portaria" />
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Resumo IA</label>
+                  <textarea className="form-input form-textarea" rows={3} value={form.ai_resumo} onChange={(e) => upd("ai_resumo", e.target.value)} />
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Observacoes</label>
+                  <textarea className="form-input form-textarea" rows={4} value={form.observacoes} onChange={(e) => upd("observacoes", e.target.value)} />
+                </div>
+              </div>
+              {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
+            </div>
+            <div className="modal-footer">
+              {lead?.id && <DeleteButton url={`/api/comercial/leads?id=${lead.id}`} label="Excluir" confirmText={`Excluir a lead ${lead.empresa}?`} />}
+              <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
+              <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Salvando..." : "Salvar lead"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function TemplateModal({ template }: { template?: TemplateData }) {
+  const router = useRouter();
+  const isEdit = Boolean(template?.id);
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState("");
+  const [form, setForm] = useState({
+    nome: String(template?.nome || ""),
+    canal: String(template?.canal || "whatsapp"),
+    objetivo: String(template?.objetivo || "prospeccao"),
+    tom: String(template?.tom || "consultivo"),
+    assunto: String(template?.assunto || ""),
+    conteudo: String(template?.conteudo || ""),
+    ai_gerado: Boolean(template?.ai_gerado),
+    ativo: template?.ativo !== false,
+  });
+
+  function upd<K extends keyof typeof form>(field: K, value: (typeof form)[K]) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setErro("");
+  }
+
+  async function gerarComIA() {
+    const res = await fetch("/api/comercial/copy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        canal: form.canal,
+        objetivo: form.objetivo,
+        tom: form.tom,
+        assunto: form.assunto,
+        empresa: "condominio premium",
+        nomeContato: "responsavel",
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setErro((data as { error?: string }).error || "Erro ao gerar copy.");
+      return;
+    }
+    upd("assunto", (data as { assunto?: string }).assunto || "");
+    upd("conteudo", (data as { mensagem?: string }).mensagem || "");
+    upd("ai_gerado", true);
+  }
+
+  async function salvar() {
+    if (!form.nome.trim() || !form.conteudo.trim()) {
+      setErro("Nome e conteudo sao obrigatorios.");
+      return;
+    }
+
+    setSaving(true);
+    const res = await fetch("/api/comercial/templates", {
+      method: isEdit ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: template?.id, ...form }),
+    });
+    setSaving(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setErro((data as { error?: string }).error || "Erro ao salvar template.");
+      return;
+    }
+    setOpen(false);
+    router.refresh();
+  }
+
+  return (
+    <>
+      <button className={isEdit ? "btn btn-ghost btn-sm" : "btn btn-secondary"} onClick={() => setOpen(true)}>
+        {isEdit ? "Editar" : "+ Novo template"}
+      </button>
+      {open && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
+          <div className="modal-box" style={{ maxWidth: "760px" }}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">{isEdit ? "Editar template" : "Novo template IA"}</div>
+                <div className="modal-subtitle">Mensagens comerciais otimizadas</div>
+              </div>
+              <button className="modal-close" onClick={() => setOpen(false)}>x</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">Nome</label>
+                  <input className="form-input" value={form.nome} onChange={(e) => upd("nome", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Canal</label>
+                  <select className="form-input" value={form.canal} onChange={(e) => upd("canal", e.target.value)}>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="email">E-mail</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Objetivo</label>
+                  <select className="form-input" value={form.objetivo} onChange={(e) => upd("objetivo", e.target.value)}>
+                    <option value="prospeccao">Prospeccao</option>
+                    <option value="followup">Follow-up</option>
+                    <option value="reativacao">Reativacao</option>
+                    <option value="fechamento">Fechamento</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Tom</label>
+                  <select className="form-input" value={form.tom} onChange={(e) => upd("tom", e.target.value)}>
+                    <option value="consultivo">Consultivo</option>
+                    <option value="direto">Direto</option>
+                    <option value="premium">Premium</option>
+                  </select>
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Assunto</label>
+                  <input className="form-input" value={form.assunto} onChange={(e) => upd("assunto", e.target.value)} />
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Mensagem</label>
+                  <textarea className="form-input form-textarea" rows={8} value={form.conteudo} onChange={(e) => upd("conteudo", e.target.value)} />
+                  <div style={{ marginTop: "10px" }}>
+                    <button className="btn btn-ghost btn-sm" type="button" onClick={gerarComIA}>Gerar copy com IA</button>
+                  </div>
+                </div>
+              </div>
+              {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
+            </div>
+            <div className="modal-footer">
+              {template?.id && <DeleteButton url={`/api/comercial/templates?id=${template.id}`} label="Excluir" confirmText={`Excluir o template ${template.nome}?`} />}
+              <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
+              <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Salvando..." : "Salvar template"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function CampanhaModal({
+  campanha,
+  templates,
+}: {
+  campanha?: CampanhaData;
+  templates: TemplateData[];
+}) {
+  const router = useRouter();
+  const isEdit = Boolean(campanha?.id);
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState("");
+  const [form, setForm] = useState({
+    nome: String(campanha?.nome || ""),
+    canal: String(campanha?.canal || "whatsapp"),
+    status: String(campanha?.status || "rascunho"),
+    template_id: String(campanha?.template_id || ""),
+    filtro_estagio: String(campanha?.filtro_estagio || ""),
+    filtro_origem: String(campanha?.filtro_origem || ""),
+    assunto: String(campanha?.assunto || ""),
+    mensagem: String(campanha?.mensagem || ""),
+    agendado_em: String(campanha?.agendado_em || ""),
+  });
+
+  function upd(field: keyof typeof form, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setErro("");
+  }
+
+  function applyTemplate(id: string) {
+    upd("template_id", id);
+    const template = templates.find((item) => item.id === id);
+    if (!template) return;
+    upd("canal", template.canal);
+    if (!form.assunto.trim()) upd("assunto", template.assunto || "");
+    if (!form.mensagem.trim()) upd("mensagem", template.conteudo);
+  }
+
+  async function salvar() {
+    if (!form.nome.trim() || !form.mensagem.trim()) {
+      setErro("Nome e mensagem sao obrigatorios.");
+      return;
+    }
+
+    setSaving(true);
+    const res = await fetch("/api/comercial/campanhas", {
+      method: isEdit ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: campanha?.id,
+        ...form,
+        template_id: form.template_id || null,
+        filtro_estagio: form.filtro_estagio || null,
+        filtro_origem: form.filtro_origem || null,
+        agendado_em: form.agendado_em || null,
+      }),
+    });
+    setSaving(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setErro((data as { error?: string }).error || "Erro ao salvar campanha.");
+      return;
+    }
+    setOpen(false);
+    router.refresh();
+  }
+
+  return (
+    <>
+      <button className={isEdit ? "btn btn-ghost btn-sm" : "btn btn-primary"} onClick={() => setOpen(true)}>
+        {isEdit ? "Editar" : "+ Nova campanha"}
+      </button>
+      {open && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
+          <div className="modal-box" style={{ maxWidth: "760px" }}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">{isEdit ? "Editar campanha" : "Nova campanha"}</div>
+                <div className="modal-subtitle">Email e WhatsApp em massa com filtro por funil</div>
+              </div>
+              <button className="modal-close" onClick={() => setOpen(false)}>x</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">Nome</label>
+                  <input className="form-input" value={form.nome} onChange={(e) => upd("nome", e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Canal</label>
+                  <select className="form-input" value={form.canal} onChange={(e) => upd("canal", e.target.value)}>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="email">E-mail</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Template base</label>
+                  <select className="form-input" value={form.template_id} onChange={(e) => applyTemplate(e.target.value)}>
+                    <option value="">Sem template</option>
+                    {templates.map((template) => (
+                      <option key={template.id} value={template.id}>{template.nome}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Filtro por estagio</label>
+                  <select className="form-input" value={form.filtro_estagio} onChange={(e) => upd("filtro_estagio", e.target.value)}>
+                    <option value="">Todos</option>
+                    {STAGES.map((stage) => <option key={stage} value={stage}>{stage}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Filtro por origem</label>
+                  <input className="form-input" value={form.filtro_origem} onChange={(e) => upd("filtro_origem", e.target.value)} placeholder="site, indicacao, evento" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Agendamento</label>
+                  <input className="form-input" type="datetime-local" value={form.agendado_em} onChange={(e) => upd("agendado_em", e.target.value)} />
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Assunto</label>
+                  <input className="form-input" value={form.assunto} onChange={(e) => upd("assunto", e.target.value)} />
+                </div>
+                <div className="form-group form-group-full">
+                  <label className="form-label">Mensagem</label>
+                  <textarea className="form-input form-textarea" rows={8} value={form.mensagem} onChange={(e) => upd("mensagem", e.target.value)} />
+                </div>
+              </div>
+              {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
+            </div>
+            <div className="modal-footer">
+              {campanha?.id && <DeleteButton url={`/api/comercial/campanhas?id=${campanha.id}`} label="Excluir" confirmText={`Excluir a campanha ${campanha.nome}?`} />}
+              <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={saving}>Cancelar</button>
+              <button className="btn btn-primary" onClick={salvar} disabled={saving}>{saving ? "Salvando..." : "Salvar campanha"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

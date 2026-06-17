@@ -350,7 +350,12 @@ export function NovoAlunoModal() {
     router.refresh();
   }
 
-  const labelCadastrar = form.perfil === "coordenador" ? "Cadastrar coordenador" : "Cadastrar aluno";
+  const labelCadastrar =
+    form.perfil === "coordenador"
+      ? "Cadastrar coordenador"
+      : form.perfil === "comercial"
+        ? "Cadastrar comercial"
+        : "Cadastrar aluno";
 
   return (
     <>
@@ -369,7 +374,7 @@ export function NovoAlunoModal() {
               <div className="form-group form-group-full" style={{ marginBottom: "16px" }}>
                 <label className="form-label">Tipo de perfil *</label>
                 <div style={{ display: "flex", gap: "10px" }}>
-                  {(["aluno", "coordenador"] as const).map((p) => (
+                  {(["aluno", "coordenador", "comercial"] as const).map((p) => (
                     <button
                       key={p}
                       type="button"
@@ -451,10 +456,10 @@ export function NovoAlunoModal() {
                   <input className="form-input" type="email" placeholder="aluno@email.com" value={form.email} onChange={(e) => upd("email", e.target.value)} />
                   {form.perfil === "aluno" && <span className="form-hint">O e-mail cadastrado sera o login do aluno.</span>}
                 </div>
-                {form.perfil === "coordenador" && (
+                {form.perfil !== "aluno" && (
                   <div className="form-group">
                     <label className="form-label">Login de acesso *</label>
-                    <input className="form-input" placeholder="ex: coordenacao" value={form.login} onChange={(e) => upd("login", e.target.value)} />
+                    <input className="form-input" placeholder={form.perfil === "comercial" ? "ex: comercial.condojob" : "ex: coordenacao"} value={form.login} onChange={(e) => upd("login", e.target.value)} />
                     <span className="form-hint">Campo usado apenas para acesso administrativo.</span>
                   </div>
                 )}

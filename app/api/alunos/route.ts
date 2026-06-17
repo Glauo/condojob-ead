@@ -25,11 +25,11 @@ export async function POST(req: NextRequest) {
     cep, cidade, rua, numero, complemento, perfil,
   } = await req.json();
 
-  const perfilFinal = perfil === "coordenador" ? "coordenador" : "aluno";
+  const perfilFinal = perfil === "coordenador" ? "coordenador" : perfil === "comercial" ? "comercial" : "aluno";
   if (!nome?.trim() || !email?.trim() || !senha)
     return NextResponse.json({ error: "Nome, e-mail e senha sao obrigatorios." }, { status: 400 });
-  if (perfilFinal === "coordenador" && !login?.trim())
-    return NextResponse.json({ error: "Login do coordenador e obrigatorio." }, { status: 400 });
+  if (perfilFinal !== "aluno" && !login?.trim())
+    return NextResponse.json({ error: "Login administrativo e obrigatorio." }, { status: 400 });
   if (senha.length < 6)
     return NextResponse.json({ error: "Senha deve ter minimo 6 caracteres." }, { status: 400 });
 
@@ -90,7 +90,7 @@ export async function PUT(req: NextRequest) {
   if (senha && senha.length < 6)
     return NextResponse.json({ error: "Senha deve ter minimo 6 caracteres." }, { status: 400 });
 
-  const atual = await dbQueryOne<{ id: string; perfil: "aluno" | "coordenador"; login: string | null }>(
+  const atual = await dbQueryOne<{ id: string; perfil: "aluno" | "coordenador" | "comercial"; login: string | null }>(
     "SELECT id, perfil, login FROM cj_users WHERE id=$1",
     [id]
   );
@@ -100,7 +100,7 @@ export async function PUT(req: NextRequest) {
   const emailLimpo = normalizeEmail(email);
   const loginAtual = normalizeLogin(atual.login);
 
-  if (atual.perfil === "coordenador") {
+  if (atual.perfil === "coordenador" || atual.perfil === "comercial") {
     const loginFinal = loginAtual === "admin" ? "admin" : normalizeLogin(login);
     if (!loginFinal) return NextResponse.json({ error: "Login administrativo e obrigatorio." }, { status: 400 });
 
@@ -109,7 +109,7 @@ export async function PUT(req: NextRequest) {
         `UPDATE cj_users SET
           nome=$1, login=$2, email=$3, ativo=$4,
           senha_hash = COALESCE($5, senha_hash)
-         WHERE id=$6 AND perfil='coordenador'
+         WHERE id=$6 AND perfil IN ('coordenador', 'comercial')
          RETURNING id`,
         [
           nome.trim(),
@@ -188,9 +188,9 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "O usuario principal admin nao pode ser excluido." }, { status: 400 });
   }
 
-  if (usuario.perfil === "coordenador") {
+  if (usuario.perfil === "coordenador" || usuario.perfil === "comercial") {
     const totalAdmins = await dbQueryOne<{ total: string }>(
-      "SELECT COUNT(*)::text AS total FROM cj_users WHERE perfil='coordenador' AND ativo=true"
+      "SELECT COUNT(*)::text AS total FROM cj_users WHERE perfil IN ('coordenador', 'comercial') AND ativo=true"
     );
     if (Number(totalAdmins?.total || 0) <= 1) {
       return NextResponse.json({ error: "Nao e permitido excluir o ultimo usuario administrativo." }, { status: 400 });

@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { dbQuery, dbQueryOne, initSchema } from "@/lib/db";
 import { signSession, setSessionCookie, clearSessionCookie } from "@/lib/auth";
 
-type User = { id: string; nome: string; email: string; senha_hash: string; perfil: "aluno" | "coordenador" };
+type User = { id: string; nome: string; email: string; senha_hash: string; perfil: "aluno" | "coordenador" | "comercial" };
 
 async function senhaConfere(senha: string, hash: string) {
   if (await bcrypt.compare(senha, hash)) return true;
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
        WHERE ativo = true
          AND (
            LOWER(email) = $1
-           OR (perfil = 'coordenador' AND LOWER(COALESCE(login, '')) = $1)
+           OR (perfil IN ('coordenador', 'comercial') AND LOWER(COALESCE(login, '')) = $1)
          )
        ORDER BY
          CASE
@@ -79,7 +79,7 @@ export async function PUT(req: NextRequest) {
     if (adminKey !== process.env.ADMIN_KEY && adminKey !== "condojob2026") {
       return NextResponse.json({ error: "Nao autorizado." }, { status: 403 });
     }
-    const perfilFinal = perfil === "aluno" ? "aluno" : "coordenador";
+    const perfilFinal = perfil === "aluno" ? "aluno" : perfil === "comercial" ? "comercial" : "coordenador";
     const emailLimpo = email.toLowerCase().trim();
     const loginFinal = perfilFinal === "aluno" ? emailLimpo : login?.toLowerCase().trim() || null;
     const hash = await bcrypt.hash(senha, 10);

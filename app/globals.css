@@ -516,6 +516,72 @@ img { max-width: 100%; }
 .student-content-row > * { min-width: 0; }
 .specialization-card-actions { margin-top: 14px; }
 .specialization-card-actions .btn { width: 100%; justify-content: center; }
+.commercial-list-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--cj-dark);
+  border: 1px solid var(--cj-dark-border);
+  border-radius: var(--cj-radius);
+}
+.funnel-board {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(220px, 1fr));
+  gap: 14px;
+  overflow-x: auto;
+  align-items: start;
+}
+.funnel-column {
+  min-width: 220px;
+  background: var(--cj-dark-card);
+  border: 1px solid var(--cj-dark-border);
+  border-radius: var(--cj-radius-lg);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.funnel-column-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.funnel-column-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--cj-text);
+}
+.funnel-column-meta,
+.funnel-empty,
+.funnel-card-value {
+  font-size: 0.78rem;
+  color: var(--cj-text-muted);
+}
+.funnel-column-body {
+  display: grid;
+  gap: 10px;
+}
+.funnel-card {
+  background: rgba(129, 140, 248, 0.05);
+  border: 1px solid rgba(129, 140, 248, 0.12);
+  border-radius: var(--cj-radius);
+  padding: 12px;
+}
+.funnel-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.funnel-card-value {
+  margin-top: 8px;
+  color: var(--cj-teal);
+  font-weight: 700;
+}
 
 /* ===== LANDING PAGE ===== */
 .landing-page {
@@ -1980,6 +2046,14 @@ img { max-width: 100%; }
     justify-content: center;
   }
 
+  .commercial-list-item {
+    display: grid;
+  }
+
+  .funnel-board {
+    grid-template-columns: repeat(7, minmax(260px, 260px));
+  }
+
   .data-table {
     min-width: 680px;
   }
@@ -2194,6 +2268,10 @@ img { max-width: 100%; }
 
   .student-content-row {
     padding: 10px !important;
+  }
+
+  .commercial-list-item {
+    padding: 10px 12px;
   }
 
   .metric-card {

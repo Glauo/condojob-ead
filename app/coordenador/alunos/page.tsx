@@ -2,7 +2,13 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQuery, initSchema } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
-import { NovoAlunoModal, MatricularAlunoModal, EditarAlunoModal, EditarUsuarioAdminModal, ExcluirUsuarioButton } from "@/components/coordenador-modals";
+import {
+  NovoAlunoModal,
+  MatricularAlunoModal,
+  EditarAlunoModal,
+  EditarUsuarioAdminModal,
+  ExcluirUsuarioButton,
+} from "@/components/coordenador-modals";
 
 type Aluno = {
   id: string;
@@ -31,6 +37,7 @@ type UsuarioAdmin = {
   nome: string;
   login: string | null;
   email: string;
+  perfil: "coordenador" | "comercial";
   ativo: boolean;
   criado_em: string;
 };
@@ -53,9 +60,9 @@ export default async function AlunosPage() {
        FROM cj_users u WHERE u.perfil = 'aluno' ORDER BY u.criado_em DESC`
     ),
     dbQuery<UsuarioAdmin>(
-      `SELECT id, nome, login, email, ativo, criado_em
+      `SELECT id, nome, login, email, perfil, ativo, criado_em
          FROM cj_users
-        WHERE perfil = 'coordenador'
+        WHERE perfil IN ('coordenador', 'comercial')
         ORDER BY criado_em DESC`
     ),
   ]);
@@ -66,7 +73,7 @@ export default async function AlunosPage() {
     <AppShell breadcrumb="Alunos" userName={session.nome} userRole="coordenador">
       <div className="page-header">
         <div>
-          <div className="page-eyebrow"><span className="page-eyebrow-dot" />Gestão</div>
+          <div className="page-eyebrow"><span className="page-eyebrow-dot" />Gestao</div>
           <h1 className="page-title">Alunos</h1>
           <p className="page-desc">Cadastre, matricule, acompanhe e gerencie os usuarios da plataforma.</p>
         </div>
@@ -85,7 +92,7 @@ export default async function AlunosPage() {
           <div className="metric-value">{alunos.filter((a) => a.ativo).length}</div>
         </div>
         <div className="metric-card metric-card-green">
-          <div className="metric-label">Cursos concluídos</div>
+          <div className="metric-label">Cursos concluidos</div>
           <div className="metric-value">{alunos.reduce((s, a) => s + Number(a.total_concluidos), 0)}</div>
         </div>
       </div>
@@ -98,12 +105,12 @@ export default async function AlunosPage() {
                 <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>
               </div>
               <div className="empty-title">Nenhum aluno cadastrado</div>
-              <p className="empty-desc">Clique em "Novo Aluno" para começar.</p>
+              <p className="empty-desc">Clique em "Novo Aluno" para comecar.</p>
             </div>
           ) : (
             <table className="data-table">
               <thead>
-                <tr><th>Aluno</th><th>Contato</th><th>Matrículas</th><th>Concluídos</th><th>Status</th><th>Ações</th></tr>
+                <tr><th>Aluno</th><th>Contato</th><th>Matriculas</th><th>Concluidos</th><th>Status</th><th>Acoes</th></tr>
               </thead>
               <tbody>
                 {alunos.map((a) => (
@@ -115,7 +122,7 @@ export default async function AlunosPage() {
                         <span className="table-name-secondary">Login: {a.email}</span>
                       </div>
                     </td>
-                    <td style={{ fontSize: "0.8rem", color: "var(--cj-text-muted)" }}>{a.telefone || "—"}</td>
+                    <td style={{ fontSize: "0.8rem", color: "var(--cj-text-muted)" }}>{a.telefone || "-"}</td>
                     <td>{a.total_matriculas}</td>
                     <td>{a.total_concluidos}</td>
                     <td>
@@ -127,7 +134,7 @@ export default async function AlunosPage() {
                       <div style={{ display: "flex", gap: "6px" }}>
                         <EditarAlunoModal aluno={a} />
                         <MatricularAlunoModal alunoId={a.id} alunoNome={a.nome} cursos={cursos} />
-                        <a href={`/coordenador/alunos/${a.id}`} className="btn btn-ghost btn-sm">Relatório</a>
+                        <a href={`/coordenador/alunos/${a.id}`} className="btn btn-ghost btn-sm">Relatorio</a>
                         <ExcluirUsuarioButton usuarioId={a.id} usuarioNome={a.nome} perfil="aluno" />
                       </div>
                     </td>
@@ -150,12 +157,12 @@ export default async function AlunosPage() {
           {usuariosAdmin.length === 0 ? (
             <div className="empty-state">
               <div className="empty-title">Nenhum usuario administrativo cadastrado</div>
-              <p className="empty-desc">Use o botao "Novo Cadastro" para criar um coordenador.</p>
+              <p className="empty-desc">Use o botao "Novo Cadastro" para criar um coordenador ou comercial.</p>
             </div>
           ) : (
             <table className="data-table">
               <thead>
-                <tr><th>Usuario</th><th>Login</th><th>Status</th><th>Criado em</th><th>Acoes</th></tr>
+                <tr><th>Usuario</th><th>Perfil</th><th>Login</th><th>Status</th><th>Criado em</th><th>Acoes</th></tr>
               </thead>
               <tbody>
                 {usuariosAdmin.map((u) => (
@@ -166,7 +173,12 @@ export default async function AlunosPage() {
                         <span className="table-name-secondary">{u.email}</span>
                       </div>
                     </td>
-                    <td>{u.login || "—"}</td>
+                    <td>
+                      <span className={`badge ${u.perfil === "comercial" ? "badge-teal" : "badge-purple"}`}>
+                        {u.perfil === "comercial" ? "Comercial" : "Coordenador"}
+                      </span>
+                    </td>
+                    <td>{u.login || "-"}</td>
                     <td>
                       <span className={`badge ${u.ativo ? "badge-success" : "badge-muted"}`}>
                         {u.ativo ? "Ativo" : "Inativo"}

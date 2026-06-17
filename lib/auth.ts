@@ -10,7 +10,7 @@ export type Session = {
   id: string;
   nome: string;
   email: string;
-  perfil: "aluno" | "coordenador";
+  perfil: "aluno" | "coordenador" | "comercial";
 };
 
 export async function signSession(payload: Session): Promise<string> {

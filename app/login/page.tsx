@@ -75,7 +75,7 @@ export default function LoginPage() {
       return;
     }
     const { perfil } = await res.json();
-    router.push(perfil === "coordenador" ? "/coordenador" : "/aluno");
+    router.push(perfil === "coordenador" ? "/coordenador" : perfil === "comercial" ? "/comercial" : "/aluno");
   }
 
   return (
