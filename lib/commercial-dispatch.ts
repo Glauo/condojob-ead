@@ -18,11 +18,21 @@ type DispatchInput = {
   };
 };
 
+function normalizeWapiPhone(value: string) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.includes("@")) return value;
+  if (digits.startsWith("55")) return digits;
+  if (digits.length === 10 || digits.length === 11) return `55${digits}`;
+  return digits;
+}
+
 export async function sendCommercialDispatch(input: DispatchInput) {
   const webhook =
     input.canal === "email"
       ? process.env.COMMERCIAL_EMAIL_WEBHOOK_URL?.trim()
       : process.env.COMMERCIAL_WHATSAPP_WEBHOOK_URL?.trim();
+  const whatsappToken = process.env.COMMERCIAL_WHATSAPP_TOKEN?.trim();
 
   const mensagem = fillTemplate(input.mensagem, {
     empresa: input.lead.empresa,
@@ -40,18 +50,34 @@ export async function sendCommercialDispatch(input: DispatchInput) {
     };
   }
 
-  const response = await fetch(webhook, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      canal: input.canal,
-      destino: input.destino,
-      assunto: input.assunto || "",
-      mensagem,
-      lead: input.lead,
-      campanha: input.campanha,
-    }),
-  });
+  const isWapi = input.canal === "whatsapp" && webhook.includes("api.w-api.app/");
+  const requestInit: RequestInit = isWapi
+    ? {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(whatsappToken ? { Authorization: `Bearer ${whatsappToken}` } : {}),
+        },
+        body: JSON.stringify({
+          phone: normalizeWapiPhone(input.destino),
+          message: mensagem,
+          delayMessage: 5,
+        }),
+      }
+    : {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          canal: input.canal,
+          destino: input.destino,
+          assunto: input.assunto || "",
+          mensagem,
+          lead: input.lead,
+          campanha: input.campanha,
+        }),
+      };
+
+  const response = await fetch(webhook, requestInit);
 
   const providerResponse = await response.json().catch(() => ({ status: response.status }));
   if (!response.ok) {
