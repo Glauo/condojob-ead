@@ -177,7 +177,7 @@ export function LeadWhatsAppButton({ lead }: { lead: LeadData }) {
     }
 
     const payload = data as { status?: string; warning?: string | null; whatsappUrl?: string };
-    if (payload.whatsappUrl && (payload.status === "rascunho" || payload.status === "enviado")) {
+    if (payload.whatsappUrl && payload.status === "rascunho") {
       window.open(payload.whatsappUrl, "_blank", "noopener,noreferrer");
     }
 
