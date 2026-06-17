@@ -134,6 +134,117 @@ export function CampanhaDisparoButton({ campanhaId }: { campanhaId: string }) {
   );
 }
 
+export function LeadWhatsAppButton({ lead }: { lead: LeadData }) {
+  const [open, setOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [erro, setErro] = useState("");
+  const [info, setInfo] = useState("");
+  const [mensagem, setMensagem] = useState(
+    `Ola, {{nome_contato}}. Sou da CondoJob Educacional. Estou entrando em contato para apresentar nossa formacao profissional para equipes condominiais. Posso te enviar um resumo rapido?`
+  );
+
+  async function enviar() {
+    if (!lead.id) {
+      setErro("Lead sem identificacao.");
+      return;
+    }
+    if (!String(lead.whatsapp || "").trim()) {
+      setErro("Essa lead nao possui WhatsApp cadastrado.");
+      return;
+    }
+    if (!mensagem.trim()) {
+      setErro("Informe a mensagem.");
+      return;
+    }
+
+    setSending(true);
+    setErro("");
+    setInfo("");
+    const res = await fetch("/api/comercial/whatsapp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        leadId: lead.id,
+        mensagem,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSending(false);
+
+    if (!res.ok) {
+      setErro((data as { error?: string }).error || "Erro ao preparar envio por WhatsApp.");
+      return;
+    }
+
+    const payload = data as { status?: string; warning?: string | null; whatsappUrl?: string };
+    if (payload.whatsappUrl && (payload.status === "rascunho" || payload.status === "enviado")) {
+      window.open(payload.whatsappUrl, "_blank", "noopener,noreferrer");
+    }
+
+    setInfo(
+      payload.warning ||
+      (payload.status === "enviado"
+        ? "Mensagem enviada pelo sistema."
+        : "Mensagem pronta no WhatsApp Web.")
+    );
+  }
+
+  return (
+    <>
+      <button className="btn btn-secondary btn-sm" onClick={() => setOpen(true)}>
+        WhatsApp
+      </button>
+      {open && (
+        <ModalPortal>
+          <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
+            <div className="modal-box commercial-modal" style={{ maxWidth: "720px" }}>
+              <div className="modal-header">
+                <div>
+                  <div className="modal-title">Enviar WhatsApp</div>
+                  <div className="modal-subtitle">{lead.empresa || "Lead"} | {lead.nome_contato || "Contato"}</div>
+                </div>
+                <button className="modal-close" onClick={() => setOpen(false)}>x</button>
+              </div>
+              <div className="modal-body commercial-modal-body">
+                <div className="form-grid">
+                  <div className="form-group form-group-full">
+                    <label className="form-label">Numero</label>
+                    <input className="form-input" value={String(lead.whatsapp || "")} disabled />
+                  </div>
+                  <div className="form-group form-group-full">
+                    <label className="form-label">Mensagem</label>
+                    <textarea
+                      className="form-input form-textarea"
+                      rows={8}
+                      value={mensagem}
+                      onChange={(e) => {
+                        setMensagem(e.target.value);
+                        setErro("");
+                        setInfo("");
+                      }}
+                    />
+                    <div className="form-hint">
+                      Variaveis aceitas: {`{{nome_contato}}`} e {`{{empresa}}`}.
+                    </div>
+                  </div>
+                </div>
+                {info && <div className="form-hint" style={{ marginTop: "12px" }}>{info}</div>}
+                {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={sending}>Fechar</button>
+                <button className="btn btn-primary" onClick={enviar} disabled={sending}>
+                  {sending ? "Enviando..." : "Enviar WhatsApp"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+    </>
+  );
+}
+
 export function LeadModal({ lead }: { lead?: LeadData }) {
   const router = useRouter();
   const isEdit = Boolean(lead?.id);

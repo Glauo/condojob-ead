@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQuery, dbQueryOne, initSchema } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
-import { LeadModal, LeadStageSelect } from "@/components/comercial-modals";
+import { LeadModal, LeadStageSelect, LeadWhatsAppButton } from "@/components/comercial-modals";
 
 type Lead = {
   id: string;
@@ -137,6 +137,7 @@ export default async function ComercialLeadsPage() {
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                        <LeadWhatsAppButton lead={lead} />
                         <LeadModal lead={lead} />
                       </div>
                     </td>
