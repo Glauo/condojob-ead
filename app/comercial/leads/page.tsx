@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQuery, dbQueryOne, initSchema } from "@/lib/db";
 import { AppShell } from "@/components/app-shell";
-import { LeadModal, LeadStageSelect, LeadWhatsAppButton } from "@/components/comercial-modals";
+import { LeadImportModal, LeadModal, LeadStageSelect, LeadWhatsAppButton } from "@/components/comercial-modals";
 
 type Lead = {
   id: string;
@@ -70,6 +70,7 @@ export default async function ComercialLeadsPage() {
           <p className="page-desc">Base completa com origem, score, valor potencial, proxima acao e funil comercial.</p>
         </div>
         <div className="page-actions">
+          <LeadImportModal />
           <LeadModal />
         </div>
       </div>

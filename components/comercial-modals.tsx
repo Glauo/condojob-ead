@@ -134,6 +134,109 @@ export function CampanhaDisparoButton({ campanhaId }: { campanhaId: string }) {
   );
 }
 
+export function LeadImportModal() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [erro, setErro] = useState("");
+  const [arquivo, setArquivo] = useState<File | null>(null);
+  const [resultado, setResultado] = useState<null | {
+    totalRecebidos: number;
+    totalValidos: number;
+    inseridos: number;
+    duplicados: number;
+  }>(null);
+
+  async function importar() {
+    if (!arquivo) {
+      setErro("Selecione um arquivo.");
+      return;
+    }
+
+    setSending(true);
+    setErro("");
+    setResultado(null);
+    const form = new FormData();
+    form.append("file", arquivo);
+
+    const res = await fetch("/api/comercial/leads/import", {
+      method: "POST",
+      body: form,
+    });
+    const data = await res.json().catch(() => ({}));
+    setSending(false);
+
+    if (!res.ok) {
+      setErro((data as { error?: string }).error || "Erro ao importar leads.");
+      return;
+    }
+
+    setResultado(data as { totalRecebidos: number; totalValidos: number; inseridos: number; duplicados: number });
+    router.refresh();
+  }
+
+  return (
+    <>
+      <button className="btn btn-secondary" onClick={() => setOpen(true)}>
+        Importar leads
+      </button>
+      {open && (
+        <ModalPortal>
+          <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
+            <div className="modal-box commercial-modal" style={{ maxWidth: "760px" }}>
+              <div className="modal-header">
+                <div>
+                  <div className="modal-title">Importar leads</div>
+                  <div className="modal-subtitle">Envie Excel, Word, PDF textual ou TXT para cadastro automatico.</div>
+                </div>
+                <button className="modal-close" onClick={() => setOpen(false)}>x</button>
+              </div>
+              <div className="modal-body commercial-modal-body">
+                <div className="form-grid">
+                  <div className="form-group form-group-full">
+                    <label className="form-label">Arquivo</label>
+                    <input
+                      className="form-input"
+                      type="file"
+                      accept=".xlsx,.xls,.csv,.docx,.pdf,.txt"
+                      onChange={(e) => {
+                        setArquivo(e.target.files?.[0] || null);
+                        setErro("");
+                        setResultado(null);
+                      }}
+                    />
+                    <div className="form-hint">
+                      Duplicados por nome ou celular sao ignorados. PDF precisa ser textual, nao escaneado.
+                    </div>
+                  </div>
+                </div>
+                {resultado && (
+                  <div className="card" style={{ marginTop: "14px" }}>
+                    <div className="card-body" style={{ display: "grid", gap: "8px" }}>
+                      <div className="table-name-primary">Importacao concluida</div>
+                      <div className="table-name-secondary">Linhas lidas: {resultado.totalRecebidos}</div>
+                      <div className="table-name-secondary">Leads validos: {resultado.totalValidos}</div>
+                      <div className="table-name-secondary">Inseridos: {resultado.inseridos}</div>
+                      <div className="table-name-secondary">Duplicados ignorados: {resultado.duplicados}</div>
+                    </div>
+                  </div>
+                )}
+                {erro && <div className="form-error" style={{ marginTop: "12px" }}>{erro}</div>}
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setOpen(false)} disabled={sending}>Fechar</button>
+                <button className="btn btn-primary" onClick={importar} disabled={sending}>
+                  {sending ? "Importando..." : "Importar arquivo"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+    </>
+  );
+}
+
 export function LeadWhatsAppButton({ lead }: { lead: LeadData }) {
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);

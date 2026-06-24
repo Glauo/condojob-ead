@@ -11,10 +11,17 @@ type Pagamento = {
   valor: number;
   status: string;
   checkout_url: string | null;
+  mp_preference_id: string | null;
   aluno_nome: string;
   aluno_email: string;
   curso_nome: string | null;
 };
+
+function isTrackedMercadoPagoCheckout(url: string | null) {
+  const value = String(url || "").trim().toLowerCase();
+  if (!value) return false;
+  return value.includes("mercadopago.com") || value.includes("mercadopago.com.br");
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,7 +35,7 @@ export async function POST(req: NextRequest) {
     if (!pagamento_id) return NextResponse.json({ error: "Pagamento obrigatorio." }, { status: 400 });
 
     const pagamento = await dbQueryOne<Pagamento>(
-    `SELECT p.id, p.usuario_id, p.curso_id, p.descricao, p.valor, p.status, p.checkout_url,
+    `SELECT p.id, p.usuario_id, p.curso_id, p.descricao, p.valor, p.status, p.checkout_url, p.mp_preference_id,
               u.nome AS aluno_nome, u.email AS aluno_email, c.nome AS curso_nome
        FROM cj_pagamentos p
        JOIN cj_users u ON u.id = p.usuario_id
@@ -39,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     if (!pagamento) return NextResponse.json({ error: "Pagamento nao encontrado." }, { status: 404 });
     if (pagamento.status === "pago") return NextResponse.json({ error: "Pagamento ja aprovado." }, { status: 400 });
-    if (pagamento.checkout_url?.trim()) {
+    if (pagamento.checkout_url?.trim() && pagamento.mp_preference_id && isTrackedMercadoPagoCheckout(pagamento.checkout_url)) {
       return NextResponse.json({ checkoutUrl: pagamento.checkout_url.trim(), pagamentoId: pagamento.id });
     }
 

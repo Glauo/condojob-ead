@@ -8,6 +8,14 @@ type Curso = { id: string; nome: string; preco: number; link_pagamento: string |
 type Aluno = { id: string; ativo: boolean; perfil: string };
 type NovoPagamento = { id: string };
 
+function getFriendlyMercadoPagoError(error: unknown) {
+  const message = error instanceof Error ? error.message : "Erro ao iniciar o pagamento.";
+  if (message.includes("MERCADO_PAGO_ACCESS_TOKEN")) {
+    return "Mercado Pago nao configurado corretamente. Sem isso, a liberacao automatica do curso nao funciona.";
+  }
+  return message;
+}
+
 export async function POST(req: NextRequest) {
   try {
     await initSchema();
@@ -122,15 +130,9 @@ export async function POST(req: NextRequest) {
     try {
       preference = await createMercadoPagoPreference(pagamentoInput);
     } catch (mpError) {
-      if (!curso.link_pagamento?.trim()) throw mpError;
-      const checkoutUrl = curso.link_pagamento.trim();
-      await dbRun(
-        `UPDATE cj_pagamentos
-         SET checkout_url=$1, mp_external_reference=$2
-         WHERE id=$2`,
-        [checkoutUrl, pagamento.id]
-      );
-      return NextResponse.json({ checkoutUrl, pagamentoId: pagamento.id }, { status: 201 });
+      await dbRun("DELETE FROM cj_pagamentos WHERE id=$1 AND status='pendente'", [pagamento.id]);
+      await dbRun("UPDATE cj_users SET ativo=false WHERE id=$1 AND perfil='aluno'", [aluno.id]);
+      return NextResponse.json({ error: getFriendlyMercadoPagoError(mpError) }, { status: 500 });
     }
     let pix = null;
     try {
