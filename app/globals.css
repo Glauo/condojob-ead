@@ -415,6 +415,19 @@ img { max-width: 100%; }
 .data-table td:last-child {
   padding-right: 30px;
 }
+.commercial-leads-table th:last-child,
+.commercial-leads-table td:last-child {
+  min-width: 164px;
+  width: 164px;
+}
+.commercial-leads-table td:last-child > div {
+  flex-wrap: nowrap !important;
+  justify-content: flex-start;
+}
+.commercial-leads-table td:last-child .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
 .data-table tr:last-child td { border-bottom: none; }
 .data-table tr:hover td { background: rgba(129,140,248,0.05); color: var(--cj-text); transition: background 0.12s; }
 .table-name-cell { display: flex; flex-direction: column; gap: 2px; }

@@ -101,7 +101,7 @@ export default async function ComercialLeadsPage() {
             </div>
           ) : (
             <div className="data-table-wrap">
-              <table className="data-table">
+              <table className="data-table commercial-leads-table">
                 <thead>
                   <tr>
                     <th>Lead</th>
