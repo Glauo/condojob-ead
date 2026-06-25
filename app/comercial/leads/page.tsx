@@ -100,53 +100,55 @@ export default async function ComercialLeadsPage() {
               <p className="empty-desc">Cadastre as primeiras oportunidades para organizar o funil comercial.</p>
             </div>
           ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Lead</th>
-                  <th>Contato</th>
-                  <th>Origem</th>
-                  <th>Etapa</th>
-                  <th>Score</th>
-                  <th>Valor</th>
-                  <th>Proxima acao</th>
-                  <th>Acoes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leads.map((lead) => (
-                  <tr key={lead.id}>
-                    <td>
-                      <div className="table-name-cell">
-                        <span className="table-name-primary">{lead.empresa}</span>
-                        <span className="table-name-secondary">{lead.segmento || "Sem segmento"} | {lead.cidade || "Sem cidade"}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="table-name-cell">
-                        <span className="table-name-primary">{lead.nome_contato}</span>
-                        <span className="table-name-secondary">{lead.email || "-"} | {lead.whatsapp || "-"}</span>
-                      </div>
-                    </td>
-                    <td>{lead.origem || "-"}</td>
-                    <td style={{ minWidth: "170px" }}>
-                      <LeadStageSelect leadId={lead.id} value={lead.estagio} />
-                    </td>
-                    <td>{lead.score}</td>
-                    <td>{currency(Number(lead.valor_potencial || 0))}</td>
-                    <td style={{ color: "var(--cj-text-muted)" }}>
-                      {lead.proxima_acao_em ? new Date(lead.proxima_acao_em).toLocaleString("pt-BR") : "-"}
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                        <LeadWhatsAppButton lead={lead} />
-                        <LeadModal lead={lead} />
-                      </div>
-                    </td>
+            <div className="data-table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Lead</th>
+                    <th>Contato</th>
+                    <th>Origem</th>
+                    <th>Etapa</th>
+                    <th>Score</th>
+                    <th>Valor</th>
+                    <th>Proxima acao</th>
+                    <th>Acoes</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {leads.map((lead) => (
+                    <tr key={lead.id}>
+                      <td>
+                        <div className="table-name-cell">
+                          <span className="table-name-primary">{lead.empresa}</span>
+                          <span className="table-name-secondary">{lead.segmento || "Sem segmento"} | {lead.cidade || "Sem cidade"}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="table-name-cell">
+                          <span className="table-name-primary">{lead.nome_contato}</span>
+                          <span className="table-name-secondary">{lead.email || "-"} | {lead.whatsapp || "-"}</span>
+                        </div>
+                      </td>
+                      <td>{lead.origem || "-"}</td>
+                      <td style={{ minWidth: "170px" }}>
+                        <LeadStageSelect leadId={lead.id} value={lead.estagio} />
+                      </td>
+                      <td>{lead.score}</td>
+                      <td>{currency(Number(lead.valor_potencial || 0))}</td>
+                      <td style={{ color: "var(--cj-text-muted)" }}>
+                        {lead.proxima_acao_em ? new Date(lead.proxima_acao_em).toLocaleString("pt-BR") : "-"}
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                          <LeadWhatsAppButton lead={lead} />
+                          <LeadModal lead={lead} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

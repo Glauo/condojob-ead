@@ -28,11 +28,14 @@ function normalizeWapiPhone(value: string) {
 }
 
 export async function sendCommercialDispatch(input: DispatchInput) {
+  const fallbackWapiWebhook = process.env.WAPI_BASE_URL?.trim();
   const webhook =
     input.canal === "email"
       ? process.env.COMMERCIAL_EMAIL_WEBHOOK_URL?.trim()
-      : process.env.COMMERCIAL_WHATSAPP_WEBHOOK_URL?.trim();
-  const whatsappToken = process.env.COMMERCIAL_WHATSAPP_TOKEN?.trim();
+      : process.env.COMMERCIAL_WHATSAPP_WEBHOOK_URL?.trim() || fallbackWapiWebhook;
+  const whatsappToken =
+    process.env.COMMERCIAL_WHATSAPP_TOKEN?.trim() ||
+    process.env.WAPI_TOKEN?.trim();
 
   const mensagem = fillTemplate(input.mensagem, {
     empresa: input.lead.empresa,

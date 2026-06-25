@@ -41,49 +41,51 @@ export default async function ComercialFunilPage() {
         </div>
       </div>
 
-      <div className="funnel-board">
-        {COMMERCIAL_STAGES.map((stage) => {
-          const stageLeads = leads.filter((lead) => lead.estagio === stage.id);
-          const total = stageLeads.reduce((sum, lead) => sum + Number(lead.valor_potencial || 0), 0);
-          return (
-            <section key={stage.id} className="funnel-column">
-              <div className="funnel-column-header">
-                <div>
-                  <div className="funnel-column-title">{stage.label}</div>
-                  <div className="funnel-column-meta">{stageLeads.length} lead(s) | {total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
+      <div className="funnel-board-wrap">
+        <div className="funnel-board">
+          {COMMERCIAL_STAGES.map((stage) => {
+            const stageLeads = leads.filter((lead) => lead.estagio === stage.id);
+            const total = stageLeads.reduce((sum, lead) => sum + Number(lead.valor_potencial || 0), 0);
+            return (
+              <section key={stage.id} className="funnel-column">
+                <div className="funnel-column-header">
+                  <div>
+                    <div className="funnel-column-title">{stage.label}</div>
+                    <div className="funnel-column-meta">{stageLeads.length} lead(s) | {total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
+                  </div>
+                  <span className={`badge ${stage.color}`}>{stage.id}</span>
                 </div>
-                <span className={`badge ${stage.color}`}>{stage.id}</span>
-              </div>
-              <div className="funnel-column-body">
-                {stageLeads.length === 0 ? (
-                  <div className="funnel-empty">Nenhuma oportunidade nesta etapa.</div>
-                ) : (
-                  stageLeads.map((lead) => (
-                    <article key={lead.id} className="funnel-card">
-                      <div className="funnel-card-top">
-                        <div>
-                          <div className="table-name-primary">{lead.empresa}</div>
-                          <div className="table-name-secondary">{lead.nome_contato}</div>
+                <div className="funnel-column-body">
+                  {stageLeads.length === 0 ? (
+                    <div className="funnel-empty">Nenhuma oportunidade nesta etapa.</div>
+                  ) : (
+                    stageLeads.map((lead) => (
+                      <article key={lead.id} className="funnel-card">
+                        <div className="funnel-card-top">
+                          <div>
+                            <div className="table-name-primary">{lead.empresa}</div>
+                            <div className="table-name-secondary">{lead.nome_contato}</div>
+                          </div>
+                          <span className="badge badge-muted">Score {lead.score}</span>
                         </div>
-                        <span className="badge badge-muted">Score {lead.score}</span>
-                      </div>
-                      <div className="table-name-secondary">{lead.origem || "sem origem"} | {lead.email || lead.whatsapp || "sem contato"}</div>
-                      <div className="funnel-card-value">
-                        {Number(lead.valor_potencial || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </div>
-                      <div style={{ marginTop: "10px" }}>
-                        <LeadStageSelect leadId={lead.id} value={lead.estagio} />
-                      </div>
-                      <div style={{ marginTop: "10px" }}>
-                        <LeadModal lead={lead} />
-                      </div>
-                    </article>
-                  ))
-                )}
-              </div>
-            </section>
-          );
-        })}
+                        <div className="table-name-secondary">{lead.origem || "sem origem"} | {lead.email || lead.whatsapp || "sem contato"}</div>
+                        <div className="funnel-card-value">
+                          {Number(lead.valor_potencial || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </div>
+                        <div style={{ marginTop: "10px" }}>
+                          <LeadStageSelect leadId={lead.id} value={lead.estagio} />
+                        </div>
+                        <div style={{ marginTop: "10px" }}>
+                          <LeadModal lead={lead} />
+                        </div>
+                      </article>
+                    ))
+                  )}
+                </div>
+              </section>
+            );
+          })}
+        </div>
       </div>
     </AppShell>
   );

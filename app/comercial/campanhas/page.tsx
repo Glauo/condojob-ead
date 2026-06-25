@@ -177,37 +177,39 @@ export default async function ComercialCampanhasPage() {
               <p className="empty-desc">Crie campanhas com filtro por etapa e origem para disparar em lote.</p>
             </div>
           ) : (
-            <table className="data-table">
-              <thead>
-                <tr><th>Campanha</th><th>Canal</th><th>Publico</th><th>Status</th><th>Envios</th><th>Acoes</th></tr>
-              </thead>
-              <tbody>
-                {campanhas.map((campanha) => (
-                  <tr key={campanha.id}>
-                    <td>
-                      <div className="table-name-cell">
-                        <span className="table-name-primary">{campanha.nome}</span>
-                        <span className="table-name-secondary">
-                          {(campanha.filtro_estagio || "todos os estagios")} | {(campanha.filtro_origem || "todas as origens")}
-                          {campanha.agendado_em ? ` | agendada para ${new Date(campanha.agendado_em).toLocaleString("pt-BR")}` : ""}
-                        </span>
-                      </div>
-                    </td>
-                    <td>{campanha.canal}</td>
-                    <td>{campanha.publico_total}</td>
-                    <td><span className={`badge ${campanha.status === "concluida" ? "badge-success" : "badge-warning"}`}>{campanha.status}</span></td>
-                    <td>{campanha.enviados}</td>
-                    <td>
-                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                        <CampanhaAutoButton campanhaId={campanha.id} enabled={campanha.status === "agendada"} />
-                        <CampanhaDisparoButton campanhaId={campanha.id} />
-                        <CampanhaModal campanha={campanha} templates={templates} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="data-table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr><th>Campanha</th><th>Canal</th><th>Publico</th><th>Status</th><th>Envios</th><th>Acoes</th></tr>
+                </thead>
+                <tbody>
+                  {campanhas.map((campanha) => (
+                    <tr key={campanha.id}>
+                      <td>
+                        <div className="table-name-cell">
+                          <span className="table-name-primary">{campanha.nome}</span>
+                          <span className="table-name-secondary">
+                            {(campanha.filtro_estagio || "todos os estagios")} | {(campanha.filtro_origem || "todas as origens")}
+                            {campanha.agendado_em ? ` | agendada para ${new Date(campanha.agendado_em).toLocaleString("pt-BR")}` : ""}
+                          </span>
+                        </div>
+                      </td>
+                      <td>{campanha.canal}</td>
+                      <td>{campanha.publico_total}</td>
+                      <td><span className={`badge ${campanha.status === "concluida" ? "badge-success" : "badge-warning"}`}>{campanha.status}</span></td>
+                      <td>{campanha.enviados}</td>
+                      <td>
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                          <CampanhaAutoButton campanhaId={campanha.id} enabled={campanha.status === "agendada"} />
+                          <CampanhaDisparoButton campanhaId={campanha.id} />
+                          <CampanhaModal campanha={campanha} templates={templates} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
