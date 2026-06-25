@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth";
 
 export const COMMERCIAL_STAGES = [
+  { id: "mensagem_enviada", label: "Mensagem enviada", color: "badge-teal" },
   { id: "novo", label: "Novo lead", color: "badge-muted" },
   { id: "qualificado", label: "Qualificado", color: "badge-teal" },
   { id: "reuniao", label: "Reuniao", color: "badge-purple" },

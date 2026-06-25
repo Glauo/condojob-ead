@@ -225,7 +225,7 @@ export async function initSchema() {
       tags JSONB DEFAULT '[]',
       score INTEGER DEFAULT 50,
       valor_potencial NUMERIC(10,2) DEFAULT 0,
-      estagio TEXT NOT NULL DEFAULT 'novo' CHECK (estagio IN ('novo','qualificado','reuniao','proposta','negociacao','ganho','perdido')),
+      estagio TEXT NOT NULL DEFAULT 'novo' CHECK (estagio IN ('mensagem_enviada','novo','qualificado','reuniao','proposta','negociacao','ganho','perdido')),
       status TEXT NOT NULL DEFAULT 'ativo' CHECK (status IN ('ativo','ganho','perdido','inativo')),
       observacoes TEXT,
       ai_resumo TEXT,
@@ -303,6 +303,8 @@ export async function initSchema() {
   await pool.query(`
     ALTER TABLE cj_users DROP CONSTRAINT IF EXISTS cj_users_perfil_check;
     ALTER TABLE cj_users ADD CONSTRAINT cj_users_perfil_check CHECK (perfil IN ('aluno','coordenador','comercial'));
+    ALTER TABLE cj_comercial_leads DROP CONSTRAINT IF EXISTS cj_comercial_leads_estagio_check;
+    ALTER TABLE cj_comercial_leads ADD CONSTRAINT cj_comercial_leads_estagio_check CHECK (estagio IN ('mensagem_enviada','novo','qualificado','reuniao','proposta','negociacao','ganho','perdido'));
 
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS celular_whatsapp TEXT;
     ALTER TABLE cj_users ADD COLUMN IF NOT EXISTS login TEXT;

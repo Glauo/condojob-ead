@@ -21,6 +21,21 @@ function normalizeWhitespace(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function normalizeLeadOrigin(value: string | null | undefined) {
+  const cleaned = normalizeWhitespace(String(value || ""));
+  const originKey = cleaned
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z]/g, "")
+    .toLowerCase();
+
+  if (!originKey) return null;
+  if (originKey.startsWith("curr")) return "Currículo";
+  if (originKey === "vcf") return "VCF";
+  if (originKey === "inexistente") return "Inexistente";
+  return cleaned;
+}
+
 export function normalizeLeadName(value: string) {
   return normalizeWhitespace(String(value || ""))
     .normalize("NFD")
@@ -84,7 +99,7 @@ function parseWorksheetRows(rows: unknown[][]) {
       const nome = normalizeWhitespace(String(row[nomeIndex] ?? ""));
       const whatsapp = normalizeLeadPhone(String(row[phoneIndex] ?? ""));
       const email = emailIndex >= 0 ? String(row[emailIndex] ?? "").trim().toLowerCase() || null : null;
-      const origem = origemIndex >= 0 ? normalizeWhitespace(String(row[origemIndex] ?? "")) || null : null;
+      const origem = origemIndex >= 0 ? normalizeLeadOrigin(String(row[origemIndex] ?? "")) : null;
       if (!nome || !whatsapp) continue;
       leads.push({ nome, whatsapp, email, origem });
     }

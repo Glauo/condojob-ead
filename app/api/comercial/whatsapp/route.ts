@@ -84,9 +84,10 @@ export async function POST(req: NextRequest) {
   await dbRun(
     `UPDATE cj_comercial_leads
         SET ultima_interacao_em = now(),
+            estagio = CASE WHEN $2 = 'enviado' THEN 'mensagem_enviada' ELSE estagio END,
             atualizado_em = now()
       WHERE id=$1`,
-    [lead.id]
+    [lead.id, result.status]
   );
 
   return NextResponse.json({

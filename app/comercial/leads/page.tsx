@@ -41,13 +41,14 @@ export default async function ComercialLeadsPage() {
          FROM cj_comercial_leads
         ORDER BY
           CASE estagio
-            WHEN 'novo' THEN 1
-            WHEN 'qualificado' THEN 2
-            WHEN 'reuniao' THEN 3
-            WHEN 'proposta' THEN 4
-            WHEN 'negociacao' THEN 5
-            WHEN 'ganho' THEN 6
-            ELSE 7
+            WHEN 'mensagem_enviada' THEN 1
+            WHEN 'novo' THEN 2
+            WHEN 'qualificado' THEN 3
+            WHEN 'reuniao' THEN 4
+            WHEN 'proposta' THEN 5
+            WHEN 'negociacao' THEN 6
+            WHEN 'ganho' THEN 7
+            ELSE 8
           END,
           atualizado_em DESC`
     ),

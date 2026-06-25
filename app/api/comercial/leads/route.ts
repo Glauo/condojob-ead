@@ -23,13 +23,14 @@ export async function GET(req: NextRequest) {
       WHERE ($1::text IS NULL OR l.estagio = $1)
       ORDER BY
         CASE l.estagio
-          WHEN 'novo' THEN 1
-          WHEN 'qualificado' THEN 2
-          WHEN 'reuniao' THEN 3
-          WHEN 'proposta' THEN 4
-          WHEN 'negociacao' THEN 5
-          WHEN 'ganho' THEN 6
-          ELSE 7
+          WHEN 'mensagem_enviada' THEN 1
+          WHEN 'novo' THEN 2
+          WHEN 'qualificado' THEN 3
+          WHEN 'reuniao' THEN 4
+          WHEN 'proposta' THEN 5
+          WHEN 'negociacao' THEN 6
+          WHEN 'ganho' THEN 7
+          ELSE 8
         END,
         l.atualizado_em DESC,
         l.criado_em DESC`,
@@ -94,7 +95,32 @@ export async function PUT(req: NextRequest) {
   const body = await req.json();
   if (!body.id) return NextResponse.json({ error: "ID obrigatorio." }, { status: 400 });
 
-  const atual = await dbQueryOne<{ id: string; estagio: string }>("SELECT id, estagio FROM cj_comercial_leads WHERE id=$1", [body.id]);
+  const atual = await dbQueryOne<{
+    id: string;
+    empresa: string;
+    nome_contato: string;
+    email: string | null;
+    whatsapp: string | null;
+    cargo: string | null;
+    origem: string | null;
+    segmento: string | null;
+    cidade: string | null;
+    tags: string[] | null;
+    score: number | null;
+    valor_potencial: number | null;
+    estagio: string;
+    status: string;
+    observacoes: string | null;
+    ai_resumo: string | null;
+    proxima_acao_em: string | null;
+    ultima_interacao_em: string | null;
+  }>(
+    `SELECT id, empresa, nome_contato, email, whatsapp, cargo, origem, segmento, cidade, tags, score,
+            valor_potencial, estagio, status, observacoes, ai_resumo, proxima_acao_em, ultima_interacao_em
+       FROM cj_comercial_leads
+      WHERE id=$1`,
+    [body.id]
+  );
   if (!atual) return NextResponse.json({ error: "Lead nao encontrado." }, { status: 404 });
 
   const novoEstagio = normalizeStage(body.estagio ?? atual.estagio);
@@ -105,23 +131,23 @@ export async function PUT(req: NextRequest) {
             ai_resumo=$15, proxima_acao_em=$16, ultima_interacao_em=$17, atualizado_em=now()
       WHERE id=$18`,
     [
-      body.empresa?.trim() || "",
-      body.nome_contato?.trim() || "",
-      body.email?.trim() || null,
-      body.whatsapp?.trim() || null,
-      body.cargo?.trim() || null,
-      body.origem?.trim() || "site",
-      body.segmento?.trim() || null,
-      body.cidade?.trim() || null,
-      JSON.stringify(normalizeTags(body.tags)),
-      Number(body.score || 50),
-      Number(body.valor_potencial || 0),
+      body.empresa?.trim() ?? atual.empresa,
+      body.nome_contato?.trim() ?? atual.nome_contato,
+      body.email?.trim() ?? atual.email,
+      body.whatsapp?.trim() ?? atual.whatsapp,
+      body.cargo?.trim() ?? atual.cargo,
+      body.origem?.trim() ?? atual.origem ?? "site",
+      body.segmento?.trim() ?? atual.segmento,
+      body.cidade?.trim() ?? atual.cidade,
+      JSON.stringify(body.tags !== undefined ? normalizeTags(body.tags) : (atual.tags || [])),
+      body.score !== undefined ? Number(body.score || 50) : Number(atual.score || 50),
+      body.valor_potencial !== undefined ? Number(body.valor_potencial || 0) : Number(atual.valor_potencial || 0),
       novoEstagio,
-      body.status || (novoEstagio === "ganho" ? "ganho" : novoEstagio === "perdido" ? "perdido" : "ativo"),
-      body.observacoes?.trim() || null,
-      body.ai_resumo?.trim() || null,
-      body.proxima_acao_em || null,
-      body.ultima_interacao_em || null,
+      body.status || atual.status || (novoEstagio === "ganho" ? "ganho" : novoEstagio === "perdido" ? "perdido" : "ativo"),
+      body.observacoes?.trim() ?? atual.observacoes,
+      body.ai_resumo?.trim() ?? atual.ai_resumo,
+      body.proxima_acao_em ?? atual.proxima_acao_em,
+      body.ultima_interacao_em ?? atual.ultima_interacao_em,
       body.id,
     ]
   );

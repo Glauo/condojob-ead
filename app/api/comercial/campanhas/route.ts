@@ -41,15 +41,18 @@ export async function POST(req: NextRequest) {
   const filtroEstagio = body.filtro_estagio ? normalizeStage(body.filtro_estagio) : null;
   const filtroOrigem = body.filtro_origem?.trim() || null;
   const publicoTotal = await countAudience(filtroEstagio, filtroOrigem);
+  const hasSchedule = Boolean(body.agendado_em);
+  const nextStatus = hasSchedule ? "agendada" : "rascunho";
 
   const campanha = await dbQueryOne(
     `INSERT INTO cj_comercial_campanhas
       (nome, canal, status, template_id, filtro_estagio, filtro_origem, assunto, mensagem, publico_total, agendado_em, criado_por, atualizado_em)
-     VALUES ($1,$2,'rascunho',$3,$4,$5,$6,$7,$8,$9,$10,now())
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now())
      RETURNING id`,
     [
       body.nome.trim(),
       normalizeChannel(body.canal),
+      nextStatus,
       body.template_id || null,
       filtroEstagio,
       filtroOrigem,
@@ -75,6 +78,7 @@ export async function PUT(req: NextRequest) {
   const filtroEstagio = body.filtro_estagio ? normalizeStage(body.filtro_estagio) : null;
   const filtroOrigem = body.filtro_origem?.trim() || null;
   const publicoTotal = await countAudience(filtroEstagio, filtroOrigem);
+  const nextStatus = body.status || (body.agendado_em ? "agendada" : "rascunho");
 
   await dbRun(
     `UPDATE cj_comercial_campanhas
@@ -91,7 +95,7 @@ export async function PUT(req: NextRequest) {
       body.mensagem?.trim() || "",
       publicoTotal,
       body.agendado_em || null,
-      body.status || "rascunho",
+      nextStatus,
       body.id,
     ]
   );

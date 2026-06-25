@@ -48,7 +48,17 @@ type CampanhaData = {
   agendado_em?: string | null;
 };
 
-const STAGES = ["novo", "qualificado", "reuniao", "proposta", "negociacao", "ganho", "perdido"];
+const STAGES = ["mensagem_enviada", "novo", "qualificado", "reuniao", "proposta", "negociacao", "ganho", "perdido"];
+const STAGE_LABELS: Record<string, string> = {
+  mensagem_enviada: "Mensagem enviada",
+  novo: "Novo lead",
+  qualificado: "Qualificado",
+  reuniao: "Reuniao",
+  proposta: "Proposta",
+  negociacao: "Negociacao",
+  ganho: "Fechado",
+  perdido: "Perdido",
+};
 
 function ModalPortal({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -101,7 +111,7 @@ export function LeadStageSelect({ leadId, value }: { leadId: string; value: stri
 
   return (
     <select className="form-input" value={value} disabled={loading} onChange={(e) => onChange(e.target.value)}>
-      {STAGES.map((stage) => <option key={stage} value={stage}>{stage}</option>)}
+      {STAGES.map((stage) => <option key={stage} value={stage}>{STAGE_LABELS[stage] || stage}</option>)}
     </select>
   );
 }
@@ -130,6 +140,41 @@ export function CampanhaDisparoButton({ campanhaId }: { campanhaId: string }) {
   return (
     <button className="btn btn-primary btn-sm" onClick={disparar} disabled={loading}>
       {loading ? "Disparando..." : "Disparar"}
+    </button>
+  );
+}
+
+export function CampanhaAutoButton({
+  campanhaId,
+  enabled,
+}: {
+  campanhaId: string;
+  enabled: boolean;
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  async function toggleAuto() {
+    setLoading(true);
+    const res = await fetch("/api/comercial/campanhas/agendar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: campanhaId, enabled: !enabled }),
+    });
+    setLoading(false);
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert((data as { error?: string }).error || "Erro ao alterar automacao.");
+      return;
+    }
+
+    router.refresh();
+  }
+
+  return (
+    <button className="btn btn-secondary btn-sm" onClick={toggleAuto} disabled={loading}>
+      {loading ? "Salvando..." : enabled ? "Pausar auto" : "Ativar auto"}
     </button>
   );
 }
@@ -462,7 +507,7 @@ export function LeadModal({ lead }: { lead?: LeadData }) {
                 <div className="form-group">
                   <label className="form-label">Estagio</label>
                   <select className="form-input" value={form.estagio} onChange={(e) => upd("estagio", e.target.value)}>
-                    {STAGES.map((stage) => <option key={stage} value={stage}>{stage}</option>)}
+                    {STAGES.map((stage) => <option key={stage} value={stage}>{STAGE_LABELS[stage] || stage}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
@@ -763,7 +808,7 @@ export function CampanhaModal({
                   <label className="form-label">Filtro por estagio</label>
                   <select className="form-input" value={form.filtro_estagio} onChange={(e) => upd("filtro_estagio", e.target.value)}>
                     <option value="">Todos</option>
-                    {STAGES.map((stage) => <option key={stage} value={stage}>{stage}</option>)}
+                    {STAGES.map((stage) => <option key={stage} value={stage}>{STAGE_LABELS[stage] || stage}</option>)}
                   </select>
                 </div>
                 <div className="form-group">

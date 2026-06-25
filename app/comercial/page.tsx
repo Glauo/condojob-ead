@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQuery, dbQueryOne, initSchema } from "@/lib/db";
+import { startCommercialCampaignScheduler } from "@/lib/commercial-scheduler";
 import { AppShell } from "@/components/app-shell";
 import { CampanhaModal, LeadModal } from "@/components/comercial-modals";
 
@@ -13,6 +14,7 @@ function currency(value: number) {
 }
 
 export default async function ComercialDashboard() {
+  startCommercialCampaignScheduler();
   const session = await getSession();
   if (!session) redirect("/comercial/login");
   if (session.perfil !== "comercial") redirect(session.perfil === "coordenador" ? "/coordenador" : "/aluno");

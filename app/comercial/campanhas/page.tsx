@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { dbQuery, dbQueryOne, initSchema } from "@/lib/db";
+import { startCommercialCampaignScheduler } from "@/lib/commercial-scheduler";
 import { AppShell } from "@/components/app-shell";
-import { CampanhaDisparoButton, CampanhaModal, TemplateModal } from "@/components/comercial-modals";
+import { CampanhaAutoButton, CampanhaDisparoButton, CampanhaModal, TemplateModal } from "@/components/comercial-modals";
 
 type Template = {
   id: string;
@@ -34,6 +35,7 @@ type Campanha = {
 };
 
 export default async function ComercialCampanhasPage() {
+  startCommercialCampaignScheduler();
   const session = await getSession();
   if (!session) redirect("/comercial/login");
   if (session.perfil !== "comercial") redirect(session.perfil === "coordenador" ? "/coordenador" : "/aluno");
@@ -146,6 +148,7 @@ export default async function ComercialCampanhasPage() {
                         <span className="table-name-primary">{campanha.nome}</span>
                         <span className="table-name-secondary">
                           {(campanha.filtro_estagio || "todos os estagios")} | {(campanha.filtro_origem || "todas as origens")}
+                          {campanha.agendado_em ? ` | agendada para ${new Date(campanha.agendado_em).toLocaleString("pt-BR")}` : ""}
                         </span>
                       </div>
                     </td>
@@ -155,6 +158,7 @@ export default async function ComercialCampanhasPage() {
                     <td>{campanha.enviados}</td>
                     <td>
                       <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                        <CampanhaAutoButton campanhaId={campanha.id} enabled={campanha.status === "agendada"} />
                         <CampanhaDisparoButton campanhaId={campanha.id} />
                         <CampanhaModal campanha={campanha} templates={templates} />
                       </div>
