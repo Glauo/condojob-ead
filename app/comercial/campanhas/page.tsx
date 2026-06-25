@@ -84,6 +84,47 @@ export default async function ComercialCampanhasPage() {
         </div>
       </div>
 
+      <div className="metric-grid metric-grid-3" style={{ marginTop: "18px" }}>
+        <div className="card">
+          <div className="card-body" style={{ display: "grid", gap: "12px" }}>
+            <div>
+              <div className="section-eyebrow">Disparo em massa</div>
+              <div className="section-title" style={{ fontSize: "1.02rem" }}>WhatsApp em massa</div>
+            </div>
+            <p style={{ color: "var(--cj-text-secondary)", margin: 0 }}>
+              Cria uma campanha para enviar mensagens por WhatsApp para varios leads com filtro por etapa e origem.
+            </p>
+            <div>
+              <CampanhaModal
+                templates={templates}
+                defaultCanal="whatsapp"
+                buttonLabel="Nova campanha WhatsApp"
+                buttonClassName="btn btn-primary"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-body" style={{ display: "grid", gap: "12px" }}>
+            <div>
+              <div className="section-eyebrow">Disparo em massa</div>
+              <div className="section-title" style={{ fontSize: "1.02rem" }}>E-mail em massa</div>
+            </div>
+            <p style={{ color: "var(--cj-text-secondary)", margin: 0 }}>
+              Cria uma campanha para enviar e-mails em lote usando assunto, mensagem e filtros do funil comercial.
+            </p>
+            <div>
+              <CampanhaModal
+                templates={templates}
+                defaultCanal="email"
+                buttonLabel="Nova campanha E-mail"
+                buttonClassName="btn btn-secondary"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div id="templates" className="card">
         <div className="card-header">
           <div>

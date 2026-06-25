@@ -702,9 +702,15 @@ export function TemplateModal({ template }: { template?: TemplateData }) {
 export function CampanhaModal({
   campanha,
   templates,
+  buttonLabel,
+  buttonClassName,
+  defaultCanal,
 }: {
   campanha?: CampanhaData;
   templates: TemplateData[];
+  buttonLabel?: string;
+  buttonClassName?: string;
+  defaultCanal?: "whatsapp" | "email";
 }) {
   const router = useRouter();
   const isEdit = Boolean(campanha?.id);
@@ -712,8 +718,15 @@ export function CampanhaModal({
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState("");
   const [form, setForm] = useState({
-    nome: String(campanha?.nome || ""),
-    canal: String(campanha?.canal || "whatsapp"),
+    nome: String(
+      campanha?.nome ||
+      (defaultCanal === "email"
+        ? "Campanha de e-mail em massa"
+        : defaultCanal === "whatsapp"
+          ? "Campanha de WhatsApp em massa"
+          : "")
+    ),
+    canal: String(campanha?.canal || defaultCanal || "whatsapp"),
     status: String(campanha?.status || "rascunho"),
     template_id: String(campanha?.template_id || ""),
     filtro_estagio: String(campanha?.filtro_estagio || ""),
@@ -768,8 +781,8 @@ export function CampanhaModal({
 
   return (
     <>
-      <button className={isEdit ? "btn btn-ghost btn-sm" : "btn btn-primary"} onClick={() => setOpen(true)}>
-        {isEdit ? "Editar" : "+ Nova campanha"}
+      <button className={buttonClassName || (isEdit ? "btn btn-ghost btn-sm" : "btn btn-primary")} onClick={() => setOpen(true)}>
+        {buttonLabel || (isEdit ? "Editar" : "+ Nova campanha")}
       </button>
       {open && (
         <ModalPortal>
