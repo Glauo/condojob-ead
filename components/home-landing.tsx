@@ -38,6 +38,36 @@ const PORTAL_ACTIONS = [
   },
 ];
 
+const PLATFORM_MODULES = [
+  {
+    title: "Area do aluno",
+    text: "Cursos, conteudo, biblioteca, notas, certificados, documentos, chat e suporte.",
+    items: ["Dashboard", "Meus cursos", "Biblioteca", "Notas e certificados"],
+    href: "/aluno",
+  },
+  {
+    title: "Gestao academica",
+    text: "Cursos, modulos, avaliacoes, alunos, financeiro, chat, relatorios e ClubCondoJob.",
+    items: ["Cursos", "Conteudo", "Alunos", "Relatorios"],
+    href: "/coordenador",
+  },
+  {
+    title: "Operacao comercial",
+    text: "Leads, funil, campanhas, templates IA e disparos comerciais por WhatsApp e e-mail.",
+    items: ["Leads", "Funil", "Campanhas", "Templates IA"],
+    href: "/comercial",
+  },
+];
+
+const FEATURE_LINKS = [
+  { label: "Login do aluno", href: "/login" },
+  { label: "Cadastro e pagamento", href: "/cadastro" },
+  { label: "CondoJob EAD", href: "/curso-assistente-condominial" },
+  { label: "Cursos extras", href: "/aluno/especializacoes" },
+  { label: "Area comercial", href: "/comercial/login" },
+  { label: "Certificados", href: "/aluno/certificados" },
+];
+
 const SECTIONS = [
   {
     kicker: "Tela principal",
@@ -75,7 +105,22 @@ const SECTIONS = [
 
 export async function HomeLanding() {
   const session = await getSession();
-  const painelHref = session?.perfil === "coordenador" ? "/coordenador" : session ? "/aluno" : "/login";
+  const painelHref =
+    session?.perfil === "coordenador"
+      ? "/coordenador"
+      : session?.perfil === "comercial"
+        ? "/comercial"
+        : session
+          ? "/aluno"
+          : "/login";
+  const roleLabel =
+    session?.perfil === "coordenador"
+      ? "Gestao academica"
+      : session?.perfil === "comercial"
+        ? "Area comercial"
+        : session?.perfil === "aluno"
+          ? "Area do aluno"
+          : "Acesso principal";
 
   return (
     <main className="home-landing-page">
@@ -108,12 +153,20 @@ export async function HomeLanding() {
               ))}
             </div>
             <div className="home-landing-actions">
-              <Link href="/login" className="home-landing-primary">
-                Entrar na CondoJob
+              <Link href={painelHref} className="home-landing-primary">
+                {session ? "Ir para minha area" : "Entrar na CondoJob"}
               </Link>
               <Link href="/cadastro" className="home-landing-secondary">
                 Criar cadastro
               </Link>
+            </div>
+            <div className="home-landing-session-card">
+              <strong>{roleLabel}</strong>
+              <span>
+                {session
+                  ? `Sessao ativa para ${session.nome}. Acesse diretamente sua area principal da CondoJob.`
+                  : "Entre com seu acesso atual ou faca um novo cadastro para usar a plataforma principal."}
+              </span>
             </div>
           </div>
 
@@ -149,6 +202,42 @@ export async function HomeLanding() {
             >
               <strong>{item.title}</strong>
               <span>{item.text}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="home-landing-platform-grid">
+        {PLATFORM_MODULES.map((module) => (
+          <div key={module.title} className="home-landing-platform-card">
+            <div className="home-landing-platform-kicker">Modulo principal</div>
+            <h3>{module.title}</h3>
+            <p>{module.text}</p>
+            <div className="home-landing-platform-tags">
+              {module.items.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </div>
+            <Link href={module.href} className="home-landing-platform-link">
+              Abrir area
+            </Link>
+          </div>
+        ))}
+      </section>
+
+      <section className="home-landing-functions">
+        <div className="home-landing-functions-copy">
+          <span className="home-landing-section-kicker">Funcoes da plataforma</span>
+          <h2>A pagina inicial agora concentra os caminhos reais da CondoJob.</h2>
+          <p>
+            O acesso principal passa a organizar login, cadastro, area do aluno, gestao academica, operacao comercial
+            e CondoJob EAD dentro do mesmo ecossistema.
+          </p>
+        </div>
+        <div className="home-landing-functions-grid">
+          {FEATURE_LINKS.map((item) => (
+            <Link key={item.label} href={item.href} className="home-landing-function-chip">
+              {item.label}
             </Link>
           ))}
         </div>

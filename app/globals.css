@@ -1323,6 +1323,28 @@ img { max-width: 100%; }
   margin-top: 28px;
 }
 
+.home-landing-session-card {
+  margin-top: 20px;
+  max-width: 520px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  display: grid;
+  gap: 8px;
+}
+
+.home-landing-session-card strong {
+  font-size: 0.95rem;
+  color: #F8FAFC;
+}
+
+.home-landing-session-card span {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: rgba(232,238,255,0.72);
+}
+
 .home-landing-hero-media,
 .home-landing-section-media {
   display: flex;
@@ -1420,6 +1442,128 @@ img { max-width: 100%; }
   transform: translateY(-2px);
 }
 
+.home-landing-platform-grid,
+.home-landing-functions {
+  width: min(1200px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.home-landing-platform-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.home-landing-platform-card {
+  min-height: 100%;
+  padding: 22px;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, rgba(15,21,35,0.92) 0%, rgba(9,14,26,0.98) 100%);
+  display: grid;
+  gap: 12px;
+}
+
+.home-landing-platform-kicker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7DD3FC;
+}
+
+.home-landing-platform-card h3 {
+  font-size: 1.4rem;
+  line-height: 1.15;
+  color: #F8FAFC;
+}
+
+.home-landing-platform-card p {
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: rgba(232,238,255,0.72);
+}
+
+.home-landing-platform-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.home-landing-platform-tags span,
+.home-landing-function-chip {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  display: inline-flex;
+  align-items: center;
+  color: #E8EEFF;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.home-landing-platform-link {
+  margin-top: 4px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(56,189,248,0.26);
+  background: rgba(56,189,248,0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #8FE8FF;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.home-landing-functions {
+  margin-top: 6px;
+  margin-bottom: 18px;
+  padding: 24px;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.home-landing-functions-copy h2 {
+  margin-top: 14px;
+  font-size: clamp(1.7rem, 2.6vw, 2.5rem);
+  line-height: 1.08;
+  color: #F8FAFC;
+}
+
+.home-landing-functions-copy p {
+  margin-top: 14px;
+  font-size: 0.96rem;
+  line-height: 1.72;
+  color: rgba(232,238,255,0.72);
+}
+
+.home-landing-functions-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.home-landing-function-chip {
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.home-landing-platform-link:hover,
+.home-landing-function-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(56,189,248,0.28);
+}
+
 .home-landing-section {
   padding: 58px 0;
 }
@@ -1435,14 +1579,21 @@ img { max-width: 100%; }
 @media(max-width:980px) {
   .home-landing-hero,
   .home-landing-highlight,
-  .home-landing-section {
+  .home-landing-section,
+  .home-landing-platform-grid,
+  .home-landing-functions {
     width: min(100% - 28px, 1200px);
   }
 
   .home-landing-hero-grid,
-  .home-landing-section {
+  .home-landing-section,
+  .home-landing-functions {
     grid-template-columns: 1fr;
     gap: 26px;
+  }
+
+  .home-landing-platform-grid {
+    grid-template-columns: 1fr;
   }
 
   .home-landing-highlight {
@@ -1511,6 +1662,10 @@ img { max-width: 100%; }
   .home-landing-highlight,
   .home-landing-section {
     padding-top: 36px;
+  }
+
+  .home-landing-functions {
+    padding: 20px;
   }
 }
 
