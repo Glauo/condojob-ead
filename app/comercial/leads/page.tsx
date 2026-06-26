@@ -31,7 +31,7 @@ function currency(value: number) {
 export default async function ComercialLeadsPage() {
   const session = await getSession();
   if (!session) redirect("/comercial/login");
-  if (session.perfil !== "comercial") redirect(session.perfil === "coordenador" ? "/coordenador" : "/aluno");
+  if (session.perfil !== "comercial" && session.perfil !== "coordenador") redirect("/aluno");
 
   await initSchema();
 
@@ -63,7 +63,7 @@ export default async function ComercialLeadsPage() {
   const s = stats || { total: 0, quentes: 0, ticket: 0 };
 
   return (
-    <AppShell breadcrumb="Leads" userName={session.nome} userRole="comercial">
+    <AppShell breadcrumb="Leads" userName={session.nome} userRole={session.perfil === "coordenador" ? "coordenador" : "comercial"}>
       <div className="page-header">
         <div>
           <div className="page-eyebrow"><span className="page-eyebrow-dot" />CRM</div>

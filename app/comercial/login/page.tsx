@@ -80,7 +80,10 @@ export default function ComercialLoginPage() {
             <button className="login-btn" type="submit" disabled={loading}>{loading ? "Entrando..." : "Entrar no CRM"}</button>
           </form>
           <p className="login-footer-text">
-            O administrador pode criar usuarios comerciais em <strong>Coordenador &gt; Alunos &gt; Novo Cadastro</strong>.
+            Ainda nao tem acesso?{" "}
+            <a href="/comercial/cadastro" style={{ color: "var(--cj-teal)", fontWeight: 700 }}>
+              Criar cadastro comercial
+            </a>
           </p>
         </div>
       </div>

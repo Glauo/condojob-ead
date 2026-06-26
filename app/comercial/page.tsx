@@ -17,7 +17,7 @@ export default async function ComercialDashboard() {
   startCommercialCampaignScheduler();
   const session = await getSession();
   if (!session) redirect("/comercial/login");
-  if (session.perfil !== "comercial") redirect(session.perfil === "coordenador" ? "/coordenador" : "/aluno");
+  if (session.perfil !== "comercial" && session.perfil !== "coordenador") redirect("/aluno");
 
   await initSchema();
 
@@ -59,7 +59,7 @@ export default async function ComercialDashboard() {
   const s = stats || { total_leads: 0, pipeline_aberto: 0, propostas: 0, ticket: 0, concluidas: 0 };
 
   return (
-    <AppShell breadcrumb="Dashboard" userName={session.nome} userRole="comercial">
+    <AppShell breadcrumb="Dashboard" userName={session.nome} userRole={session.perfil === "coordenador" ? "coordenador" : "comercial"}>
       <div className="page-header">
         <div>
           <div className="page-eyebrow"><span className="page-eyebrow-dot" />CRM Comercial</div>

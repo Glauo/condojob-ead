@@ -38,7 +38,7 @@ export default async function ComercialCampanhasPage() {
   startCommercialCampaignScheduler();
   const session = await getSession();
   if (!session) redirect("/comercial/login");
-  if (session.perfil !== "comercial") redirect(session.perfil === "coordenador" ? "/coordenador" : "/aluno");
+  if (session.perfil !== "comercial" && session.perfil !== "coordenador") redirect("/aluno");
 
   await initSchema();
 
@@ -56,7 +56,7 @@ export default async function ComercialCampanhasPage() {
   const s = stats || { templates: 0, campanhas: 0, disparos: 0 };
 
   return (
-    <AppShell breadcrumb="Campanhas" userName={session.nome} userRole="comercial">
+    <AppShell breadcrumb="Campanhas" userName={session.nome} userRole={session.perfil === "coordenador" ? "coordenador" : "comercial"}>
       <div className="page-header">
         <div>
           <div className="page-eyebrow"><span className="page-eyebrow-dot" />Automacao comercial</div>

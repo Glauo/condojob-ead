@@ -11,30 +11,38 @@ const HIGHLIGHTS = [
   "Educacao profissional integrada",
 ];
 
-const PORTAL_ACTIONS = [
+const PORTAL_HUBS = [
   {
-    title: "Entrar como trabalhador",
-    text: "Login da plataforma de empregos para aceitar trabalhos e acompanhar vagas.",
-    href: "/profissionais/login",
-    style: "primary" as const,
+    title: "CondoJob EAD",
+    text: "Portal educacional com cadastro do aluno, login proprio e painel de cursos, certificados e biblioteca.",
+    actions: [
+      { label: "Entrar no EAD", href: "/login", style: "primary" as const },
+      { label: "Cadastrar no EAD", href: "/cadastro", style: "secondary" as const },
+      { label: "Painel EAD", href: "/aluno", style: "ghost" as const },
+    ],
   },
   {
-    title: "Cadastrar trabalhador",
-    text: "Criar o acesso do profissional para receber vagas e aceitar servicos.",
-    href: "/profissionais/cadastro",
-    style: "secondary" as const,
+    title: "CondoJob Comercial",
+    text: "Portal comercial com login, cadastro proprio e painel de leads, funil, campanhas e templates IA.",
+    actions: [
+      { label: "Entrar no Comercial", href: "/comercial/login", style: "primary" as const },
+      { label: "Cadastrar no Comercial", href: "/comercial/cadastro", style: "secondary" as const },
+      { label: "Painel Comercial", href: "/comercial", style: "ghost" as const },
+    ],
   },
   {
-    title: "Entrar como empresa",
-    text: "Acesso para publicar vagas e acompanhar aceite dos trabalhadores.",
-    href: "/empresas/login",
-    style: "primary" as const,
-  },
-  {
-    title: "Cadastrar empresa",
-    text: "Criar o acesso da empresa ou condominio para postar vagas.",
-    href: "/empresas/cadastro",
-    style: "secondary" as const,
+    title: "CondoJob Empregos",
+    text: "Portal de trabalho com cadastro e login separados para profissional e empresa, cada um com seu painel.",
+    actions: [
+      { label: "Entrar em Empregos", href: "/profissionais/login", style: "primary" as const },
+      { label: "Cadastrar em Empregos", href: "/profissionais/cadastro", style: "secondary" as const },
+      { label: "Painel de Empregos", href: "/profissionais/painel", style: "ghost" as const },
+    ],
+    extras: [
+      { label: "Empresa login", href: "/empresas/login" },
+      { label: "Empresa cadastro", href: "/empresas/cadastro" },
+      { label: "Painel empresa", href: "/empresas/painel" },
+    ],
   },
 ];
 
@@ -66,14 +74,14 @@ const PLATFORM_MODULES = [
 ];
 
 const FEATURE_LINKS = [
-  { label: "Login do trabalhador", href: "/profissionais/login" },
-  { label: "Cadastro do trabalhador", href: "/profissionais/cadastro" },
-  { label: "Login da empresa", href: "/empresas/login" },
-  { label: "Cadastro da empresa", href: "/empresas/cadastro" },
-  { label: "CondoJob EAD", href: "/curso-assistente-condominial" },
-  { label: "Cursos extras", href: "/aluno/especializacoes" },
-  { label: "Area comercial", href: "/comercial/login" },
-  { label: "Plataforma de empregos", href: "/empregos" },
+  { label: "Login EAD", href: "/login" },
+  { label: "Cadastro EAD", href: "/cadastro" },
+  { label: "Login comercial", href: "/comercial/login" },
+  { label: "Cadastro comercial", href: "/comercial/cadastro" },
+  { label: "Login trabalhador", href: "/profissionais/login" },
+  { label: "Cadastro trabalhador", href: "/profissionais/cadastro" },
+  { label: "Login empresa", href: "/empresas/login" },
+  { label: "Cadastro empresa", href: "/empresas/cadastro" },
 ];
 
 const SECTIONS = [
@@ -164,8 +172,8 @@ export async function HomeLanding() {
               <Link href={painelHref} className="home-landing-primary">
                 {session ? "Ir para minha area" : "Entrar na CondoJob"}
               </Link>
-              <Link href="/cadastro" className="home-landing-secondary">
-                Criar cadastro
+              <Link href="/comercial/cadastro" className="home-landing-secondary">
+                Criar acesso comercial
               </Link>
             </div>
             <div className="home-landing-session-card">
@@ -194,23 +202,39 @@ export async function HomeLanding() {
 
       <section className="home-landing-highlight">
         <div className="home-landing-highlight-copy">
-          <span className="home-landing-section-kicker">Acessos principais</span>
-          <h2>A CondoJob EAD continua dentro da plataforma, mas a pagina principal agora funciona como home real da CondoJob.</h2>
+          <span className="home-landing-section-kicker">Portais principais</span>
+          <h2>Entradas separadas para EAD, Comercial e Empregos, cada uma com cadastro, login e painel proprio.</h2>
           <p>
-            Cadastro, login e acessos principais ficam na pagina inicial. A CondoJob EAD continua como uma opcao em
-            destaque para quem quer entrar no ambiente educacional atual.
+            A pagina principal agora destaca os tres portais da CondoJob. Cada area tem seu proprio fluxo de entrada,
+            seu proprio cadastro e seu proprio painel operacional.
           </p>
         </div>
         <div className="home-landing-portal-grid">
-          {PORTAL_ACTIONS.map((item) => (
-            <Link
-              key={item.title}
-              href={item.href}
-              className={`home-landing-portal-card ${item.style === "primary" ? "is-primary" : ""}`}
-            >
-              <strong>{item.title}</strong>
-              <span>{item.text}</span>
-            </Link>
+          {PORTAL_HUBS.map((portal) => (
+            <div key={portal.title} className="home-landing-portal-card is-hub">
+              <strong>{portal.title}</strong>
+              <span>{portal.text}</span>
+              <div className="home-landing-portal-actions">
+                {portal.actions.map((action) => (
+                  <Link
+                    key={action.label}
+                    href={action.href}
+                    className={`home-landing-portal-btn is-${action.style}`}
+                  >
+                    {action.label}
+                  </Link>
+                ))}
+              </div>
+              {"extras" in portal && portal.extras ? (
+                <div className="home-landing-portal-links">
+                  {portal.extras.map((item) => (
+                    <Link key={item.label} href={item.href}>
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           ))}
         </div>
       </section>

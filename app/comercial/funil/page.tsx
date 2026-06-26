@@ -20,7 +20,7 @@ type Lead = {
 export default async function ComercialFunilPage() {
   const session = await getSession();
   if (!session) redirect("/comercial/login");
-  if (session.perfil !== "comercial") redirect(session.perfil === "coordenador" ? "/coordenador" : "/aluno");
+  if (session.perfil !== "comercial" && session.perfil !== "coordenador") redirect("/aluno");
 
   await initSchema();
 
@@ -32,7 +32,7 @@ export default async function ComercialFunilPage() {
   );
 
   return (
-    <AppShell breadcrumb="Funil" userName={session.nome} userRole="comercial">
+    <AppShell breadcrumb="Funil" userName={session.nome} userRole={session.perfil === "coordenador" ? "coordenador" : "comercial"}>
       <div className="page-header">
         <div>
           <div className="page-eyebrow"><span className="page-eyebrow-dot" />Funil comercial</div>
