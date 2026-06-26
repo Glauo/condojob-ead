@@ -1381,6 +1381,45 @@ img { max-width: 100%; }
   justify-content: flex-end;
 }
 
+.home-landing-portal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px;
+  width: min(100%, 520px);
+}
+
+.home-landing-portal-card {
+  min-height: 136px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.home-landing-portal-card strong {
+  font-size: 1rem;
+  color: #F8FAFC;
+}
+
+.home-landing-portal-card span {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: rgba(232,238,255,0.72);
+}
+
+.home-landing-portal-card.is-primary {
+  border-color: rgba(56,189,248,0.28);
+  background: linear-gradient(135deg, rgba(56,189,248,0.10) 0%, rgba(129,140,248,0.10) 100%);
+}
+
+.home-landing-portal-card:hover {
+  transform: translateY(-2px);
+}
+
 .home-landing-section {
   padding: 58px 0;
 }
@@ -1416,6 +1455,10 @@ img { max-width: 100%; }
     justify-content: flex-start;
   }
 
+  .home-landing-portal-grid {
+    width: 100%;
+  }
+
   .home-landing-section.reverse .home-landing-section-copy,
   .home-landing-section.reverse .home-landing-section-media {
     order: initial;
@@ -1436,6 +1479,10 @@ img { max-width: 100%; }
   .home-landing-actions,
   .home-landing-highlight-actions {
     width: 100%;
+  }
+
+  .home-landing-portal-grid {
+    grid-template-columns: 1fr;
   }
 
   .home-landing-nav-link,

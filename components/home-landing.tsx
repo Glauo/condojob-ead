@@ -6,41 +6,68 @@ const LOGO_URL =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663028326461/T5ftWUvfkBh5pRx7KLbqse/condojob-logo-cropped_a273700c.png";
 
 const HIGHLIGHTS = [
-  "Curso online com certificado",
-  "Acesso a oportunidades CondoJob",
-  "Formacao organizada por modulos",
+  "Plataforma principal CondoJob",
+  "Trabalho em condominio",
+  "Educacao profissional integrada",
+];
+
+const PORTAL_ACTIONS = [
+  {
+    title: "Entrar na plataforma",
+    text: "Acesso para usuarios ja cadastrados na CondoJob.",
+    href: "/login",
+    style: "primary" as const,
+  },
+  {
+    title: "Criar cadastro",
+    text: "Cadastro inicial para entrar no ecossistema CondoJob.",
+    href: "/cadastro",
+    style: "secondary" as const,
+  },
+  {
+    title: "Entrar na CondoJob EAD",
+    text: "Acesso em destaque para a plataforma educacional que ja existe hoje.",
+    href: "/curso-assistente-condominial",
+    style: "primary" as const,
+  },
+  {
+    title: "Area comercial",
+    text: "Funil, campanhas, leads e operacao comercial.",
+    href: "/comercial/login",
+    style: "secondary" as const,
+  },
 ];
 
 const SECTIONS = [
   {
-    kicker: "Experiencia inicial",
-    title: "Uma entrada mais clara para a CondoJob Educacional.",
+    kicker: "Tela principal",
+    title: "A CondoJob como plataforma principal, nao como leadpage da EAD.",
     text:
-      "A nova pagina inicial apresenta a plataforma, mostra a experiencia real do aplicativo e conduz o interessado para a area atual de cadastro e matricula.",
+      "A nova pagina inicial apresenta a CondoJob como ecossistema principal para trabalho em condominio, cadastro, entrada de usuarios e acesso aos servicos.",
     image: "/home/screenshot-01-hero.png",
     reverse: false,
   },
   {
-    kicker: "Cadastro guiado",
-    title: "Onboarding simples para quem quer entrar e comecar rapido.",
+    kicker: "Fluxo de entrada",
+    title: "Login, cadastro e uso da plataforma em um ponto central.",
     text:
-      "O interessado entende o fluxo, visualiza a proposta da plataforma e segue para a pagina atual da CondoJob EAD, onde faz cadastro, pagamento e liberacao do curso.",
+      "A pagina principal passa a funcionar como porta de entrada do sistema, enquanto a CondoJob EAD continua disponivel como uma opcao destacada dentro do mesmo ambiente.",
     image: "/home/screenshot-02-onboarding.png",
     reverse: true,
   },
   {
-    kicker: "Estrutura da plataforma",
-    title: "Conteudo, servicos e organizacao em um ambiente unico.",
+    kicker: "Servicos",
+    title: "As areas da CondoJob aparecem como funcoes reais da plataforma.",
     text:
-      "A CondoJob Educacional concentra aulas, progresso, apoio ao aluno e recursos da plataforma em uma experiencia visual mais premium e objetiva.",
+      "A home agora organiza melhor os caminhos principais da CondoJob e deixa o modulo educacional no lugar certo: como um recurso integrado, nao como a home inteira.",
     image: "/home/screenshot-03-servicos.png",
     reverse: false,
   },
   {
-    kicker: "Publico atendido",
-    title: "Uma plataforma pensada para formar profissionais e conectar oportunidades.",
+    kicker: "Publico",
+    title: "Entrada clara para profissionais, empresas e alunos.",
     text:
-      "A pagina inicial apresenta para quem a CondoJob foi feita e destaca o principal caminho comercial: entrar, se cadastrar e seguir para a EAD atual.",
+      "A pagina inicial mostra para quem a CondoJob foi feita e abre os caminhos principais da operacao sem transformar o site principal em uma pagina de anuncio do curso.",
     image: "/home/screenshot-04-publico.png",
     reverse: true,
   },
@@ -55,25 +82,25 @@ export async function HomeLanding() {
       <section className="home-landing-hero">
         <nav className="home-landing-nav" aria-label="Navegacao principal">
           <Link href="/" className="home-landing-logo">
-            <Image src={LOGO_URL} alt="CondoJob Educacional" width={170} height={52} priority />
+            <Image src={LOGO_URL} alt="CondoJob" width={170} height={52} priority />
           </Link>
           <div className="home-landing-nav-actions">
             <Link href={painelHref} className="home-landing-nav-link">
               {session ? "Ir para plataforma" : "Entrar"}
             </Link>
             <Link href="/curso-assistente-condominial" className="home-landing-nav-cta">
-              Quero entrar na CondoJob EAD
+              CondoJob EAD
             </Link>
           </div>
         </nav>
 
         <div className="home-landing-hero-grid">
           <div className="home-landing-copy">
-            <div className="home-landing-eyebrow">CondoJob Educacional</div>
-            <h1>Pagina inicial da CondoJob com entrada direta para a plataforma EAD.</h1>
+            <div className="home-landing-eyebrow">CondoJob - Plataforma principal</div>
+            <h1>Login, cadastro e acessos principais da CondoJob em uma home funcional.</h1>
             <p>
-              Esta home apresenta a CondoJob de forma mais premium, mostra a experiencia real da plataforma
-              e destaca o acesso para cadastro e matricula na area educacional que ja existe hoje.
+              A raiz da CondoJob passa a funcionar como pagina principal da plataforma, com entrada real para usuarios,
+              cadastro e operacao. A CondoJob EAD continua em destaque como um dos acessos do ecossistema.
             </p>
             <div className="home-landing-badges">
               {HIGHLIGHTS.map((item) => (
@@ -81,11 +108,11 @@ export async function HomeLanding() {
               ))}
             </div>
             <div className="home-landing-actions">
-              <Link href="/curso-assistente-condominial" className="home-landing-primary">
-                Cadastrar na CondoJob EAD
+              <Link href="/login" className="home-landing-primary">
+                Entrar na CondoJob
               </Link>
-              <Link href="/login" className="home-landing-secondary">
-                Ja sou aluno
+              <Link href="/cadastro" className="home-landing-secondary">
+                Criar cadastro
               </Link>
             </div>
           </div>
@@ -94,7 +121,7 @@ export async function HomeLanding() {
             <div className="home-landing-device home-landing-device-hero">
               <Image
                 src="/home/screenshot-01-hero.png"
-                alt="Tela inicial CondoJob"
+                alt="Tela principal CondoJob"
                 width={1280}
                 height={2778}
                 priority
@@ -106,20 +133,24 @@ export async function HomeLanding() {
 
       <section className="home-landing-highlight">
         <div className="home-landing-highlight-copy">
-          <span className="home-landing-section-kicker">Acesso em destaque</span>
-          <h2>Quem quiser se cadastrar segue daqui direto para a CondoJob EAD atual.</h2>
+          <span className="home-landing-section-kicker">Acessos principais</span>
+          <h2>A CondoJob EAD continua dentro da plataforma, mas a pagina principal agora funciona como home real da CondoJob.</h2>
           <p>
-            O botao principal leva para a pagina atual de venda e matricula da CondoJob, mantendo o fluxo de cadastro,
-            pagamento e entrada no curso sem alterar a funcionalidade que ja esta no ar.
+            Cadastro, login e acessos principais ficam na pagina inicial. A CondoJob EAD continua como uma opcao em
+            destaque para quem quer entrar no ambiente educacional atual.
           </p>
         </div>
-        <div className="home-landing-highlight-actions">
-          <Link href="/curso-assistente-condominial" className="home-landing-highlight-cta">
-            Ir para cadastro na CondoJob EAD
-          </Link>
-          <Link href="/cadastro" className="home-landing-secondary">
-            Ir direto para matricula
-          </Link>
+        <div className="home-landing-portal-grid">
+          {PORTAL_ACTIONS.map((item) => (
+            <Link
+              key={item.title}
+              href={item.href}
+              className={`home-landing-portal-card ${item.style === "primary" ? "is-primary" : ""}`}
+            >
+              <strong>{item.title}</strong>
+              <span>{item.text}</span>
+            </Link>
+          ))}
         </div>
       </section>
 
