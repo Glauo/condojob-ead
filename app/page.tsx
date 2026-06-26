@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { SalesLanding } from "@/components/sales-landing";
+import { HomeLanding } from "@/components/home-landing";
 
 export const metadata: Metadata = {
-  title: "Curso de Assistente Condominial | CondoJob Educacional",
-  description: "Curso online CondoJob Educacional por R$ 99,00 ou 12x de R$ 9,90.",
+  title: "CondoJob Educacional | Pagina inicial",
+  description: "Pagina inicial da CondoJob Educacional com acesso destacado para cadastro e entrada na plataforma EAD.",
 };
 
 export default function LandingPage() {
-  return <SalesLanding />;
+  return <HomeLanding />;
 }
