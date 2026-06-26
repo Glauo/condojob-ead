@@ -146,11 +146,11 @@ export async function HomeLanding() {
             <Image src={LOGO_URL} alt="CondoJob" width={170} height={52} priority />
           </Link>
           <div className="home-landing-nav-actions">
-            <Link href={painelHref} className="home-landing-nav-link">
-              {session ? "Ir para plataforma" : "Entrar"}
+            <Link href="/profissionais/login" className="home-landing-nav-link">
+              Entrar Empregos
             </Link>
-            <Link href="/curso-assistente-condominial" className="home-landing-nav-cta">
-              CondoJob EAD
+            <Link href="/profissionais/cadastro" className="home-landing-nav-cta">
+              Cadastrar Empregos
             </Link>
           </div>
         </nav>
@@ -160,8 +160,8 @@ export async function HomeLanding() {
             <div className="home-landing-eyebrow">CondoJob - Plataforma principal</div>
             <h1>Login, cadastro e acessos principais da CondoJob em uma home funcional.</h1>
             <p>
-              A raiz da CondoJob passa a funcionar como pagina principal da plataforma, com entrada real para usuarios,
-              cadastro e operacao. A CondoJob EAD continua em destaque como um dos acessos do ecossistema.
+              A CondoJob conecta profissionais, empresas, condominios e formacao em um unico ecossistema.
+              Aqui voce entra na plataforma de empregos, acessa o CondoJob EAD e utiliza os portais operacionais da marca.
             </p>
             <div className="home-landing-badges">
               {HIGHLIGHTS.map((item) => (
