@@ -5,10 +5,11 @@ import path from "path";
 import { Readable } from "stream";
 import { getSession } from "@/lib/auth";
 import { dbQueryOne } from "@/lib/db";
+import { getUploadFolder } from "@/lib/storage";
 
 type Params = { params: Promise<{ filename: string }> };
 
-const VIDEO_DIR = path.join(process.cwd(), "public", "videos");
+const VIDEO_DIR = getUploadFolder("videos");
 
 function contentType(filename: string): string {
   const ext = path.extname(filename).toLowerCase();

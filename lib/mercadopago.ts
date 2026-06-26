@@ -59,7 +59,12 @@ export function assertMercadoPagoConfigured() {
 export async function createMercadoPagoPreference(input: PreferenceInput) {
   assertMercadoPagoConfigured();
 
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || input.origin).replace(/\/$/, "");
+  const baseUrl = (
+    process.env.APP_BASE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.APP_URL ||
+    input.origin
+  ).replace(/\/$/, "");
   const response = await fetch(`${MP_API}/checkout/preferences`, {
     method: "POST",
     headers: {
@@ -115,7 +120,12 @@ export async function createMercadoPagoPreference(input: PreferenceInput) {
 export async function createMercadoPagoPixPayment(input: PreferenceInput) {
   assertMercadoPagoConfigured();
 
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || input.origin).replace(/\/$/, "");
+  const baseUrl = (
+    process.env.APP_BASE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.APP_URL ||
+    input.origin
+  ).replace(/\/$/, "");
   const response = await fetch(`${MP_API}/v1/payments`, {
     method: "POST",
     headers: {

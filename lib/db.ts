@@ -314,9 +314,12 @@ async function initSchemaInternal() {
     CREATE TABLE IF NOT EXISTS cj_job_workers (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       nome TEXT NOT NULL,
+      email TEXT,
+      senha_hash TEXT,
       telefone TEXT,
       cidade TEXT,
       nivel TEXT DEFAULT 'operacional',
+      disponibilidade TEXT,
       onboarding_concluido BOOLEAN DEFAULT false,
       ativo BOOLEAN DEFAULT true,
       criado_em TIMESTAMPTZ DEFAULT now()
@@ -325,6 +328,10 @@ async function initSchemaInternal() {
     CREATE TABLE IF NOT EXISTS cj_job_condos (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       nome TEXT NOT NULL,
+      responsavel_nome TEXT,
+      email TEXT,
+      senha_hash TEXT,
+      telefone TEXT,
       tipo TEXT DEFAULT 'residencial',
       total_unidades INTEGER,
       endereco TEXT,
@@ -344,6 +351,12 @@ async function initSchemaInternal() {
       tipo_jornada TEXT DEFAULT 'efetivo',
       faixa_pagamento TEXT,
       requisitos TEXT,
+      disponibilidade TEXT,
+      data_servico DATE,
+      hora_servico TIME,
+      status TEXT DEFAULT 'aberta',
+      worker_id UUID REFERENCES cj_job_workers(id) ON DELETE SET NULL,
+      aceito_em TIMESTAMPTZ,
       ativo BOOLEAN DEFAULT true,
       criado_em TIMESTAMPTZ DEFAULT now()
     );
@@ -428,6 +441,22 @@ async function initSchemaInternal() {
 
     ALTER TABLE cj_comercial_disparos ADD COLUMN IF NOT EXISTS provider_resposta JSONB;
     ALTER TABLE cj_comercial_disparos ADD COLUMN IF NOT EXISTS erro_texto TEXT;
+
+    ALTER TABLE cj_job_workers ADD COLUMN IF NOT EXISTS email TEXT;
+    ALTER TABLE cj_job_workers ADD COLUMN IF NOT EXISTS senha_hash TEXT;
+    ALTER TABLE cj_job_workers ADD COLUMN IF NOT EXISTS disponibilidade TEXT;
+
+    ALTER TABLE cj_job_condos ADD COLUMN IF NOT EXISTS responsavel_nome TEXT;
+    ALTER TABLE cj_job_condos ADD COLUMN IF NOT EXISTS email TEXT;
+    ALTER TABLE cj_job_condos ADD COLUMN IF NOT EXISTS senha_hash TEXT;
+    ALTER TABLE cj_job_condos ADD COLUMN IF NOT EXISTS telefone TEXT;
+
+    ALTER TABLE cj_job_opportunities ADD COLUMN IF NOT EXISTS disponibilidade TEXT;
+    ALTER TABLE cj_job_opportunities ADD COLUMN IF NOT EXISTS data_servico DATE;
+    ALTER TABLE cj_job_opportunities ADD COLUMN IF NOT EXISTS hora_servico TIME;
+    ALTER TABLE cj_job_opportunities ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'aberta';
+    ALTER TABLE cj_job_opportunities ADD COLUMN IF NOT EXISTS worker_id UUID REFERENCES cj_job_workers(id) ON DELETE SET NULL;
+    ALTER TABLE cj_job_opportunities ADD COLUMN IF NOT EXISTS aceito_em TIMESTAMPTZ;
   `);
 
   await pool.query(`
@@ -439,6 +468,15 @@ async function initSchemaInternal() {
     CREATE INDEX IF NOT EXISTS cj_comercial_leads_responsavel_idx ON cj_comercial_leads (responsavel_id);
     CREATE INDEX IF NOT EXISTS cj_comercial_atividades_lead_idx ON cj_comercial_atividades (lead_id, criado_em DESC);
     CREATE INDEX IF NOT EXISTS cj_comercial_disparos_campanha_idx ON cj_comercial_disparos (campanha_id, criado_em DESC);
+    CREATE UNIQUE INDEX IF NOT EXISTS cj_job_workers_email_unique ON cj_job_workers (LOWER(email)) WHERE email IS NOT NULL AND email <> '';
+    CREATE UNIQUE INDEX IF NOT EXISTS cj_job_condos_email_unique ON cj_job_condos (LOWER(email)) WHERE email IS NOT NULL AND email <> '';
+  `);
+
+  await pool.query(`
+    ALTER TABLE cj_job_opportunities DROP CONSTRAINT IF EXISTS cj_job_opportunities_status_check;
+    ALTER TABLE cj_job_opportunities
+      ADD CONSTRAINT cj_job_opportunities_status_check
+      CHECK (status IN ('aberta','aceita','concluida','cancelada'));
   `);
 
   await pool.query(`

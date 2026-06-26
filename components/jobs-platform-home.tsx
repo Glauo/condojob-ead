@@ -23,14 +23,14 @@ type Opportunity = {
 const ACCESS_CARDS = [
   {
     title: "Sou profissional",
-    text: "Entrar nas oportunidades, acompanhar formacao e consultar historico profissional.",
-    href: "/profissionais/oportunidades",
+    text: "Fazer login, ver vagas, aceitar trabalhos e acompanhar seu painel profissional.",
+    href: "/profissionais/login",
     primary: true,
   },
   {
-    title: "Sou condominio",
-    text: "Consultar base da plataforma, condominios cadastrados e operacao de contratacao.",
-    href: "/condominios",
+    title: "Sou empresa",
+    text: "Cadastrar a empresa, publicar vagas e acompanhar quais trabalhadores aceitaram.",
+    href: "/empresas/login",
     primary: false,
   },
   {
@@ -75,7 +75,7 @@ export async function JobsPlatformHome() {
             <Image src={LOGO_URL} alt="CondoJob" width={170} height={52} priority />
           </Link>
           <div className="jobs-home-nav-actions">
-            <Link href="/profissionais/oportunidades" className="jobs-home-nav-link">Plataforma de empregos</Link>
+            <Link href="/profissionais/oportunidades" className="jobs-home-nav-link">Ver vagas</Link>
             <Link href="/curso-assistente-condominial" className="jobs-home-nav-cta">CondoJob EAD</Link>
           </div>
         </nav>
@@ -126,7 +126,7 @@ export async function JobsPlatformHome() {
       <section className="jobs-home-section">
         <div className="jobs-home-section-copy">
           <span className="jobs-home-section-kicker">Oportunidades recentes</span>
-          <h2>Entrada direta na plataforma de empregos, sem jogar tudo no EAD.</h2>
+          <h2>Entrada direta para trabalhador e empresa, com vagas reais e aceite pela plataforma.</h2>
           <p>
             Os principais caminhos agora abrem a plataforma de trabalho. O EAD fica disponivel somente como uma trilha
             complementar de formacao e certificacao.

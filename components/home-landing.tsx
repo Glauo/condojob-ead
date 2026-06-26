@@ -13,27 +13,27 @@ const HIGHLIGHTS = [
 
 const PORTAL_ACTIONS = [
   {
-    title: "Entrar na plataforma",
-    text: "Acesso para usuarios ja cadastrados na CondoJob.",
-    href: "/login",
+    title: "Entrar como trabalhador",
+    text: "Login da plataforma de empregos para aceitar trabalhos e acompanhar vagas.",
+    href: "/profissionais/login",
     style: "primary" as const,
   },
   {
-    title: "Criar cadastro",
-    text: "Cadastro inicial para entrar no ecossistema CondoJob.",
-    href: "/cadastro",
+    title: "Cadastrar trabalhador",
+    text: "Criar o acesso do profissional para receber vagas e aceitar servicos.",
+    href: "/profissionais/cadastro",
     style: "secondary" as const,
   },
   {
-    title: "Entrar na CondoJob EAD",
-    text: "Acesso em destaque para a plataforma educacional que ja existe hoje.",
-    href: "/curso-assistente-condominial",
+    title: "Entrar como empresa",
+    text: "Acesso para publicar vagas e acompanhar aceite dos trabalhadores.",
+    href: "/empresas/login",
     style: "primary" as const,
   },
   {
-    title: "Area comercial",
-    text: "Funil, campanhas, leads e operacao comercial.",
-    href: "/comercial/login",
+    title: "Cadastrar empresa",
+    text: "Criar o acesso da empresa ou condominio para postar vagas.",
+    href: "/empresas/cadastro",
     style: "secondary" as const,
   },
 ];
@@ -52,6 +52,12 @@ const PLATFORM_MODULES = [
     href: "/coordenador",
   },
   {
+    title: "Plataforma de empregos",
+    text: "Login do trabalhador, aceite de vaga, painel de trabalhos e publicacao pelas empresas.",
+    items: ["Login do trabalhador", "Cadastro da empresa", "Aceite de vaga", "Painel de trabalhos"],
+    href: "/empregos",
+  },
+  {
     title: "Operacao comercial",
     text: "Leads, funil, campanhas, templates IA e disparos comerciais por WhatsApp e e-mail.",
     items: ["Leads", "Funil", "Campanhas", "Templates IA"],
@@ -60,12 +66,14 @@ const PLATFORM_MODULES = [
 ];
 
 const FEATURE_LINKS = [
-  { label: "Login do aluno", href: "/login" },
-  { label: "Cadastro e pagamento", href: "/cadastro" },
+  { label: "Login do trabalhador", href: "/profissionais/login" },
+  { label: "Cadastro do trabalhador", href: "/profissionais/cadastro" },
+  { label: "Login da empresa", href: "/empresas/login" },
+  { label: "Cadastro da empresa", href: "/empresas/cadastro" },
   { label: "CondoJob EAD", href: "/curso-assistente-condominial" },
   { label: "Cursos extras", href: "/aluno/especializacoes" },
   { label: "Area comercial", href: "/comercial/login" },
-  { label: "Certificados", href: "/aluno/certificados" },
+  { label: "Plataforma de empregos", href: "/empregos" },
 ];
 
 const SECTIONS = [

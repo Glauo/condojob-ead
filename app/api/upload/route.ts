@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { getUploadFolder } from "@/lib/storage";
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
     const ext = isPdf ? "pdf" : (originalExt || (isImage ? file.type.split("/")[1] : "mp4"));
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const folder = isResposta ? "respostas" : isPdf ? "materiais" : "videos";
-    const uploadsDir = path.join(process.cwd(), "public", folder);
+    const uploadsDir = getUploadFolder(folder);
 
     await mkdir(uploadsDir, { recursive: true });
     const buffer = Buffer.from(await file.arrayBuffer());
