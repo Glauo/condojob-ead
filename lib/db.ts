@@ -13,6 +13,11 @@ const pool = new Pool({
   ssl: rawUrl.includes("neon.tech") ? { rejectUnauthorized: false } : undefined,
 });
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __condojobSchemaInitPromise: Promise<void> | undefined;
+}
+
 export const db = pool;
 
 export async function dbQuery<T = Record<string, unknown>>(
@@ -37,6 +42,13 @@ export async function dbRun(sql: string, params?: unknown[]): Promise<void> {
 
 /* ---- Schema migration (run once on startup) ---- */
 export async function initSchema() {
+  if (!globalThis.__condojobSchemaInitPromise) {
+    globalThis.__condojobSchemaInitPromise = initSchemaInternal();
+  }
+  await globalThis.__condojobSchemaInitPromise;
+}
+
+async function initSchemaInternal() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS cj_users (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -298,6 +310,52 @@ export async function initSchema() {
       enviado_em TIMESTAMPTZ,
       criado_em TIMESTAMPTZ DEFAULT now()
     );
+
+    CREATE TABLE IF NOT EXISTS cj_job_workers (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      nome TEXT NOT NULL,
+      telefone TEXT,
+      cidade TEXT,
+      nivel TEXT DEFAULT 'operacional',
+      onboarding_concluido BOOLEAN DEFAULT false,
+      ativo BOOLEAN DEFAULT true,
+      criado_em TIMESTAMPTZ DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS cj_job_condos (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      nome TEXT NOT NULL,
+      tipo TEXT DEFAULT 'residencial',
+      total_unidades INTEGER,
+      endereco TEXT,
+      bairro TEXT,
+      cidade TEXT,
+      uf TEXT,
+      premium BOOLEAN DEFAULT false,
+      ativo BOOLEAN DEFAULT true,
+      criado_em TIMESTAMPTZ DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS cj_job_opportunities (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      condo_id UUID REFERENCES cj_job_condos(id) ON DELETE CASCADE,
+      titulo TEXT NOT NULL,
+      descricao TEXT,
+      tipo_jornada TEXT DEFAULT 'efetivo',
+      faixa_pagamento TEXT,
+      requisitos TEXT,
+      ativo BOOLEAN DEFAULT true,
+      criado_em TIMESTAMPTZ DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS cj_job_applications (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      opportunity_id UUID REFERENCES cj_job_opportunities(id) ON DELETE CASCADE,
+      worker_id UUID REFERENCES cj_job_workers(id) ON DELETE CASCADE,
+      status TEXT DEFAULT 'pendente' CHECK (status IN ('pendente','aceita','rejeitada','concluida','cancelada')),
+      criado_em TIMESTAMPTZ DEFAULT now(),
+      UNIQUE(opportunity_id, worker_id)
+    );
   `);
 
   await pool.query(`
@@ -432,6 +490,7 @@ export async function initSchema() {
   `);
 
   await ensureCommercialTemplates();
+  await ensureJobsPlatformSeed();
   await ensureDefaultAdmin();
   await ensureDefaultCommercial();
 }
@@ -531,5 +590,56 @@ async function ensureDefaultCommercial() {
            senha_hash=EXCLUDED.senha_hash,
            ativo=true`,
     [nome, login, email, hash]
+  );
+}
+
+async function ensureJobsPlatformSeed() {
+  const existingCondos = await pool.query<{ total: string }>("SELECT COUNT(*)::text AS total FROM cj_job_condos");
+  if (Number(existingCondos.rows[0]?.total || 0) > 0) return;
+
+  const condoA = await pool.query<{ id: string }>(
+    `INSERT INTO cj_job_condos (nome, tipo, total_unidades, endereco, bairro, cidade, uf, premium, ativo)
+     VALUES ('Condominio Parque Paulista', 'residencial', 180, 'Rua das Palmeiras, 210', 'Jardim Paulista', 'Ribeirao Preto', 'SP', true, true)
+     RETURNING id`
+  );
+  const condoB = await pool.query<{ id: string }>(
+    `INSERT INTO cj_job_condos (nome, tipo, total_unidades, endereco, bairro, cidade, uf, premium, ativo)
+     VALUES ('Residencial Villa Alianca', 'misto', 96, 'Av. Alianca, 880', 'Centro', 'Sertaozinho', 'SP', false, true)
+     RETURNING id`
+  );
+  const condoC = await pool.query<{ id: string }>(
+    `INSERT INTO cj_job_condos (nome, tipo, total_unidades, endereco, bairro, cidade, uf, premium, ativo)
+     VALUES ('Alpha Condominios Operacao Leste', 'comercial', 140, 'Rua Operacional, 55', 'Nova Ribeirania', 'Ribeirao Preto', 'SP', true, true)
+     RETURNING id`
+  );
+
+  await pool.query(
+    `INSERT INTO cj_job_workers (nome, telefone, cidade, nivel, onboarding_concluido, ativo)
+     VALUES
+      ('Fabio Luiz', '16999990001', 'Ribeirao Preto', 'elite', true, true),
+      ('Glauco Operacional', '16999990002', 'Sertaozinho', 'executive', true, true),
+      ('Maria Portaria', '16999990003', 'Ribeirao Preto', 'operacional', false, true)`
+  );
+
+  await pool.query(
+    `INSERT INTO cj_job_opportunities (condo_id, titulo, descricao, tipo_jornada, faixa_pagamento, requisitos, ativo)
+     VALUES
+      ($1, 'Assistente condominial premium', 'Operacao de atendimento, controle de rotinas e apoio ao sindico em condominio de alto padrao.', 'efetivo', 'R$ 2.800 a R$ 3.400', 'Postura profissional, atendimento humanizado e conhecimento operacional.', true),
+      ($2, 'Porteiro com foco em atendimento', 'Atuacao em escala com rotina de acesso, comunicacao e apoio ao morador.', '12x36', 'R$ 2.100 a R$ 2.500', 'Boa comunicacao, organizacao e vivencia em condominio.', true),
+      ($3, 'Supervisor operacional condominial', 'Acompanhamento de equipe, checklist e interface com administradora.', 'efetivo', 'R$ 3.500 a R$ 4.200', 'Experiencia com lideranca e rotina condominial.', true)`,
+    [condoA.rows[0].id, condoB.rows[0].id, condoC.rows[0].id]
+  );
+
+  await pool.query(
+    `INSERT INTO cj_job_applications (opportunity_id, worker_id, status)
+     SELECT o.id, w.id, x.status
+       FROM (
+         VALUES
+          (1, 1, 'pendente'::text),
+          (2, 2, 'aceita'::text),
+          (3, 1, 'concluida'::text)
+       ) AS x(op_idx, worker_idx, status)
+       JOIN LATERAL (SELECT id FROM cj_job_opportunities ORDER BY criado_em ASC LIMIT 1 OFFSET x.op_idx - 1) o ON true
+       JOIN LATERAL (SELECT id FROM cj_job_workers ORDER BY criado_em ASC LIMIT 1 OFFSET x.worker_idx - 1) w ON true`
   );
 }

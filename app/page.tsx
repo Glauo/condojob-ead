@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { HomeLanding } from "@/components/home-landing";
+import { JobsPlatformHome } from "@/components/jobs-platform-home";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "CondoJob | Plataforma principal",
-  description: "Pagina principal da CondoJob com acesso a login, cadastro, plataforma comercial e CondoJob EAD.",
+  title: "CondoJob | Plataforma de empregos",
+  description: "Plataforma principal de empregos da CondoJob com acesso para profissionais, condominios, administracao e CondoJob EAD.",
 };
 
 export default function LandingPage() {
-  return <HomeLanding />;
+  return <JobsPlatformHome />;
 }
