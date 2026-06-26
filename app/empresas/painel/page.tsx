@@ -4,6 +4,8 @@ import { getJobSession } from "@/lib/job-auth";
 import { initSchema, dbQuery } from "@/lib/db";
 import { JobsCompanyOpportunityForm } from "@/components/jobs-company-opportunity-form";
 
+export const dynamic = "force-dynamic";
+
 type CompanyOpportunity = {
   id: string;
   titulo: string;

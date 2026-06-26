@@ -3,6 +3,8 @@ import Link from "next/link";
 import { getJobSession } from "@/lib/job-auth";
 import { initSchema, dbQuery } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 type JobRow = {
   id: string;
   titulo: string;
